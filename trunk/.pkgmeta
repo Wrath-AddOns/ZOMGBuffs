@@ -1,0 +1,10 @@
+package-as: ZOMGBuffs
+
+move-folders:
+   ZOMGBuffs/ZOMGBuffs_Blessings: ZOMGBuffs_Blessings
+   ZOMGBuffs/ZOMGBuffs_BlessingsManager: ZOMGBuffs_BlessingsManager
+   ZOMGBuffs/ZOMGBuffs_BlessingsPP: ZOMGBuffs_BlessingsPP
+   ZOMGBuffs/ZOMGBuffs_BuffTehRaid: ZOMGBuffs_BuffTehRaid
+   ZOMGBuffs/ZOMGBuffs_Log: ZOMGBuffs_Log
+   ZOMGBuffs/ZOMGBuffs_SelfBuffs: ZOMGBuffs_SelfBuffs
+   ZOMGBuffs/ZOMGBuffs_Portalz: ZOMGBuffs_Portalz
