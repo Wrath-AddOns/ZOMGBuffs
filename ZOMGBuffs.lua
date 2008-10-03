@@ -250,7 +250,7 @@ do
 end
 
 z.version = tonumber(string.sub("$Revision$", 12, -3)) or 1
-z.versionCompat = 65478
+z.versionCompat = 65478 - 82090				-- 65478 is the compat version check
 z.title = L["TITLE"]
 z.titleColour = L["TITLECOLOUR"]
 z.hasIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
@@ -2568,9 +2568,9 @@ end
 function z:SetAnchors()
 	self.members:ClearAllPoints()
 	if (wow3) then
-		self.members:SetPoint(z.db.char.anchor or "BOTTOMRIGHT", self.icon, z.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
+		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
 	else
-		self.members:SetPoint(z.db.char.anchor or "BOTTOMRIGHT", self.menu, z.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
+		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.menu, self.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
 	end
 end
 
