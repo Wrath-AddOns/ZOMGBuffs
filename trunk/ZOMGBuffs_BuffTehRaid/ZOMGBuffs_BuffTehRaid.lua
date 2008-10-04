@@ -1573,10 +1573,10 @@ function zg:CheckTickColumns(cell)
 
 	if (self.tickColumns) then
 		-- Go thru the ticks we have and assign them their values
+		local any
 		local unit = cell:GetAttribute("unit")
 		if (unit) then
 			local myself = UnitIsUnit("player", unit)
-			local any
 			for index,key in ipairs(self.tickColumns) do
 				local handler = self.tickHandlers[key]
 				if (type(handler) ~= "table" or not handler.func or not handler.module) then
