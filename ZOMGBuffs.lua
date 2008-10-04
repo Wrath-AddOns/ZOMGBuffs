@@ -2568,9 +2568,9 @@ end
 function z:SetAnchors()
 	self.members:ClearAllPoints()
 	if (wow3) then
-		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
+		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
 	else
-		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.menu, self.db.char.relpoint or "TOPLEFT", 0, 0 - (self.db.char.iconborder and 4))
+		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.menu, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
 	end
 end
 
