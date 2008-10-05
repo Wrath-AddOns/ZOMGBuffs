@@ -157,6 +157,7 @@ local bm
 z.new, z.del, z.deepDel, z.copy = new, del, deepDel, copy
 z.classOrder = classOrder
 z.classIndex = classIndex
+z.manaClasses = {HUNTER = true, DRUID = true, SHAMAN = true, PALADIN = true, PRIEST = true, MAGE = true, WARLOCK = true}
 
 z.blessingColour = {BOK = "|cFFFF80FF", BOM = "|cFFFF5050", BOL = "|cFF80FF80", BOS = "|cFFFFA0A0", BOW = "|cFF8080FF", SAC = "|cFFFF0000", SAN = "|cFF4040C0", BOF = "|cFFFFCC19", BOP = "|cFF00FF00"}
 do
@@ -280,6 +281,7 @@ function z:CheckVersion(ver)
 	end
 end
 
+--@debug@
 -- err
 local function err(self, message, ...)
 	if type(self) ~= "table" then
@@ -361,7 +363,7 @@ function z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 		end
 	end
 end
-
+--@no-debug@
 
 local function getOption(v)
 	return z.db.profile[v]
@@ -2308,7 +2310,7 @@ end
 
 -- Report
 function z:Report(option)
-	if (not IsRaidOfficer() or not IsRaidLeader()) then
+	if (not IsRaidOfficer() and not IsRaidLeader()) then
 		return
 	end
 
@@ -2375,7 +2377,7 @@ function z:Report(option)
 					tinsert(list.MARK, name)
 					groupList[subgroup].MARK = (groupList[subgroup].MARK or 0) + 1
 				end
-				if (not (class == "ROGUE" or class == "WARRIOR" or class == "DEATHKNIGHT")) then
+				if (self.manaClasses[class]) then
 					if (not flags.INT and self.classcount.MAGE > 0) then
 						if (not list.INT) then
 							list.INT = new()
@@ -3592,7 +3594,7 @@ local function DrawCell(self)
 			if (UnitIsDeadOrGhost(partyid) or not UnitIsConnected(partyid)) then
 				icon:SetTexture(nil)
 			else
-				if (b.manaOnly and (class == "ROGUE" or class == "WARRIOR" or class == "DEATHKNIGHT")) then
+				if (b.manaOnly and not z.manaClasses[class]) then
 					icon:SetTexture(nil)
 				else
 					if (b.type == "FLASK") then
@@ -3647,7 +3649,7 @@ local function DrawCell(self)
 			for j,icon in pairs(self.buff) do
 				local buff = z.buffs[j]
 				if (buff and (not buff.class or z.classcount[buff.class] > 0)) then
-					if (not buff.manaOnly or not (class == "ROGUE" or class == "WARRIOR" or class == "DEATHKNIGHT")) then
+					if (not buff.manaOnly or z.manaClasses[class]) then
 						if (buff.list and buff.list[name]) then
 							icon:Show()
 							icon:SetAlpha(onAlpha)
@@ -3716,10 +3718,10 @@ local function DrawCell(self)
 							end
 
 							if (Type == "BOW") then
-								if (class == "WARRIOR" or class == "ROGUE" or class == "DEATHKNIGHT") then
-									b:SetVertexColor(1, 0.5, 0.5)
-								else
+								if (z.manaClasses[class]) then
 									b:SetVertexColor(1, 1, 1)
+								else
+									b:SetVertexColor(1, 0.5, 0.5)
 								end
 							else
 								b:SetVertexColor(1, 1, 1)

@@ -30,7 +30,6 @@ local UnitInParty		= UnitInParty
 local UnitIsPVP			= UnitIsPVP
 local UnitInRaid		= UnitInRaid
 local UnitIsUnit		= UnitIsUnit
-local UnitPowerType		= UnitPowerType
 
 local kiru = GetSpellInfo(46302)			-- Counts as INT (Ignoring STA because talented is still better)
 
@@ -554,20 +553,12 @@ function zg:GetBuffedMembers()
 					absent = true
 				elseif (UnitIsAFK(unitid)) then
 					absent = true
-				else
-					local inZone = true
-					if (id) then
-						local n, _, _, _, _, _, zone = GetRaidRosterInfo((strmatch(unitid, "(%d+)") or 0) + 0)
-						if (n == unitname and zone and zone ~= playerZone) then
-							absent = true
-						end
-					end
 				end
 			end
 
 			if (present) then
 				local foundBuffs
-				local manaUser = UnitPowerType(unitid) == 0
+				local manaUser = z.manaClasses[unitclass]	--   UnitPowerType(unitid) == 0
 				groupPresent[grp] = groupPresent[grp] + 1
 				totalPresent = totalPresent + 1
 				
@@ -666,7 +657,8 @@ function zg:FindUnitInRangeMissing(group, typ)
 	local requiredTimeLeft = (self.db.char.rebuff and self.db.char.rebuff[typ]) or self.db.char.rebuff.default
 
 	for unitid, unitname, unitclass, subgroup, index in z:IterateRoster() do
-		if (buffEveryone or UnitPowerType(unitid) == 0) then
+		local manaUser = z.manaClasses[unitclass]
+		if (buffEveryone or manaUser) then
 			if (not t.limited or (limitedPeople and limitedPeople[unitname])) then
 				if (subgroup == group and not z:IsBlacklisted(unitname)) then
 					if (UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid) == 1 and ((not z.db.profile.skippvp or not UnitIsPVP(unitid)) or UnitIsPVP("player"))) then
@@ -793,7 +785,7 @@ function zg:CheckBuffs()
 		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
 			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid)) then
  				if (db.groups[subgroup]) then
- 					local manaUser = UnitPowerType(unitid) == 0
+ 					local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
 					for i = 1,40 do
 						local name, rank, buff, count, _, max, endTime = z:UnitBuff(unitid, i)
 						if (not name) then
@@ -961,7 +953,8 @@ function zg:RebuffQuery(unit)
 			end
 		end
 
-		local manaUser = UnitPowerType(unit) == 0
+		local _, class = UnitClass(unit)
+		local manaUser = class and z.manaClasses[class]			--  UnitPowerType(unit) == 0
 		local limited = template.limited
 		for key,info in pairs(self.buffs) do
 			if (template[key] and not got[key]) then
