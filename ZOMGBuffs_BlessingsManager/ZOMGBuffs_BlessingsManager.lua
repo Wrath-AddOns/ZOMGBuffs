@@ -2557,11 +2557,12 @@ end
 
 -- OnReceiveBroadcastTemplatePart
 function man:OnReceiveBroadcastTemplatePart(sender, name, class, buff)
+--@debug@
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(class, 3, "string")
 	self:argCheck(buff, 4, "string", "nil")
-
+--@no-debug@
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala[name]
 		if (pala) then
@@ -2577,11 +2578,12 @@ end
 -- OnReceiveTemplatePart
 -- PallyPower support only
 function man:OnReceiveTemplatePart(sender, name, classOrName, spell)
+--@debug@
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(classOrName, 3, "string")
 	self:argCheck(spell, 4, "string", "nil")
-
+--@no-debug@
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala and self.pala[name]
 		if (pala) then
@@ -3465,10 +3467,11 @@ end
 
 -- SetCell
 function man:SetCell(row, col, Type, panel)
+--@debug@
 	self:argCheck(row, 1, "number")
 	self:argCheck(col, 2, "number")
 	self:argCheck(Type, 3, "string", "nil")
-
+--@no-debug@
 	if (panel) then
 		if (row and col) then
 			local class = self.expandpanel.class
@@ -3583,11 +3586,12 @@ end
 
 -- SetException
 function man:SetException(name, row, col, n)
+--@debug@
 	self:argCheck(name, 1, "string")
 	self:argCheck(row, 2, "number")
 	self:argCheck(col, 3, "number")
 	self:argCheck(n, 4, "string", "nil")
-
+--@no-debug@
 	local class = classOrder[col]
 	if (not man.configuring and self.canEdit) then
 		local pala, palaName = self:GetPalaFromRow(row)
@@ -4379,8 +4383,10 @@ end
 
 -- OnModifyTemplate
 function man:OnModifyTemplate(key, value)
+--@debug@
 	self:argCheck(key, 1, "string")
 	self:argCheck(value, 2, "string", "nil")
+--@no-debug@
 end
 
 -- OnReceiveAck

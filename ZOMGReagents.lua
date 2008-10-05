@@ -20,6 +20,8 @@ R:RegisterTranslations("enUS", function() return {
 	["Wild Berries"]			= true,
 	["Wild Quillvine"]			= true,
 	["Wild Thornroot"]			= true,
+	["Demonic Figurine"]		= true,
+	["Infernal Stone"]			= true,
 	["Corpse Dust"]				= true,
 } end)
 
@@ -43,6 +45,8 @@ R:RegisterTranslations("deDE", function() return{
 	["Wild Berries"]			= "Wilde Beeren",
 	["Wild Quillvine"]			= "Wilde Federranke",
 	["Wild Thornroot"]			= "Wilder Dornwurz",
+	["Demonic Figurine"]		= "Dämonenstatuette",
+	["Infernal Stone"]			= "Höllenstein",
 --	["Corpse Dust"]				= true,
 } end)
 
@@ -66,6 +70,8 @@ R:RegisterTranslations("frFR", function() return{
 	["Wild Berries"]			= "Baie sauvage",
 	["Wild Quillvine"]			= "Vigneplume sauvage",
 	["Wild Thornroot"]			= "Ronceterre sauvage",
+	["Demonic Figurine"]		= "Figurine démoniaque",
+	["Infernal Stone"]			= "Pierre infernale",
 --	["Corpse Dust"]				= true,
 } end)
 
@@ -89,6 +95,8 @@ R:RegisterTranslations("esES", function() return{
 	["Wild Berries"]			= "Frutos silvestres",
 	["Wild Quillvine"]			= "Videpluma salvaje",
 	["Wild Thornroot"]			= "Raíz de espina salvaje",
+	["Demonic Figurine"]		= "Figurilla demoníaca",
+	["Infernal Stone"]			= "Piedra infernal",
 --	["Corpse Dust"]				= true,
 } end)
 
@@ -112,6 +120,8 @@ R:RegisterTranslations("zhCN", function() return{
 	["Wild Berries"]			= "野生漿果",
 	["Wild Quillvine"]			= "野生刺藤",
 	["Wild Thornroot"]			= "野生棘根草",
+	["Demonic Figurine"]		= "恶魔雕像",
+	["Infernal Stone"]			= "地狱火石",
 --	["Corpse Dust"]				= true,
 } end)
 
@@ -135,6 +145,8 @@ R:RegisterTranslations("zhTW", function() return{
 	["Wild Berries"]			= "野性漿果",
 	["Wild Quillvine"]			= "野生羽蔓",
 	["Wild Thornroot"]			= "野生棘根草",
+	["Demonic Figurine"]		= "惡魔刻像",
+	["Infernal Stone"]			= "地獄火石",
 --	["Corpse Dust"]				= true,
 } end)
 
@@ -158,6 +170,8 @@ R:RegisterTranslations("koKR", function() return {
 	["Wild Berries"]			= "야생 가지",
 	["Wild Quillvine"]			= "야생 가시덩굴",
 	["Wild Thornroot"]			= "야생 가시",
+	["Demonic Figurine"]		= "악마의 구슬",
+	["Infernal Stone"]			= "지옥의 돌",
 --	["Corpse Dust"]				= true,
 } end )
 
@@ -181,6 +195,8 @@ R:RegisterTranslations("ruRU", function() return{
 	["Wild Berries"]			= "Лесные ягоды",
 	["Wild Quillvine"]			= "Дикая перьелоза",
 	["Wild Thornroot"]			= "Дикий шипокорень",
+	["Demonic Figurine"]		= "Демоническая статуэтка",
+	["Infernal Stone"]			= "Камень инфернала",
 --	["Corpse Dust"]				= true,
 } end )
 

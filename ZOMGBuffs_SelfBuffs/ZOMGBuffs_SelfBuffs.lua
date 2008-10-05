@@ -489,6 +489,10 @@ function zs:GetClassBuffs()
 			{id = 28610, o = 6, duration = 0.5, default = 5, who = "self", noauto = true, c = "FF60FF"},				-- Shadow Ward
 			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
 		}
+		self.reagents = {
+			[R["Demonic Figurine"]]	= {5, 1, 100},
+			[R["Infernal Stone"]]	= {5, 1, 100},
+		}
 		local shoulShard = R["Soul Shard"]
 		local warlockList = {
 			27250, -- Create Firestone
