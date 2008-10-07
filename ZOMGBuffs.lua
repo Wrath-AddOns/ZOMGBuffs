@@ -1,4 +1,4 @@
-local wow3 = GetBuildInfo() >= "3.0.0"
+local wow3 = select(4, GetBuildInfo()) >= 30000
 
 if (wow3) then
 	-- Temporary fix while WoW's LoD stuff is broke
@@ -4390,6 +4390,7 @@ end
 
 -- OnRaidRosterUpdate
 function z:OnRaidRosterUpdate()
+	self:CheckStateChange()
 	local delList = copy(z.versionRoster)
 	local any
 
@@ -4787,6 +4788,7 @@ function z:PLAYER_ENTERING_WORLD()
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
 	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
 	-- Buff timers aren't available immediately upon zoning
+	self:CheckStateChange()
 end
 
 -- FinishedZoning
@@ -5601,6 +5603,36 @@ function z:ADDON_LOADED(addon)
 	end
 end
 
+-- CheckStateChange
+function z:CheckStateChange()
+	local party = GetNumPartyMembers() > 0
+	local raid = GetNumRaidMembers() > 0
+	local instance, Type = IsInInstance()
+	
+	local state, reason
+	if (instance and Type == "pvp") then
+		state, reason = "bg", L["You are now in a battleground"]
+	elseif (instance and Type == "arena") then
+		state, reason = "arena", L["You are now in an arena"]
+	elseif (raid) then
+		state, reason = "raid", L["You are now in a raid"]
+	elseif (party) then
+		state, reason = "party", L["You are now in a party"]
+	else
+		state, reason = "solo", L["You are now solo"]
+	end
+
+	if (state ~= self.state) then
+		self.state = state
+		self:CallMethodOnAllModules("OnStateChanged", state, reason)
+	end
+end
+
+-- PARTY_MEMBERS_CHANGED
+function z:PARTY_MEMBERS_CHANGED()
+	self:CheckStateChange()
+end
+
 -- OnEnableOnce
 function z:OnEnableOnce()
 	if (SM) then
@@ -5743,6 +5775,7 @@ function z:OnEnable()
 
 	self:RegisterEvent("RAID_ROSTER_UPDATE")
 	self:RegisterEvent("UNIT_AURA")
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_UPDATE_RESTING")

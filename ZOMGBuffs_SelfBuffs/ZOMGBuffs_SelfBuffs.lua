@@ -1,4 +1,4 @@
-﻿local wow3 = GetBuildInfo() >= "3.0.0"
+﻿local wow3 = select(4, GetBuildInfo()) >= 30000
 
 if (ZOMGSelfBuffs) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_SelfBuffs (Addons\ZOMGBuffs\ZOMGBuffs_SelfBuffs and Addons\ZOMGBuffs_SelfBuffs)")

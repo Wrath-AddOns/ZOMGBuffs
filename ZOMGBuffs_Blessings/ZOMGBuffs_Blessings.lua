@@ -3,6 +3,8 @@ if (ZOMGBlessings) then
 	return
 end
 
+local wow3 = select(4, GetBuildInfo()) >= 30000
+
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
@@ -918,7 +920,6 @@ end
 
 -- OnRaidRosterUpdate
 function zb:OnRaidRosterUpdate()
-	self:CheckStateChange()
 	if (template) then
 		z:CheckForChange(zb)		-- Because raid IDs can change
 		z:SendClass("PALADIN", "HELLO", z.version)
@@ -1513,11 +1514,6 @@ function zb:TooltipOnClickException(name)
 	end
 end
 
--- PARTY_MEMBERS_CHANGED
-function zb:PARTY_MEMBERS_CHANGED()
-	self:CheckStateChange()
-end
-
 -- TooltipUpdate
 function zb:TooltipUpdate(cat)
 	if (template) then
@@ -1743,7 +1739,6 @@ function zb:OnModuleEnable()
 		self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.2)
 		self:RegisterBucketEvent("SPELLS_CHANGED", 0.2)
 		self:RegisterBucketEvent("CHARACTER_POINTS_CHANGED", 5)		-- Throttle points spending spam from Talented by clumping
-		self:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	end
 	z:CheckForChange(self)
 

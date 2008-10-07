@@ -1,4 +1,4 @@
-local wow3 = GetBuildInfo() >= "3.0.0"
+local wow3 = select(4, GetBuildInfo()) >= 30000
 
 if (ZOMGBuffTehRaid) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_BuffTehRaid (Addons\ZOMGBuffs\ZOMGBuffs_BuffTehRaid and Addons\ZOMGBuffs_BuffTehRaid)")
@@ -2468,11 +2468,6 @@ function zg:SortedBuffList()
 	return list
 end
 
--- RAID_ROSTER_UPDATE
-function zg:RAID_ROSTER_UPDATE()
-	self:CheckStateChange()
-end
-
 -- TooltipUpdate
 function zg:TooltipUpdate(cat)
 	if (template) then
@@ -2544,8 +2539,6 @@ function zg:OnModuleEnable()
 
 		self:RegisterBucketEvent("UNIT_AURA", 0.2)				-- We don't care who
 		self:RegisterBucketEvent("SPELLS_CHANGED", 2)
-		self:RegisterEvent("RAID_ROSTER_UPDATE")
-		self:RegisterEvent("PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE")
 		z:CheckForChange(self)
 	end
 end

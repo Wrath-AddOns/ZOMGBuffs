@@ -328,41 +328,9 @@ function z.modulePrototype:SelectTemplate(templateName, reason)
 	end
 end
 
--- CheckStateChange
-function z.modulePrototype:CheckStateChange()
-	if (self:CanChangeState()) then
-		local party = GetNumPartyMembers() > 0
-		local raid = GetNumRaidMembers() > 0
-		local instance, Type = IsInInstance()
-		
-		local state, reason
-		if (instance and Type == "pvp") then
-			state, reason = "bg", L["You are now in a battleground"]
-		elseif (instance and Type == "arena") then
-			state, reason = "arena", L["You are now in an arena"]
-		elseif (raid) then
-			state, reason = "raid", L["You are now in a raid"]
-		elseif (party) then
-			state, reason = "party", L["You are now in a party"]
-		else
-			state, reason = "solo", L["You are now solo"]
-		end
-
-		if (state ~= self.state) then
-			self.state = state
-			self:OnStateChanged(state, reason)
-		end
-	end
-end
-
--- PLAYER_ENTERING_WORLD
-function z.modulePrototype:PLAYER_ENTERING_WORLD()
-	self:CheckStateChange()
-end
-
 -- OnStateChanged
 function z.modulePrototype:OnStateChanged(newState, reason)
-	if (self.db) then
+	if (self.db and self:CanChangeState()) then
 		local t = self.db.char.templates or self.db.profile.templates
 		if (t) then
 			for k,v in pairs(t) do
@@ -417,7 +385,6 @@ end
 -- OnEnable
 function z.modulePrototype:OnEnable()
 	--self:RegisterBucketEvent("RAID_ROSTER_UPDATE", 0.2)			-- We don't care who
-	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("AceDB20_ResetDB")
 	self:SetupDB()
 	self:OnResetDB()
