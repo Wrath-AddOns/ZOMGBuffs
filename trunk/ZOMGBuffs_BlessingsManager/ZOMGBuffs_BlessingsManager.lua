@@ -14,7 +14,7 @@ local abCount = 0
 -- Constants
 local SHOW_CELL_EXCEPTIONS_COUNT = 3
 
-local wow3 = GetBuildInfo() >= "3.0.0"
+local wow3 = select(4, GetBuildInfo()) >= 30000
 
 local blessingCycle
 if (wow3) then
