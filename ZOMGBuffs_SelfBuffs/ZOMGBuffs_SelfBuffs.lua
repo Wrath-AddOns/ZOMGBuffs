@@ -601,7 +601,7 @@ function zs:GetClassBuffs()
 			{id = 27151, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Shadow Resistance Aura
 			{id = 27152, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
 			{id = 27153, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
-			{id = 32223, o = 20, duration = -1, who = "self", dup = 2, mounted = true, noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
+			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
 		}
 
 		if (wow3) then
@@ -612,7 +612,7 @@ function zs:GetClassBuffs()
 			tinsert(classBuffs, 5, {id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Corruption
 			tinsert(classBuffs, 6, {id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
 		else
-			tinsert(classBuffs, #classBuffs - 1, {id = 20218, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "FFFF90", checkdups = true, skip = skipFunc})		-- Sanctity Aura
+			tinsert(classBuffs, #classBuffs - 1, {id = 20218, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "FFFF90", checkdups = true, skip = skipFunc})		-- Sanctity Aura
 
 			tinsert(classBuffs, 1, {id = 27155, o = 1,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]})	-- Seal of Righteousness
 			tinsert(classBuffs, 2, {id = 27170, o = 2,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Command (Old)
