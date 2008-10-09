@@ -11,7 +11,7 @@ end
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
 local BC = LibStub("LibBabble-Class-3.0"):GetLookupTable()
-local Sink, SinkVersion = LibStub("LibSink-2.0")
+local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
@@ -153,6 +153,10 @@ ZOMGBuffs:SetModuleMixins("AceEvent-2.0", "AceHook-2.1")
 local z = ZOMGBuffs
 local btr
 local bm
+
+if (Sink) then
+	Sink:Embed(z)
+end
 
 z.new, z.del, z.deepDel, z.copy = new, del, deepDel, copy
 z.classOrder = classOrder
@@ -755,6 +759,16 @@ z.options = {
 					passValue = "alwaysLoadManager",
 					order = 20,
 				},
+				portalz = {
+					type = 'toggle',
+					name = L["Always Load Portalz"],
+					desc = L["Always load the Portalz module, even when not a Mage"],
+					get = getOption,
+					set = function(v,n) setOption(v,n) if (z.MaybeLoadPortalz) then z:MaybeLoadPortalz() end end,
+					hidden = function() return select(2,UnitClass("player")) == "MAGE" or select(6,GetAddOnInfo("ZOMGBuffs_Portalz")) == "MISSING" end,
+					passValue = "alwaysLoadPortalz",
+					order = 21,
+				},
 				raidmod = {
 					type = 'toggle',
 					name = L["Load Raid Module"],
@@ -770,7 +784,7 @@ z.options = {
 					end,
 					hidden = function() return not z.canloadraidbuffmodule end,
 					passValue = "loadraidbuffmodule",
-					order = 20,
+					order = 25,
 				},
 				space = {
 					type = 'header',
@@ -1254,13 +1268,12 @@ z.options = {
 		},
 	},
 }
-
-	if (Sink and SinkVersion >= 62534) then
+	if (Sink and (SinkVersion >= 62534 or SinkVersion < 10000)) then
 		-- Move the Sink options menu
-		local temp = Sink:GetSinkAce2OptionsDataTable(z)
-		z.options.args.reminder.args.sinkopts = temp.output
-		temp.output.order = 8
-		temp.output.disabled = function() return not z.db.profile.usesink or not z.db.profile.notice end
+		local temp = z:GetSinkAce2OptionsDataTable().output
+		z.options.args.reminder.args.output = temp
+		temp.order = 8
+		temp.disabled = function() return not z.db.profile.usesink or not z.db.profile.notice end
 	end
 end
 
@@ -2278,7 +2291,7 @@ function z:Notice(notice, sound)
 			end
 
 			if (Sink and self.db.profile.usesink) then
-				Sink.Pour(self, notice)
+				self:Pour(notice)
 			else
 				local f = self.noticeWindow
 				if (not f) then
@@ -5173,14 +5186,28 @@ z.OnCommReceive = {
 
 			local cap
 			if (playerClass == "PALADIN") then
-				local c1 = select(5, GetTalentInfo(2, 6)) == 1		-- Kings
-				local c3 = select(5, GetTalentInfo(2, 14)) == 1		-- Sanctuary
-				local might = select(5, GetTalentInfo(3, 1))		-- Might
-				local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
-				cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
+				if (wow3) then
+					-- Correct as of build 9061
+					local c1 = select(5, GetTalentInfo(2, 2)) == 4		-- Kings (Improved x4)
+					local c3 = select(5, GetTalentInfo(2, 12)) == 1		-- Sanctuary
+					local might = select(5, GetTalentInfo(3, 5))		-- Might
+					local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
+					cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
+				else
+					local c1 = select(5, GetTalentInfo(2, 6)) == 1		-- Kings
+					local c3 = select(5, GetTalentInfo(2, 14)) == 1		-- Sanctuary
+					local might = select(5, GetTalentInfo(3, 1))		-- Might
+					local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
+					cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
+				end
 			elseif (playerClass == "PRIEST") then
-				local c1 = select(5, GetTalentInfo(1, 14)) == 1		-- Spirit
-				cap = {canSpirit = c1}
+				if (wow3) then
+					local c1 = select(5, GetTalentInfo(1, 13)) == 1		-- Spirit
+					cap = {canSpirit = c1}
+				else
+					local c1 = select(5, GetTalentInfo(1, 14)) == 1		-- Spirit
+					cap = {canSpirit = c1}
+				end
 			end
 			z:SendComm(sender, "CAPABILITY", cap)
 		end
@@ -5453,6 +5480,22 @@ function z:MaybeLoadManager()
 	end
 end
 
+-- MaybeLoadPortalz
+function z:MaybeLoadPortalz()
+	if (ZOMGPortalz) then
+		self.MaybeLoadPortalz = nil
+		return
+	end
+
+	if (self.db.profile.alwaysLoadPortalz) then
+		LoadAddOn("ZOMGBuffs_Portalz")
+		if (ZOMGPortalz) then
+			self.options.args["ZOMGPortalz"] = ZOMGPortalz:GetModuleOptions()
+		end
+		self.MaybeLoadPortalz = nil
+	end
+end
+
 -- DrawAllCells
 function z:DrawAllCells()
 	for k,v in pairs(FrameArray) do
@@ -5653,7 +5696,7 @@ function z:OnEnableOnce()
 	end
 
 	if (Sink) then
-		Sink.SetSinkStorage(self, self.db.profile.sinkopts)		-- Yes, Sink. and not Sink:
+		self:SetSinkStorage(self.db.profile.sinkopts)
 	end
 
 	self:SendCommMessage("GROUP", "HELLO", self.version)
@@ -5667,6 +5710,7 @@ function z:OnEnableOnce()
 		ZOMGBuffs_SelfBuffs = ZOMGSelfBuffs,
 		ZOMGBuffs_Log = ZOMGLog,
 		ZOMGBuffs_BuffTehRaid = ZOMGBuffTehRaid,
+		ZOMGBuffs_Portalz = ZOMGPortalz,
 	}
 
 	playerClass = playerClass or select(2, UnitClass("player"))
@@ -5706,6 +5750,7 @@ function z:OnEnableOnce()
 	btr = ZOMGBuffTehRaid
 
 	self:MaybeLoadManager()
+	self:MaybeLoadPortalz()
 
 	if (not ZOMGLog) then
 		LoadAddOn("ZOMGBuffs_Log")

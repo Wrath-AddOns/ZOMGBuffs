@@ -3,6 +3,8 @@ if (ZOMGPortalz) then
 	return
 end
 
+local wow3 = select(4, GetBuildInfo()) >= 30000
+
 local L = LibStub("AceLocale-2.2"):new("ZOMGPortalz")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
@@ -58,6 +60,14 @@ do
 				get = function() return module.db.char.showall end,
 				set = function(n) module.db.char.showall = n end,
 				order = 1,
+			},
+			items = {
+				type = 'toggle',
+				name = L["Items"],
+				desc = format(L["Include appropriate items as castable portals (eg: %s or %s)"], select(2,GetItemInfo(6948)) or "Hearthstone", select(2,GetItemInfo(32757)) or "Blessed Medallion of Karobor"),
+				get = function() return module.db.char.useitems end,
+				set = function(n) module.db.char.useitems = n end,
+				order = 3,
 			},
 			anchor = {
 				type = 'toggle',
@@ -158,7 +168,7 @@ function module:InitFrames()
 	frame.reagents = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	frame.warning = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	frame.text:SetTextColor(1, 0.9294, 0.7607)
-	frame.reagents:SetTextColor(0.7, 0.7, 0.7)
+	frame.reagents:SetTextColor(0.85, 0.85, 0.85)
 	frame.warning:SetTextColor(1, 0, 0)
 
 	self:SetScale()
@@ -210,7 +220,18 @@ do
 
 	-- CreateButton
 	function module:CreateButton(city, single, spell, texture)
-		local b = CreateFrame("Frame", "ZOMGPortalszButton"..city..(single and "Single" or "Group"), self.frame)
+		local itemID, itemName
+		if (type(city) == "number") then
+			itemID = city
+			itemName = GetItemInfo(itemID)
+			texture = select(10, GetItemInfo(itemID))
+			city, spell, single = nil, nil, nil
+			buttonName = "ZOMGPortalszButton"..itemID.."_"..itemName
+		else
+			buttonName = "ZOMGPortalszButton"..city..(single and "Single" or "Group")
+		end
+
+		local b = CreateFrame("Frame", buttonName, self.frame)
 		b:SetWidth(1)
 		b:SetHeight(1)
 
@@ -221,17 +242,31 @@ do
 		d:SetWidth(self.sizeX)
 		d:SetHeight(self.sizeY)
 
-		b.single = single
-		b.group = not single
-		d.single = single
-		d.group = not single
+		if (city) then
+			b.single = single
+			b.group = not single
+			d.single = single
+			d.group = not single
+		end
 
 		b.tex = b.drawFrame:CreateTexture(nil, "BACKGROUND")
 		b.tex:SetTexture(texture)
 		b.tex:SetAllPoints()
+		b.texture = texture
 
-		d:SetAttribute("*type1", "spell")
-		d:SetAttribute("spell", spell)
+		if (spell) then
+			d:SetAttribute("*type1", "spell")
+			d:SetAttribute("spell", spell)
+			d.spell = spell
+			b.spell = spell
+		else
+			d:SetAttribute("*type1", "item")
+			d:SetAttribute("item", itemName)
+			d.item = itemID
+			b.item = itemID
+			b.tex:SetTexCoord(0.06, 0.94, 0.09, 0.91)
+			b.tex:SetBlendMode("ADD")
+		end
 
 		d.highlight1 = b.drawFrame:CreateTexture(nil, "OVERLAY")
 		d.highlight1:SetBlendMode("ADD")
@@ -337,21 +372,35 @@ function module:OnEnterButton(button)
 	button.highlight3:Show()
 	button:SetScript("OnUpdate", buttonOnUpdate)
 
-	self.frame.text:SetText(button:GetAttribute("spell"))
+	local spell = button:GetAttribute("spell")
+	local item = button:GetAttribute("item")
 
-	local r = button.single and 17031 or 17032
-	local count = GetItemCount(r)
-	local colourCount
-	if (count < 2) then
-		colourCount = "|cFFFF4040"
-	elseif (count < 5) then
-		colourCount = "|cFFFFFF40"
+	self.frame.text:SetText(spell or item)
+
+	if (spell) then
+		local r = button.single and 17031 or 17032
+		local count = GetItemCount(r)
+		local colourCount
+		if (count < 2) then
+			colourCount = "|cFFFF4040"
+		elseif (count < 5) then
+			colourCount = "|cFFFFFF40"
+		else
+			colourCount = "|cFF40FF40"
+		end
+		self.frame.reagents:SetFormattedText("Reagents: %s%d|r %s", colourCount, count, GetItemInfo(r))
+		self.frame.reagents:Show()
+
+		self:CheckForWarning(button)
 	else
-		colourCount = "|cFF40FF40"
+		if (button.item == 6948 or button.item == 28585) then
+			self.frame.reagents:SetText(GetBindLocation())
+			self.frame.reagents:Show()
+		else
+			self.frame.reagents:Hide()
+		end
+		self.frame.warning:SetText("")
 	end
-	self.frame.reagents:SetFormattedText("Reagents: %s%d|r %s", colourCount, count, GetItemInfo(r))
-
-	self:CheckForWarning(button)
 end
 
 -- OnEnterButton
@@ -369,7 +418,7 @@ end
 -- CheckForWarning
 function module:CheckForWarning(button)
 	local any
-	if (button.group) then
+	if (button.single) then
 		if (GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0) then
 			for unit,unitname in z:IterateRoster(true) do
 				if (UnitIsConnected(unit) and UnitIsVisible(unit)) then
@@ -386,6 +435,11 @@ function module:CheckForWarning(button)
 	end
 end
 
+-- getItemCooldown
+local function getSpellCooldown(self)
+	return self.spell and GetSpellCooldown(self.spell)
+end
+
 -- CreatePortal
 function module:CreatePortal(info, single, city)
 	local spell = single and info.single or info.group
@@ -393,12 +447,16 @@ function module:CreatePortal(info, single, city)
 
 	local button = single and info.singleButton or info.groupButton
 	if (not button) then
-		button = self:CreateButton(city, true, spell, info.tex)
-		self:UpdateCooldown(button)
-		if (single) then
-			info.singleButton = button
-		else
-			info.groupButton = button
+		if (show) then
+			button = self:CreateButton(city, true, spell, info.tex)
+			button.GetCooldown = getSpellCooldown
+
+			self:UpdateCooldown(button)
+			if (single) then
+				info.singleButton = button
+			else
+				info.groupButton = button
+			end
 		end
 	else
 		if (show) then
@@ -414,7 +472,90 @@ end
 function module:CreatePortals()
 	for city,info in pairs(self.portals) do
 		self:CreatePortal(info, true, city)
-		self:CreatePortal(info, false, city)
+		if (info.group) then
+			self:CreatePortal(info, false, city)
+		end
+	end
+end
+
+-- getItemCooldown
+local function getItemCooldown(self)
+	return GetItemCooldown(self.item)
+end
+
+-- CreatePortal
+function module:CreateItemButton(item, equiped)
+	local name = GetItemInfo(item)
+	if (not name) then
+		return
+	end
+
+	local show = GetItemCount(item) > 0
+	local info = self.itemButtons and self.itemButtons[name]
+	local button = info and info.singleButton
+
+	if (not button) then
+		if (show) then
+			button = self:CreateButton(item)
+			button.GetCooldown = getItemCooldown
+			button.equiped = equiped
+
+			self:UpdateCooldown(button)
+			if (not self.itemButtons) then
+				self.itemButtons = new()
+			end
+			self.itemButtons[name] = {
+				singleButton = button,
+				tex = button.texture,
+			}
+		end
+	else
+		if (show) then
+			button:Show()
+			self:UpdateCooldown(button)
+		else
+			button:Hide()
+		end
+	end
+end
+
+-- CreateItemButtons
+function module:CreateItemButtons()
+	if (self.db.char.useitems) then
+		if (GetItemCount(6948) > 0) then
+			self:CreateItemButton(6948)				-- Hearthstone
+		elseif (GetItemCount(28585) > 0) then
+			self:CreateItemButton(28585, true)		-- Ruby Slippers
+		end
+
+		if (GetItemCount(32757) > 0) then
+			self:CreateItemButton(28585, true)		-- Blessed Medallion of Karobor
+		end
+
+		if (GetItemCount(32757) > 0) then
+			self:CreateItemButton(35230)			-- Darnarian's Scroll of Teleportation (SSO daily reward)
+		end
+
+		if (wow3) then
+			if (GetItemCount(44315) > 0) then
+				self:CreateItemButton(44315)		-- Scroll of Recall 3 (Level 71-80)
+			elseif (GetItemCount(44314) > 0) then
+				self:CreateItemButton(44314)		-- Scroll of Recall 2 (Level 41-70)
+			elseif (GetItemCount(37118) > 0) then
+				self:CreateItemButton(37118)		-- Scroll of Recall (Level 1-40)
+			end
+		end
+
+		if (self.newPortals) then
+			for i,button in pairs(self.newPortals) do
+				local name = GetItemInfo(button.item)
+				self.portals[name] = {
+					tex = select(10, GetItemInfo(button.item)),
+					buttonSingle = button,
+				}
+			end
+			del(self.newPortals)
+		end
 	end
 end
 
@@ -429,126 +570,153 @@ function module:SetScale()
 		frame.text:SetFont("Fonts\\FRIZQT__.TTF", h, "OUTLINE")
 
 		frame.text:SetTextColor(1, 0.9294, 0.7607)
-		frame.reagents:SetTextColor(0.7, 0.7, 0.7)
+		frame.reagents:SetTextColor(0.8, 0.8, 0.8)
 	end
 end
 
 -- SetPoints
 function module:SetPoints()
-	local list = new()
-	for city,info in pairs(self.portals) do
-		if (self.db.char.showall or GetSpellCooldown(info.single)) then
-			tinsert(list, city)
+	local pat = self.db.char.pattern
+	for j = 1,(pat == "arc" and 2 or 1) do
+		local list = new()
+
+		if (j == 1) then
+			for city,info in pairs(self.portals) do
+				if (self.db.char.showall or GetSpellCooldown(info.single)) then
+					tinsert(list, city)
+				end
+			end
+		end
+
+		if (self.db.char.useitems) then
+			if ((j == 2) == (pat == "arc")) then
+				if (self.itemButtons) then
+					for name,info in pairs(self.itemButtons) do
+						if (info.singleButton:IsShown()) then
+							if (GetItemCount(name) > 0 and GetItemCooldown(name) == 0) then
+								tinsert(list, name)
+							end
+						end
+					end
+				end
+			end
+		end
+
+		if (next(list)) then
+			sort(list)
+
+			local angle, seperatingAngle, offsetX, offsetY
+
+			self.frame.text:ClearAllPoints()
+			self.frame.reagents:ClearAllPoints()
+			if (self.db.char.pattern == "circle") then
+				angle = 0
+				seperatingAngle = 360 / #list
+
+				self.frame.text:SetPoint("CENTER")
+				self.frame.text:SetJustifyH("CENTER")
+				self.frame.text:SetJustifyV("MIDDLE")
+				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
+				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+
+			elseif (self.db.char.pattern == "arc") then
+				angle = 0 - max(-30, (floor((#list - 1) / 2) * 15))
+				seperatingAngle = 60 / (#list - 1)
+
+				self.frame.text:SetPoint("CENTER", 0, -self.distance)
+				self.frame.text:SetJustifyH("CENTER")
+				self.frame.text:SetJustifyV("TOP")
+				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
+				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+
+			elseif (self.db.char.pattern == "horz") then
+				offsetX = -(self.sizeX * ((#list - 1) / 2) * 1.1)
+				offsetY = -(self.sizeY / 2)
+
+				self.frame.text:SetPoint("TOP", self.frame, "CENTER", 0, -self.sizeY * 1.1)
+				self.frame.text:SetJustifyH("CENTER")
+				self.frame.text:SetJustifyV("TOP")
+				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
+				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+
+			elseif (self.db.char.pattern == "vert") then
+				offsetX = -(self.sizeX / 2)
+				offsetY = -(self.sizeY * ((#list - 1) / 2) * 1.1)
+
+				self.frame.text:SetPoint("LEFT", self.sizeX * 1.1, 0)
+				self.frame.text:SetJustifyH("LEFT")
+				self.frame.text:SetJustifyV("MIDDLE")
+				self.frame.reagents:SetPoint("TOPLEFT", self.frame.text, "BOTTOMLEFT")
+				self.frame.warning:SetPoint("TOPLEFT", self.frame.reagents, "BOTTOMLEFT")
+			end
+
+			for i = 1,#list do
+				local info = self.portals[list[i]] or self.itemButtons[list[i]]
+				assert(info)
+
+				if (not info.pos) then
+					info.pos = new()
+				end
+				if (not info.pos[1]) then
+					info.pos[1] = new()
+				end
+				if (not info.pos[2]) then
+					info.pos[2] = new()
+				end
+
+				if (self.db.char.pattern == "circle") then
+					info.angle = angle
+					info.pos[1].x = sin(angle) * self.distance * 1.1
+					info.pos[1].y = cos(angle) * self.distance * 1.1
+					info.pos[2].x = sin(angle) * self.distance * 2
+					info.pos[2].y = cos(angle) * self.distance * 2
+					angle = angle + seperatingAngle
+
+				elseif (self.db.char.pattern == "arc") then
+					info.angle = angle
+					info.pos[1].x = sin(angle) * self.distance * 4
+					info.pos[1].y = cos(angle) * self.distance * 4 - (self.distance * 4)
+					info.pos[2].x = sin(angle) * self.distance * 5
+					info.pos[2].y = cos(angle) * self.distance * 5 - (self.distance * 4)
+					if (j == 2) then
+						info.pos[1].y = -200 - info.pos[1].y
+						info.pos[2].y = -200 - info.pos[2].y
+					end
+					angle = angle + seperatingAngle
+
+				elseif (self.db.char.pattern == "horz") then
+					info.pos[1].x = offsetX
+					info.pos[1].y = offsetY
+					info.pos[2].x = offsetX
+					info.pos[2].y = offsetY + self.distance
+					offsetX = offsetX + self.sizeX * 1.1
+
+				elseif (self.db.char.pattern == "vert") then
+					info.pos[1].x = offsetX
+					info.pos[1].y = offsetY
+					info.pos[2].x = offsetX + self.distance
+					info.pos[2].y = offsetY
+					offsetY = offsetY + self.sizeY * 1.1
+				end
+			end
+		end
+
+		del(list)
+	end
+end
+
+-- CloseButtonList
+function module:CloseButtonList(list)	
+	if (list) then
+		for city,info in pairs(list) do
+			if (info.singleButton) then
+				info.singleButton:Hide()
+			end
+			if (info.groupButton) then
+				info.groupButton:Hide()
+			end
 		end
 	end
-	sort(list)
-
-	local angle, seperatingAngle, offsetX, offsetY
-
-	self.frame.text:ClearAllPoints()
-	self.frame.reagents:ClearAllPoints()
-	if (self.db.char.pattern == "circle") then
-		angle = 0
-		seperatingAngle = 360 / #list
-
-		self.frame.text:SetPoint("CENTER")
-		self.frame.text:SetJustifyH("CENTER")
-		self.frame.text:SetJustifyV("MIDDLE")
-		self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-		self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
-
-	elseif (self.db.char.pattern == "arc") then
-		angle = -30
-		seperatingAngle = 60 / (#list - 1)
-
-		self.frame.text:SetPoint("CENTER", 0, -self.distance)
-		self.frame.text:SetJustifyH("CENTER")
-		self.frame.text:SetJustifyV("TOP")
-		self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-		self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
-
-	elseif (self.db.char.pattern == "horz") then
-		offsetX = -(self.sizeX * ((#list - 1) / 2) * 1.1)
-		offsetY = -(self.sizeY / 2)
-
-		self.frame.text:SetPoint("TOP", self.frame, "CENTER", 0, -self.sizeY * 1.1)
-		self.frame.text:SetJustifyH("CENTER")
-		self.frame.text:SetJustifyV("TOP")
-		self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-		self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
-
-	elseif (self.db.char.pattern == "vert") then
-		offsetX = -(self.sizeX / 2)
-		offsetY = -(self.sizeY * ((#list - 1) / 2) * 1.1)
-
-		self.frame.text:SetPoint("LEFT", self.sizeX * 1.1, 0)
-		self.frame.text:SetJustifyH("LEFT")
-		self.frame.text:SetJustifyV("MIDDLE")
-		self.frame.reagents:SetPoint("TOPLEFT", self.frame.text, "BOTTOMLEFT")
-		self.frame.warning:SetPoint("TOPLEFT", self.frame.reagents, "BOTTOMLEFT")
-	end
-
-	for i = 1,#list do
-		local info = self.portals[list[i]]
-		assert(info)
-
-		if (self.db.char.pattern == "circle") then
-			info.angle = angle
-			info.pos = {
-				[1] = {
-					x = sin(angle) * self.distance * 1.1,
-					y = cos(angle) * self.distance * 1.1,
-				},
-				[2] = {
-					x = sin(angle) * self.distance * 2,
-					y = cos(angle) * self.distance * 2,
-				}
-			}
-			angle = angle + seperatingAngle
-
-		elseif (self.db.char.pattern == "arc") then
-			info.angle = angle
-			info.pos = {
-				[1] = {
-					x = sin(angle) * self.distance * 4,
-					y = cos(angle) * self.distance * 4 - (self.distance * 4),
-				},
-				[2] = {
-					x = sin(angle) * self.distance * 5,
-					y = cos(angle) * self.distance * 5 - (self.distance * 4),
-				}
-			}
-			angle = angle + seperatingAngle
-
-		elseif (self.db.char.pattern == "horz") then
-			info.pos = {
-				[1] = {
-					x = offsetX,
-					y = offsetY,
-				},
-				[2] = {
-					x = offsetX,
-					y = offsetY + self.distance,
-				}
-			}
-			offsetX = offsetX + self.sizeX * 1.1
-
-		elseif (self.db.char.pattern == "vert") then
-			info.pos = {
-				[1] = {
-					x = offsetX,
-					y = offsetY,
-				},
-				[2] = {
-					x = offsetX + self.distance,
-					y = offsetY,
-				}
-			}
-			offsetY = offsetY + self.sizeY * 1.1
-		end
-	end
-
-	del(list)
 end
 
 -- OnUpdateOpening
@@ -558,7 +726,11 @@ function module:OnUpdateOpening(elapsed)
 		self.expandingState = true
 		self.frame:Show()
 
+		self:CloseButtonList(self.portals)
+		self:CloseButtonList(self.itemButtons)
+
 		self:CreatePortals()
+		self:CreateItemButtons()
 		self:SetPoints()
 
 		self.scale = 0.001
@@ -570,6 +742,9 @@ function module:OnUpdateOpening(elapsed)
 		self.expandingState = nil
 		self.mode = self.OnUpdate
 	end
+
+	self.frame.text:SetTextColor(1, 0.9294, 0.7607, self.scale)
+	self.frame.reagents:SetTextColor(0.8, 0.8, 0.8, self.scale)
 
 	self:Draw()
 end
@@ -596,6 +771,19 @@ function module:Draw()
 			end
 		end
 	end
+
+	if (self.db.char.useitems) then
+		for city,info in pairs(self.itemButtons) do
+			if (info.singleButton) then
+				if (info.pos and info.singleButton:IsShown()) then
+					info.singleButton:SetPoint("CENTER", info.pos[1].x, info.pos[1].y)
+					info.singleButton.drawFrame:SetScale(self.scale)
+					self:CheckDistance(info.singleButton, mx, my)
+					self:OnUpdateCheckCooldown(info.singleButton)
+				end
+			end
+		end
+	end
 end
 
 -- OnUpdateClosing
@@ -616,6 +804,9 @@ function module:OnUpdateClosing(elapsed)
 		return
 	end
 
+	self.frame.text:SetTextColor(1, 0.9294, 0.7607, self.scale)
+	self.frame.reagents:SetTextColor(0.8, 0.8, 0.8, self.scale)
+
 	self:Draw()
 end
 
@@ -635,10 +826,8 @@ function module:GetFrameXY(frame)
 	local px, py = self.frame:GetCenter()
 	local x, y = frame:GetCenter()
 	if (px and x) then
-		x = x - px
-		y = y - py
-		x = x * UIParent:GetEffectiveScale()
-		y = y * UIParent:GetEffectiveScale()
+		x = (x * self.frame:GetScale() - px) * UIParent:GetEffectiveScale()
+		y = (y * self.frame:GetScale() - py) * UIParent:GetEffectiveScale()
 	end
 	return x, y
 end
@@ -652,11 +841,12 @@ function module:CheckDistance(frame, mx, my)
 	local x, y = self:GetFrameXY(frame)
 	if (x) then
 		local distance = abs(x - mx) + abs(y - my)
+		local checkDistance = 100 * self.frame:GetScale()
 
-		if (distance > 100 or frame.drawFrame:IsEnabled() == 0) then
+		if (distance > checkDistance or frame.drawFrame:IsEnabled() == 0) then
 			frame.drawFrame:SetScale(self.scale)
 		else
-			local factor = (100 - distance) / 100
+			local factor = (checkDistance - distance) / checkDistance
 			local scale = self.scale + ((self.scale * 0.6) * factor)
 			frame.drawFrame:SetScale(scale)
 		end
@@ -673,6 +863,14 @@ function module:OnUpdate(elapsed)
 			self:CheckDistance(info.groupButton, x, y)
 			self:OnUpdateCheckCooldown(info.singleButton)
 			self:OnUpdateCheckCooldown(info.groupButton)
+		end
+		if (self.db.char.useitems) then
+			for city,info in pairs(self.itemButtons) do
+				if (info.singleButton) then
+					self:CheckDistance(info.singleButton, x, y)
+					self:OnUpdateCheckCooldown(info.singleButton)
+				end
+			end
 		end
 	end
 end
@@ -693,11 +891,7 @@ end
 function module:UpdateCooldown(button)
 	if (button) then
 		local spell = button.drawFrame:GetAttribute("spell")
-		local start, dur
-
-		if (spell) then
-			start, dur = GetSpellCooldown(spell)
-		end
+		local start, dur = button:GetCooldown()
 
 		if (start == 0) then
 			button.endTime = nil
@@ -738,9 +932,6 @@ end
 -- OnModuleInitialize
 function module:OnModuleInitialize()
 	playerClass = select(2, UnitClass("player"))
-	if (playerClass ~= "MAGE") then
-		return
-	end
 
 	self.db = z:AcquireDBNamespace("Portalz")
 	z:RegisterDefaults("Portalz", "char", {
@@ -754,36 +945,50 @@ function module:OnModuleInitialize()
 	self.OnMenuRequest = self.options
 	z.options.args.ZOMGPortalz = self.options
 
-	if (UnitFactionGroup("player") == "Horde") then
+	if (playerClass == "MAGE") then
+		if (UnitFactionGroup("player") == "Horde") then
+			self.portals = {
+				["Dalaran"]			= {group = 53142, single = 53140,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Dalaran"},
+				["Shattrath"]		= {group = 35717, single = 35715,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Shattrath"},
+				["Orgrimmar"]		= {group = 11417, single = 3567,	tex = "SPELLS\\Ogrimmar_Portal"},
+				["Undercity"]		= {group = 11418, single = 3563,	tex = "SPELLS\\Undercity_Portal"},
+				["Thunder Bluff"]	= {group = 11420, single = 3566,	tex = "SPELLS\\ThunderBluff_Portal"},
+				["Silvermoon"]		= {group = 32267, single = 32272, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Silvermoon"},
+				["Stonard"]			= {group = 49361, single = 49358, 	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Stonard_Portal"},
+			}
+		else
+			self.portals = {
+				["Dalaran"]			= {group = 53142, single = 53140,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Dalaran"},
+				["Shattrath"]		= {group = 33691, single = 33690, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Shattrath"},
+				["Stormwind"]		= {group = 10059, single = 3561, 	tex = "World\\GENERIC\\ACTIVEDOODADS\\MAGEPORTALS\\STORMWIND_PORTAL"},
+				["Ironforge"]		= {group = 11416, single = 3562, 	tex = "SPELLS\\Ironforge_Portal"},
+				["Darnassus"]		= {group = 11419, single = 3565, 	tex = "SPELLS\\Darnassus_Portal"},
+				["Exodar"]			= {group = 32266, single = 32271, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Exodar"},
+				["Theramore"]		= {group = 49360, single = 49359, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Theramore"},
+			}
+		end
+	elseif (playerClass == "DRUID") then
 		self.portals = {
-			["Dalaran"]			= {group = 53142, single = 53140,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Dalaran"},
-			["Shattrath"]		= {group = 35717, single = 35715,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Shattrath"},
-			["Orgrimmar"]		= {group = 11417, single = 3567,	tex = "SPELLS\\Ogrimmar_Portal"},
-			["Undercity"]		= {group = 11418, single = 3563,	tex = "SPELLS\\Undercity_Portal"},
-			["Thunder Bluff"]	= {group = 11420, single = 3566,	tex = "SPELLS\\ThunderBluff_Portal"},
-			["Silvermoon"]		= {group = 32267, single = 32272, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Silvermoon"},
-			["Stonard"]			= {group = 49361, single = 49358, 	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Stonard_Portal"},
+			["Moonglade"]			= {single = 18960, tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\DruidPortal_Moonglade"},
 		}
-	else
+	elseif (playerClass == "DEATHKNIGHT") then
 		self.portals = {
-			["Dalaran"]			= {group = 53142, single = 53140,	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Dalaran"},
-			["Shattrath"]		= {group = 33691, single = 33690, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Shattrath"},
-			["Stormwind"]		= {group = 10059, single = 3561, 	tex = "World\\GENERIC\\ACTIVEDOODADS\\MAGEPORTALS\\STORMWIND_PORTAL"},
-			["Ironforge"]		= {group = 11416, single = 3562, 	tex = "SPELLS\\Ironforge_Portal"},
-			["Darnassus"]		= {group = 11419, single = 3565, 	tex = "SPELLS\\Darnassus_Portal"},
-			["Exodar"]			= {group = 32266, single = 32271, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Exodar"},
-			["Theramore"]		= {group = 49360, single = 49359, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Theramore"},
+			["Death Gate"]			= {single = 50977, tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\DeathKnightPortal_EbonHold"},
 		}
 	end
 
-	for name, info in pairs(self.portals) do
-		local s = GetSpellInfo(info.single)
-		if (s) then
-			info.single = GetSpellInfo(info.single)
-			info.group = GetSpellInfo(info.group)
-		else
-			self.portals[name] = nil	-- Removes unknown spells (ie: running on live WoW will not know about Dalaran portal)
+	if (self.portals) then
+		for name, info in pairs(self.portals) do
+			local s = GetSpellInfo(info.single)
+			if (s) then
+				info.single = info.single and GetSpellInfo(info.single)
+				info.group = info.group and GetSpellInfo(info.group)
+			else
+				self.portals[name] = nil	-- Removes unknown spells (ie: running on live WoW will not know about Dalaran portal)
+			end
 		end
+	else
+		self.portals = {}
 	end
 
 	self.OnModuleInitialize = nil
@@ -799,9 +1004,6 @@ function module:OnModuleEnable()
 		local class = select(2, UnitClass("player"))
 		if (class ~= playerClass and self.OnModuleInitialize) then
 			self:OnModuleInitializ()
-		end
-		if (class ~= "MAGE") then
-			return
 		end
 
 		self:InitFrames()

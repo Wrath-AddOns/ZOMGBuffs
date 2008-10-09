@@ -51,6 +51,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Display options"]		= true,
 	["Always Load Manager"]	= true,
 	["Always load the Blessings Manager, even when not eligable to modify blessings"] = true,
+	["Always Load Portalz"]	= true,
+	["Always load the Portalz module, even when not a Mage"] = true,
 	["Shift-"]				= true,
 	["Ctrl-"]				= true,
 	["Alt-"]				= true,
