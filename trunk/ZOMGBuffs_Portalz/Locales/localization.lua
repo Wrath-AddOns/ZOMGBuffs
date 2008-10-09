@@ -26,6 +26,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Reagent information"]						= true,
 	["Show All"]								= true,
 	["Show all portal spells, even if you have not learnt them yet."] = true,
-
+	["Are you sure you're not leaving your friends behind?!"] = true,
+	["Items"]									= true,
+	["Include appropriate items as castable portals (eg: %s or %s)"] = true,
 } end)
 
