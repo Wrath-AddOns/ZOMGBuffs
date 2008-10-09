@@ -448,7 +448,7 @@ function module:CreatePortal(info, single, city)
 	local button = single and info.singleButton or info.groupButton
 	if (not button) then
 		if (show) then
-			button = self:CreateButton(city, true, spell, info.tex)
+			button = self:CreateButton(city, single, spell, info.tex)
 			button.GetCooldown = getSpellCooldown
 
 			self:UpdateCooldown(button)
@@ -899,7 +899,7 @@ function module:UpdateCooldown(button)
 			button.tex:SetDesaturated(false)
 			button.tex:SetVertexColor(1, 1, 1)
 		else
-			button.endTime = start and start + dur
+			button.endTime = start and dur and start + dur
 
 			button.drawFrame:Disable()
 
