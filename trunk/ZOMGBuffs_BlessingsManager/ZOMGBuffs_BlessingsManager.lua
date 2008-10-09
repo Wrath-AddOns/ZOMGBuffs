@@ -3205,9 +3205,9 @@ function man:DrawPaladin(row)
 
 		local v = z.versionRoster and z.versionRoster[who]
 		if (v) then
-			if (v > 50000) then
+			if (tonumber(v) and tonumber(v) > 50000) then
 				-- So we can compare new vs. old SVN repositories
-				v = v - 82090		-- 82089 was last ZOMG on old SVN
+				v = tonumber(v) - 82090		-- 82089 was last ZOMG on old SVN
 			end
 
 			row.title.version:Show()
