@@ -29,5 +29,6 @@ L:RegisterTranslations("enUS", function() return {
 	["Are you sure you're not leaving your friends behind?!"] = true,
 	["Items"]									= true,
 	["Include appropriate items as castable portals (eg: %s or %s)"] = true,
+	["Click to equip. Click again when cooldown is up"] = true,
 } end)
 
