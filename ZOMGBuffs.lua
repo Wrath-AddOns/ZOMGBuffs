@@ -4714,6 +4714,10 @@ function z:PLAYER_REGEN_ENABLED()
 		self.updateListWidthOOC = nil
 		self:UpdateListWidth()
 	end
+
+	if (not self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
+		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	end
 end
 
 -- PLAYER_REGEN_DISABLED
@@ -4726,6 +4730,10 @@ function z:PLAYER_REGEN_DISABLED()
 
 	for name, module in self:IterateModulesWithMethod("OnRegenDisabled") do
 		module:OnRegenDisabled()
+	end
+
+	if (self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
+		self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	end
 end
 
@@ -5115,20 +5123,19 @@ do
 	end
 end
 
--- CHAT_MSG_COMBAT_FRIENDLY_DEATH
--- function z:CHAT_MSG_COMBAT_FRIENDLY_DEATH(msg)
-	-- if (self.icon) then
-		-- local deadName = strmatch(msg, L["PERSONDIES"])
-		-- if (deadName) then
-			-- local unit = self.icon:GetAttribute("unit")
-			-- local name = unit and UnitExists(unit) and UnitName(unit)
-			-- if (name and name == deadName) then
-				-- self:SetupForSpell()
-				-- self:RequestSpells()
-			-- end
-		-- end
-	-- end
--- end
+-- COMBAT_LOG_EVENT_UNFILTERED
+local mask = COMBATLOG_OBJECT_AFFILIATION_PARTY + COMBATLOG_OBJECT_AFFILIATION_RAID
+function z:COMBAT_LOG_EVENT_UNFILTERED(ev, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+	if (event == "UNIT_DIES") then
+		if (self.icon and band(srcFlags, mask)) then
+			local loadedUnit = self.icon:GetAttribute("unit")
+			if (UnitIsUnit(srcName, loadedUnit)) then
+				self:SetupForSpell()
+				self:RequestSpells()
+			end
+		end
+	end
+end
 
 -- MODIFIER_STATE_CHANGED
 function z:MODIFIER_STATE_CHANGED()
@@ -5637,6 +5644,25 @@ function z:GetHelpFrame()
 	return helpFrame
 end
 
+-- SPELLS_CHANGED
+function z:SPELLS_CHANGED()
+	if (not self.zoneFlag) then
+		self:ScheduleEvent("ZOMGBuffs-OnSpellsChanged", self.OnSpellsChanged, 2, self)
+	end
+end
+
+-- CHARACTER_POINTS_CHANGED
+function z:CHARACTER_POINTS_CHANGED(mode)
+	if (mode == -1) then
+		self:ScheduleEvent("ZOMGBuffs-OnSpellsChanged", self.OnSpellsChanged, 2, self)
+	end
+end
+
+-- OnSpellsChanged
+function z:OnSpellsChanged()
+	self:CallMethodOnAllModules("OnSpellsChanged")
+end
+
 -- ADDON_LOADED
 function z:ADDON_LOADED(addon)
 	if (addon == "ZOMGBuffs_BuffTehRaid") then
@@ -5651,7 +5677,7 @@ function z:CheckStateChange()
 	local party = GetNumPartyMembers() > 0
 	local raid = GetNumRaidMembers() > 0
 	local instance, Type = IsInInstance()
-	
+
 	local state, reason
 	if (instance and Type == "pvp") then
 		state, reason = "bg", L["You are now in a battleground"]
@@ -5841,7 +5867,9 @@ function z:OnEnable()
 		self:RegisterEvent("PLAYER_AURAS_CHANGED")
 	end
 	self:RegisterEvent("CHAT_MSG_WHISPER")
-	--self:RegisterEvent("CHAT_MSG_COMBAT_FRIENDLY_DEATH")		-- Might need to change with new combat log system?
+	self:RegisterEvent("SPELLS_CHANGED")
+	self:RegisterEvent("CHARACTER_POINTS_CHANGED")
+	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
 	self.chatMatch = {}
 	local i = 1

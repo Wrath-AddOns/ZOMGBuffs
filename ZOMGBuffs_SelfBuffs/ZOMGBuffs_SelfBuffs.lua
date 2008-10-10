@@ -1069,8 +1069,8 @@ function zs:UNIT_INVENTORY_CHANGED(unit)
 	end
 end
 
--- SPELLS_CHANGED
-function zs:SPELLS_CHANGED()
+-- OnSpellsChanged
+function zs:OnSpellsChanged()
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
 	self:GetClassBuffs()
@@ -1080,8 +1080,6 @@ function zs:SPELLS_CHANGED()
 
 	z:CheckForChange(self)
 end
-
-zs.CHARACTER_POINTS_CHANGED = zs.SPELLS_CHANGED
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
@@ -1339,13 +1337,11 @@ function zs:OnModuleEnable()
 			self.db.char.reagents.flashpowder = 20
 		end
 	end
-	self:SPELLS_CHANGED()
+	self:OnSpellsChanged()
 	z:MakeOptionsReagentList()
 
 	self.mounted = IsMounted()
 
-	self:RegisterBucketEvent("SPELLS_CHANGED", 0.2)
-	self:RegisterBucketEvent("CHARACTER_POINTS_CHANGED", 0.2)
 	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	if (not wow3) then

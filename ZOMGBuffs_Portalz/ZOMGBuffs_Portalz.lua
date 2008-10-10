@@ -408,6 +408,7 @@ function module:ShowBindLocation(on)
 end
 
 -- OnEnterButton
+local hearthStoneItems = {[6948] = true, [28585] = true, [44315] = true, [44314] = true, [37118] = true}
 function module:OnEnterButton(button)
 	button.highlight1.phase = 1
 	button.highlight1.alpha = 0
@@ -446,7 +447,7 @@ function module:OnEnterButton(button)
 
 		self:CheckForWarning(button)
 	else
-		self:ShowBindLocation(button.item == 6948 or button.item == 28585)
+		self:ShowBindLocation(hearthStoneItems[button.item])
 
 		self.frame.warning:SetText("")
 		if (button.equiped) then
