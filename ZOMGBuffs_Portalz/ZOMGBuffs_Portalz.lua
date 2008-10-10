@@ -254,6 +254,10 @@ do
 		b.tex:SetAllPoints()
 		b.texture = texture
 
+		b.cooldown = d:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		b.cooldown:SetAllPoints()
+		b.cooldown:Hide()
+
 		if (spell) then
 			d:SetAttribute("*type1", "spell")
 			d:SetAttribute("spell", spell)
@@ -352,6 +356,7 @@ local function buttonOnUpdateHighlight(self, elapsed)
 	self:SetVertexColor(self.alpha, self.alpha, self.alpha)
 end
 
+-- buttonOnUpdate
 local function buttonOnUpdate(self, elapsed)
 	buttonOnUpdateHighlight(self.highlight1, elapsed)
 	buttonOnUpdateHighlight(self.highlight2, elapsed)
@@ -420,8 +425,8 @@ function module:CheckForWarning(button)
 	local any
 	if (button.single) then
 		if (GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0) then
-			for unit,unitname in z:IterateRoster(true) do
-				if (UnitIsConnected(unit) and UnitIsVisible(unit)) then
+			for unit,unitname in z:IterateRoster() do
+				if (not UnitIsUnit("player", unit) and UnitIsConnected(unit) and UnitIsVisible(unit)) then
 					any = true
 				end
 			end
@@ -437,7 +442,9 @@ end
 
 -- getItemCooldown
 local function getSpellCooldown(self)
-	return self.spell and GetSpellCooldown(self.spell)
+	if (self.spell) then
+		return GetSpellCooldown(self.spell)
+	end
 end
 
 -- CreatePortal
@@ -480,7 +487,9 @@ end
 
 -- getItemCooldown
 local function getItemCooldown(self)
-	return GetItemCooldown(self.item)
+	if (self.item) then
+		return GetItemCooldown(self.item)
+	end
 end
 
 -- CreatePortal
@@ -593,7 +602,7 @@ function module:SetPoints()
 				if (self.itemButtons) then
 					for name,info in pairs(self.itemButtons) do
 						if (info.singleButton:IsShown()) then
-							if (GetItemCount(name) > 0 and GetItemCooldown(name) == 0) then
+							if (GetItemCount(name) > 0) then
 								tinsert(list, name)
 							end
 						end
@@ -745,6 +754,7 @@ function module:OnUpdateOpening(elapsed)
 
 	self.frame.text:SetTextColor(1, 0.9294, 0.7607, self.scale)
 	self.frame.reagents:SetTextColor(0.8, 0.8, 0.8, self.scale)
+	self.frame.warning:SetTextColor(1, 0, 0, self.scale)
 
 	self:Draw()
 end
@@ -806,6 +816,7 @@ function module:OnUpdateClosing(elapsed)
 
 	self.frame.text:SetTextColor(1, 0.9294, 0.7607, self.scale)
 	self.frame.reagents:SetTextColor(0.8, 0.8, 0.8, self.scale)
+	self.frame.warning:SetTextColor(1, 0, 0, self.scale)
 
 	self:Draw()
 end
@@ -878,12 +889,16 @@ end
 -- OnUpdateCheckCooldown
 function module:OnUpdateCheckCooldown(button)
 	if (button and button.endTime) then
-		if (GetTime() > button.endTime) then
+		local diff = button.endTime - GetTime()
+		if (diff <= 0) then
+			button.cooldown:Hide()
 			button.endTime = nil
 			button.drawFrame:Enable()
 			button.tex:SetDesaturated(false)
 			button.tex:SetVertexColor(1, 1, 1)
 		end
+
+		button.cooldown:SetFormattedText(SecondsToTimeAbbrev(diff))
 	end
 end
 
@@ -894,12 +909,22 @@ function module:UpdateCooldown(button)
 		local start, dur = button:GetCooldown()
 
 		if (start == 0) then
+			button.cooldownValue = nil
+			button.cooldown:Hide()
 			button.endTime = nil
 			button.drawFrame:Enable()
 			button.tex:SetDesaturated(false)
 			button.tex:SetVertexColor(1, 1, 1)
 		else
-			button.endTime = start and dur and start + dur
+			button.endTime = start and start + dur
+
+			if (button.endTime > GetTime() + 3) then
+				button.cooldownValue = button.endTime
+				button.cooldown:Show()
+			else
+				button.cooldownValue = nil
+				button.cooldown:Hide()
+			end
 
 			button.drawFrame:Disable()
 
