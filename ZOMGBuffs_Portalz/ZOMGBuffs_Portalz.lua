@@ -157,6 +157,21 @@ function module:InitFrames()
 		frame:SetPoint("CENTER", 0, 155)
 	end
 
+	frame:SetScript("OnShow", function(self)
+		module:RegisterEvent("PLAYER_REGEN_DISABLED")
+		module:RegisterEvent("UNIT_SPELLCAST_SENT")
+		module:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+		module:RegisterEvent("UNIT_INVENTORY_CHANGED")
+	end)
+	frame:SetScript("OnHide", function(self)
+		if (module:IsEventRegistered("UNIT_SPELLCAST_SENT")) then
+			module:UnregisterEvent("PLAYER_REGEN_DISABLED")
+			module:UnregisterEvent("UNIT_SPELLCAST_SENT")
+			module:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+			module:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+		end
+	end)
+
 	frame:SetScript("OnUpdate",
 		function(self, elapsed)
 			if (module.mode) then
@@ -219,7 +234,7 @@ do
 	end
 
 	-- CreateButton
-	function module:CreateButton(city, single, spell, texture)
+	function module:CreateButton(city, single, spell, texture, spellIDSingle)
 		local itemID, itemName
 		if (type(city) == "number") then
 			itemID = city
@@ -261,15 +276,21 @@ do
 		if (spell) then
 			d:SetAttribute("*type1", "spell")
 			d:SetAttribute("spell", spell)
+			d.spellIDSingle = spellIDSingle
+			b.spellIDSingle = spellIDSingle
 			d.spell = spell
 			b.spell = spell
+			b.tex:SetBlendMode(self.spellBlend)
+			if (self.spellTrim) then
+				b.tex:SetTexCoord(0.06, 0.94, 0.09, 0.91)
+			end
 		else
 			d:SetAttribute("*type1", "item")
 			d:SetAttribute("item", itemName)
 			d.item = itemID
 			b.item = itemID
 			b.tex:SetTexCoord(0.06, 0.94, 0.09, 0.91)
-			b.tex:SetBlendMode("ADD")
+			b.tex:SetBlendMode(self.itemBlend)
 		end
 
 		d.highlight1 = b.drawFrame:CreateTexture(nil, "OVERLAY")
@@ -363,6 +384,29 @@ local function buttonOnUpdate(self, elapsed)
 	buttonOnUpdateHighlight(self.highlight3, elapsed)
 end
 
+-- IsItemEquiped
+local function IsItemEquiped(item)
+	for i = 1,18 do
+		local link = GetInventoryItemLink("player", i)
+		if (link) then
+			local id = strmatch(link, "|Hitem:(%d+):")
+			if (tonumber(id) == item) then
+				return true
+			end
+		end
+	end
+end
+
+-- ShowBindLocation
+function module:ShowBindLocation(on)
+	if (on) then
+		self.frame.reagents:SetText(GetBindLocation())
+		self.frame.reagents:Show()
+	else
+		self.frame.reagents:Hide()
+	end
+end
+
 -- OnEnterButton
 function module:OnEnterButton(button)
 	button.highlight1.phase = 1
@@ -383,28 +427,33 @@ function module:OnEnterButton(button)
 	self.frame.text:SetText(spell or item)
 
 	if (spell) then
-		local r = button.single and 17031 or 17032
-		local count = GetItemCount(r)
-		local colourCount
-		if (count < 2) then
-			colourCount = "|cFFFF4040"
-		elseif (count < 5) then
-			colourCount = "|cFFFFFF40"
+		local r = button.single and self.singleReagent or self.groupReagent
+		if (r) then
+			local count = GetItemCount(r)
+			local colourCount
+			if (count < 2) then
+				colourCount = "|cFFFF4040"
+			elseif (count < 5) then
+				colourCount = "|cFFFFFF40"
+			else
+				colourCount = "|cFF40FF40"
+			end
+			self.frame.reagents:SetFormattedText("Reagents: %s%d|r %s", colourCount, count, GetItemInfo(r))
+			self.frame.reagents:Show()
 		else
-			colourCount = "|cFF40FF40"
+			self:ShowBindLocation(button.spellIDSingle == 556)
 		end
-		self.frame.reagents:SetFormattedText("Reagents: %s%d|r %s", colourCount, count, GetItemInfo(r))
-		self.frame.reagents:Show()
 
 		self:CheckForWarning(button)
 	else
-		if (button.item == 6948 or button.item == 28585) then
-			self.frame.reagents:SetText(GetBindLocation())
-			self.frame.reagents:Show()
-		else
-			self.frame.reagents:Hide()
-		end
+		self:ShowBindLocation(button.item == 6948 or button.item == 28585)
+
 		self.frame.warning:SetText("")
+		if (button.equiped) then
+			if (not IsItemEquiped(button.item)) then
+				self.frame.warning:SetText(L["Click to equip. Click again when cooldown is up"])
+			end
+		end
 	end
 end
 
@@ -455,7 +504,7 @@ function module:CreatePortal(info, single, city)
 	local button = single and info.singleButton or info.groupButton
 	if (not button) then
 		if (show) then
-			button = self:CreateButton(city, single, spell, info.tex)
+			button = self:CreateButton(city, single, spell, info.tex, info.spellIDSingle)
 			button.GetCooldown = getSpellCooldown
 
 			self:UpdateCooldown(button)
@@ -488,6 +537,12 @@ end
 -- getItemCooldown
 local function getItemCooldown(self)
 	if (self.item) then
+		if (self.equiped) then
+			if (not IsItemEquiped(self.item)) then
+				return 0, 0, 1						-- Not equiped, and needs to be, so pretend it's ready (to equiped)
+			end
+		end
+
 		return GetItemCooldown(self.item)
 	end
 end
@@ -508,6 +563,7 @@ function module:CreateItemButton(item, equiped)
 			button = self:CreateButton(item)
 			button.GetCooldown = getItemCooldown
 			button.equiped = equiped
+			button.drawFrame.equiped = equiped
 
 			self:UpdateCooldown(button)
 			if (not self.itemButtons) then
@@ -538,10 +594,10 @@ function module:CreateItemButtons()
 		end
 
 		if (GetItemCount(32757) > 0) then
-			self:CreateItemButton(28585, true)		-- Blessed Medallion of Karobor
+			self:CreateItemButton(32757, true)		-- Blessed Medallion of Karobor
 		end
 
-		if (GetItemCount(32757) > 0) then
+		if (GetItemCount(35230) > 0) then
 			self:CreateItemButton(35230)			-- Darnarian's Scroll of Teleportation (SSO daily reward)
 		end
 
@@ -586,6 +642,7 @@ end
 -- SetPoints
 function module:SetPoints()
 	local pat = self.db.char.pattern
+	local f = self.frame
 	for j = 1,(pat == "arc" and 2 or 1) do
 		local list = new()
 
@@ -616,47 +673,48 @@ function module:SetPoints()
 
 			local angle, seperatingAngle, offsetX, offsetY
 
-			self.frame.text:ClearAllPoints()
-			self.frame.reagents:ClearAllPoints()
+			f.text:ClearAllPoints()
+			f.reagents:ClearAllPoints()
+			f.warning:ClearAllPoints()
 			if (self.db.char.pattern == "circle") then
 				angle = 0
 				seperatingAngle = 360 / #list
 
-				self.frame.text:SetPoint("CENTER")
-				self.frame.text:SetJustifyH("CENTER")
-				self.frame.text:SetJustifyV("MIDDLE")
-				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+				f.text:SetPoint("CENTER")
+				f.text:SetJustifyH("CENTER")
+				f.text:SetJustifyV("MIDDLE")
+				f.reagents:SetPoint("TOP", f.text, "BOTTOM")
+				f.warning:SetPoint("TOP", f.reagents, "BOTTOM")
 
 			elseif (self.db.char.pattern == "arc") then
-				angle = 0 - max(-30, (floor((#list - 1) / 2) * 15))
-				seperatingAngle = 60 / (#list - 1)
+				seperatingAngle = 12
+				angle = 0 - (seperatingAngle * (#list - 1) / 2)
 
-				self.frame.text:SetPoint("CENTER", 0, -self.distance)
-				self.frame.text:SetJustifyH("CENTER")
-				self.frame.text:SetJustifyV("TOP")
-				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+				f.text:SetPoint("CENTER", 0, -self.distance)
+				f.text:SetJustifyH("CENTER")
+				f.text:SetJustifyV("TOP")
+				f.reagents:SetPoint("TOP", f.text, "BOTTOM")
+				f.warning:SetPoint("TOP", f.reagents, "BOTTOM")
 
 			elseif (self.db.char.pattern == "horz") then
 				offsetX = -(self.sizeX * ((#list - 1) / 2) * 1.1)
 				offsetY = -(self.sizeY / 2)
 
-				self.frame.text:SetPoint("TOP", self.frame, "CENTER", 0, -self.sizeY * 1.1)
-				self.frame.text:SetJustifyH("CENTER")
-				self.frame.text:SetJustifyV("TOP")
-				self.frame.reagents:SetPoint("TOP", self.frame.text, "BOTTOM")
-				self.frame.warning:SetPoint("TOP", self.frame.reagents, "BOTTOM")
+				f.text:SetPoint("TOP", f, "CENTER", 0, -self.sizeY * 1.1)
+				f.text:SetJustifyH("CENTER")
+				f.text:SetJustifyV("TOP")
+				f.reagents:SetPoint("TOP", f.text, "BOTTOM")
+				f.warning:SetPoint("TOP", f.reagents, "BOTTOM")
 
 			elseif (self.db.char.pattern == "vert") then
 				offsetX = -(self.sizeX / 2)
 				offsetY = -(self.sizeY * ((#list - 1) / 2) * 1.1)
 
-				self.frame.text:SetPoint("LEFT", self.sizeX * 1.1, 0)
-				self.frame.text:SetJustifyH("LEFT")
-				self.frame.text:SetJustifyV("MIDDLE")
-				self.frame.reagents:SetPoint("TOPLEFT", self.frame.text, "BOTTOMLEFT")
-				self.frame.warning:SetPoint("TOPLEFT", self.frame.reagents, "BOTTOMLEFT")
+				f.text:SetPoint("LEFT", self.sizeX * 1.1, 0)
+				f.text:SetJustifyH("LEFT")
+				f.text:SetJustifyV("MIDDLE")
+				f.reagents:SetPoint("TOPLEFT", f.text, "BOTTOMLEFT")
+				f.warning:SetPoint("TOPLEFT", f.reagents, "BOTTOMLEFT")
 			end
 
 			for i = 1,#list do
@@ -905,7 +963,6 @@ end
 -- UpdateCooldown
 function module:UpdateCooldown(button)
 	if (button) then
-		local spell = button.drawFrame:GetAttribute("spell")
 		local start, dur = button:GetCooldown()
 
 		if (start == 0) then
@@ -918,7 +975,7 @@ function module:UpdateCooldown(button)
 		else
 			button.endTime = start and start + dur
 
-			if (button.endTime > GetTime() + 3) then
+			if (button.endTime and button.endTime > GetTime() + 3) then
 				button.cooldownValue = button.endTime
 				button.cooldown:Show()
 			else
@@ -940,6 +997,20 @@ function module:SPELL_UPDATE_COOLDOWN()
 	for name, info in pairs(self.portals) do
 		self:UpdateCooldown(info.singleButton)
 		self:UpdateCooldown(info.groupButton)
+	end
+	if (self.db.char.useitems) then
+		for city,info in pairs(self.itemButtons) do
+			if (info.singleButton) then
+				self:UpdateCooldown(info.singleButton)
+			end
+		end
+	end
+end
+
+-- UNIT_INVENTORY_CHANGED
+function module:UNIT_INVENTORY_CHANGED(unit)
+	if (unit == "player") then
+		self:SPELL_UPDATE_COOLDOWN()
 	end
 end
 
@@ -970,6 +1041,9 @@ function module:OnModuleInitialize()
 	self.OnMenuRequest = self.options
 	z.options.args.ZOMGPortalz = self.options
 
+	self.spellBlend = "BLEND"
+	self.itemBlend = "ADD"
+
 	if (playerClass == "MAGE") then
 		if (UnitFactionGroup("player") == "Horde") then
 			self.portals = {
@@ -992,10 +1066,21 @@ function module:OnModuleInitialize()
 				["Theramore"]		= {group = 49360, single = 49359, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Theramore"},
 			}
 		end
+		self.singleReagent = 17031
+		self.groupReagent = 17032
+
+	elseif (playerClass == "SHAMAN") then
+		self.portals = {
+			["Astral Recall"]		= {single = 556, tex = select(3, GetSpellInfo(556))},
+		}
+		self.spellBlend = "ADD"
+		self.spellTrim = true
+
 	elseif (playerClass == "DRUID") then
 		self.portals = {
 			["Moonglade"]			= {single = 18960, tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\DruidPortal_Moonglade"},
 		}
+
 	elseif (playerClass == "DEATHKNIGHT") then
 		self.portals = {
 			["Death Gate"]			= {single = 50977, tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\DeathKnightPortal_EbonHold"},
@@ -1006,6 +1091,8 @@ function module:OnModuleInitialize()
 		for name, info in pairs(self.portals) do
 			local s = GetSpellInfo(info.single)
 			if (s) then
+				info.spellIDSingle = info.single
+				info.spellIDGroup = info.group
 				info.single = info.single and GetSpellInfo(info.single)
 				info.group = info.group and GetSpellInfo(info.group)
 			else
@@ -1028,14 +1115,10 @@ function module:OnModuleEnable()
 	if (self.db) then
 		local class = select(2, UnitClass("player"))
 		if (class ~= playerClass and self.OnModuleInitialize) then
-			self:OnModuleInitializ()
+			self:OnModuleInitialize()
 		end
 
 		self:InitFrames()
-
-		self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
-		self:RegisterEvent("PLAYER_REGEN_DISABLED")
-		self:RegisterEvent("UNIT_SPELLCAST_SENT")
 	end
 end
 
