@@ -406,7 +406,7 @@ function man:OnModuleInitialize()
 	end
 	-- SPELLS_CHANGED - Broadcasted on RAID addon channel after a respec/talent purchase
 	z.OnCommReceive.SPELLS_CHANGED = function(self, prefix, sender, channel)
-		man:OnSpellsChanged(sender)
+		man:OnPlayerSpellsChanged(sender)
 	end
 	-- GIVETEMPLATEPART - Sent from Manager when a user changes a single assignment
 	z.OnCommReceive.GIVETEMPLATEPART = function(self, prefix, sender, channel, name, class, Type)
@@ -1778,8 +1778,8 @@ function man:OnReceiveSubClassDefinitions(sender, playerCodes)
 	self:Print(L["Player sub-class assignments received from %s"], z:ColourUnitByName(sender))
 end
 
--- OnSpellsChanged
-function man:OnSpellsChanged(sender)
+-- OnPlayerSpellsChanged
+function man:OnPlayerSpellsChanged(sender)
 	if (select(2, UnitClass(sender)) == "PALADIN") then
 		z:SendComm(sender, "REQUESTCAPABILITY", nil)
 		z:SendComm(sender, "REQUESTSPEC", nil)

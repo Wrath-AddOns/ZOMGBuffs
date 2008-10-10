@@ -1440,25 +1440,15 @@ function zb:ValidateTemplate(template, tell)
 	end
 end
 
--- SPELLS_CHANGED
-function zb:SPELLS_CHANGED()
-	clickList = nil
-	z:CheckForChange(self)
-	local bm = ZOMGBlessingsManager
-	if (bm) then
-		bm:OnSpellsChanged(playerName)
-	end
-end
-
--- CHARACTER_POINTS_CHANGED
-function zb:CHARACTER_POINTS_CHANGED()
+-- OnSpellsChanged
+function zb:OnSpellsChanged()
 	clickList = nil
 	self:ValidateTemplate(template, true)
 	z:CheckForChange(self)
 	z:SendCommMessage("GROUP", "SPELLS_CHANGED")
 	local bm = ZOMGBlessingsManager
 	if (bm) then
-		bm:OnSpellsChanged(playerName)
+		bm:OnPlayerSpellsChanged(playerName)
 	end
 end
 
@@ -1735,10 +1725,7 @@ function zb:OnModuleEnable()
 
 	if (class == "PALADIN") then
 		self:RegisterEvent("UNIT_AURA")
-		--self:RegisterBucketEvent("UNIT_AURA", 0.2, "CheckBuffs")				-- We don't care who
 		self:RegisterBucketEvent("UNIT_INVENTORY_CHANGED", 0.2)
-		self:RegisterBucketEvent("SPELLS_CHANGED", 0.2)
-		self:RegisterBucketEvent("CHARACTER_POINTS_CHANGED", 5)		-- Throttle points spending spam from Talented by clumping
 	end
 	z:CheckForChange(self)
 

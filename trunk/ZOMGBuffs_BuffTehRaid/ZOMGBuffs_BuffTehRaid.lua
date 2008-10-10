@@ -2439,15 +2439,27 @@ function zg:SpellCastFailed(spell, name, manual)
 	end
 end
 
--- SPELLS_CHANGED
-function zg:SPELLS_CHANGED()
-	if (not z.zoneFlag) then
-		self.actions = nil
-		self:GetActions()
-		z:UpdateCellSpells()
-		self:MakeSpellOptions()
+-- OnSpellsChanged
+function zg:OnSpellsChanged()
+	self.actions = nil
+	self:ValidateTemplate(template)
+	self:GetActions()
+	z:UpdateCellSpells()
+	self:MakeSpellOptions()
+	z:CheckForChange(self)
+end
 
-		z:CheckForChange(self)
+-- ValidateTemplate
+function zg:ValidateTemplate(template)
+	for key,info in pairs(self.buffs) do
+		if (not GetSpellInfo(info.list[1])) then
+			if (template[key]) then
+				self:ModifyTemplate(key, nil)
+				if (z.icon:GetAttribute("spell") == info.list[1]) then
+					z:SetupForSpell()			-- Clear loaded icon
+				end
+			end
+		end
 	end
 end
 
@@ -2534,11 +2546,10 @@ function zg:OnModuleEnable()
 		z:MakeOptionsReagentList()
 		self:OnResetDB()
 		
-		self:SPELLS_CHANGED()
-		self:MakeSpellOptions()
+		self:OnSpellsChanged()
 
 		self:RegisterBucketEvent("UNIT_AURA", 0.2)				-- We don't care who
-		self:RegisterBucketEvent("SPELLS_CHANGED", 2)
+
 		z:CheckForChange(self)
 	end
 end
