@@ -7,7 +7,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Manager"]									= true,
 	["Blessings Manager configuration"]			= true,
 	["Open"]									= true,
-	["Open Blessings Manager"]					= true,
+	["Open Blessings Manager"]					= "Open Blessings Manager\n|cFF80FF80Note:|r you can also open the Blessings Manager by Alt-Clicking on the minimap icon.",
 	["Send"]									= true,
 	["Send options"]							= true,
 	["Template"]								= true,

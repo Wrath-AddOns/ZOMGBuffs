@@ -565,6 +565,7 @@ function module:CreateItemButton(item, equiped)
 			button.GetCooldown = getItemCooldown
 			button.equiped = equiped
 			button.drawFrame.equiped = equiped
+			button.tex:SetVertexColor(1, 1, 1, 0.5)
 
 			self:UpdateCooldown(button)
 			if (not self.itemButtons) then

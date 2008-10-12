@@ -5892,8 +5892,10 @@ end
 -- OnDisable
 function z:OnDisable()
 	z.options.args.behaviour.args.reagentlevels.args = nil
-	z.options.args.click.args = nil
-	z.options.args.click = nil
+	if (z.options.args.click) then
+		z.options.args.click.args = nil
+		z.options.args.click = nil
+	end
 	self.oldPots = del(self.oldPots)
 	self:SetupForSpell()
 	self.enabled = nil
