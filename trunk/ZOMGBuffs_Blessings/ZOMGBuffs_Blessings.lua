@@ -1718,8 +1718,8 @@ function zb:OnModuleEnable()
 	self:OnResetDB()
 
 	self.reagents = {
-		[R["Symbol of Kings"]] = {100, 20, 1000},		-- Stack size, min, max
-		[R["Symbol of Divinity"]] = {5, 1, 50},			-- Stack size, min, max
+		[R["Symbol of Kings"]] = {100, 20, 1000, minLevel = 52},		-- Stack size, min, max
+		[R["Symbol of Divinity"]] = {5, 1, 50, minLevel = 30},			-- Stack size, min, max
 	}
 	z:MakeOptionsReagentList()
 
