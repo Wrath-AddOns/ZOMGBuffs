@@ -5356,7 +5356,7 @@ function z:OnInitialize()
 		iconsize = 36,
 		classIcon = false,
 		anchor = "BOTTOMRIGHT",
-		relpoint = "TOPLEFT",
+		relpoint = "TOPRIGHT",
 		sort = "GROUP",
 		iconborder = true,
 		border = false,
