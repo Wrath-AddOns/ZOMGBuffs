@@ -3,6 +3,8 @@
 	return
 end
 
+local wow3 = select(4, GetBuildInfo()) >= 30000
+
 -- ZOMGBUffs, Pally Power comunication module, for those Paladins who've not yet seen the light
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsPP")
@@ -101,10 +103,9 @@ function mod:ProcessChat(sender, msg)
 	elseif (strfind(msg, "^SELF")) then
 		local numbers, assign = strmatch(msg, "SELF ([0-9n]*)@([0-9n]*)")
 		if (numbers) then
-			local template = {}
 			self.AllPallys[sender] = {}
 			local s = self.AllPallys[sender]
-			for i = 1, 6 do
+			for i = 1, wow3 and 4 or 6 do
 				local rank = strsub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
 				local talent = strsub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
 				if (rank ~= "n") then
@@ -130,6 +131,7 @@ function mod:ProcessChat(sender, msg)
 			bm:OnReceiveCapability(sender, t)
 
 			if (assign) then
+				local template = {}
 				for i,class in ipairs(ppClassOrder) do
 					local tmp = string.sub(assign, i, i)
 					if (tmp == "n" or tmp == "") then
@@ -186,6 +188,10 @@ function mod:ProcessChat(sender, msg)
 		if (count) then
 			bm:OnReceiveSymbolCount(sender, count + 0)
 		end
+
+	elseif (strfind(msg, "^FREEASSIGN")) then
+		local enable = strmatch(msg, "^FREEASSIGN (%s)") == "YES"
+		-- TODO - Free assign lets anyone set blessings, regardless of rank. So reflect this in Manager
 
 	elseif (strfind(msg, "^CLEAR")) then
 		-- Do nothing with this. Clear is necessary with Pally power because of the necessity to setup blessings from scratch.
@@ -335,7 +341,7 @@ function mod:GetSelf()
 
 	local SkillInfo = self.AllPallys[self.player]
 	local s = ""
-	for i = 1,6 do
+	for i = 1,wow3 and 4 or 6 do
 		if (not SkillInfo[i]) then
 			s = s.."nn"
 		else
