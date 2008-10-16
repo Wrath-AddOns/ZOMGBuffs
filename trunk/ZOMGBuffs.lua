@@ -4935,9 +4935,13 @@ function z:GetMerchantBuyItemList()
 	local level = UnitLevel("player")
 	for name, module in z:IterateModules() do
 		if (module.reagents and module.db and module.db.char and module.db.char.reagents) then
-			for itemname,info in pairs(module.reagents) do
-				if ((not info.maxLevel or level <= info.maxLevel) and (not info.minLevel or level >= info.minLevel)) then
-					local num = module.db.char.reagents[itemname]
+			for item,info in pairs(module.reagents) do
+				local itemname = item
+				if (type(item) == "number") then
+					itemname = GetItemInfo(item)
+				end
+				if (itemname and (not info.maxLevel or level <= info.maxLevel) and (not info.minLevel or level >= info.minLevel)) then
+					local num = module.db.char.reagents[item]
 					if (num and num > 0) then
 						list[itemname] = num
 					end
@@ -4960,7 +4964,7 @@ function z:MERCHANT_SHOW()
 	self.lastMerchantBuy = GetTime()
 
 	local list = z:GetMerchantBuyItemList()
-
+self:PrintLiteral(list)
 	if (next(list)) then
 		local numMerchantItems = GetMerchantNumItems()
 		local doneItems = new()				-- Double check there's no error in what we buy

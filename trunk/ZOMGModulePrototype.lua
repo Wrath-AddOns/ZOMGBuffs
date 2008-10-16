@@ -74,24 +74,35 @@ function z.modulePrototype:MakeReagentsOptions(args)
 		local any
 		local level = UnitLevel("player")
 		for k,v in pairs(self.reagents) do
-			if (not v.maxLevel or level <= v.maxLevel) then
+			if ((not v.maxLevel or level <= v.maxLevel) and (not v.minLevel or level >= v.minLevel)) then
 				if (not self.db.char.reagents[k]) then
 					self.db.char.reagents[k] = v[1]
 				end
-				args[k] = {
-					type = "range",
-					name = k,
-					desc = format(L["Auto purchase level for %s (will not exceed this amount)"], k),
-					get = function(k) return self.db.char.reagents[k] end,
-					set = function(k,n) self.db.char.reagents[k] = n end,
-					passValue = k,
-					min = 0,
-					max = v[3],
-					step = v[2]
-				}
-				any = true
+				local name = k
+				if (type(name) == "number") then
+					name = GetItemInfo(k)
+					if (not name) then
+						-- Not in cache, so we'll retreive it for next time
+						GameTooltip:SetHyperlink(format("|Hitem:%d|h", k))
+						GameTooltip:Hide()
+					end
+				end
+				if (name) then
+					args[k] = {
+						type = "range",
+						name = name,
+						desc = format(L["Auto purchase level for %s (will not exceed this amount)"], name),
+						get = function(k) return self.db.char.reagents[k] end,
+						set = function(k,n) self.db.char.reagents[k] = n end,
+						passValue = k,
+						min = 0,
+						max = v[3],
+						step = v[2]
+					}
+					any = true
+				end
 			else
-				self.db.char.reagents[k] = 0
+				self.db.char.reagents[k] = nil			-- 0
 			end
 		end
 		z.hideReagentOptions = not any or nil
