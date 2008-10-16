@@ -4964,7 +4964,6 @@ function z:MERCHANT_SHOW()
 	self.lastMerchantBuy = GetTime()
 
 	local list = z:GetMerchantBuyItemList()
-self:PrintLiteral(list)
 	if (next(list)) then
 		local numMerchantItems = GetMerchantNumItems()
 		local doneItems = new()				-- Double check there's no error in what we buy
