@@ -62,9 +62,16 @@ local ppPrefix = "PLPWR"
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
-local ppSpellOrder = {"BOW", "BOM", "BOS", "BOL", "BOK", "SAN"}
+local ppSpellOrder
 local ppSpellIndex
-local ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "PET"}
+local ppClassOrder
+if (wow3) then
+	ppSpellOrder = {"BOW", "BOM", "BOK", "SAN"}
+	ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "DEATHKNIGHT", "PET"}
+else
+	ppSpellOrder = {"BOW", "BOM", "BOS", "BOL", "BOK", "SAN"}
+	ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "PET"}
+end
 local ppClassIndex
 do
 	local function IndexArray(source)
@@ -113,10 +120,10 @@ function mod:ProcessChat(sender, msg)
 				if (not t) then
 					t = {}
 					z.talentSpecs[sender] = t
-					t.canKings = s[ppSpellIndex.BOK] and s[ppSpellIndex.BOK].rank > 0
-					t.canSanctuary = s[ppSpellIndex.SAN] and s[ppSpellIndex.SAN].rank > 0
-					t.impMight = (s[ppSpellIndex.BOM] and s[ppSpellIndex.BOM].talent > 0 and s[ppSpellIndex.BOM].talent) or 0
-					t.impWisdom = (s[ppSpellIndex.BOW] and s[ppSpellIndex.BOW].talent > 0 and s[ppSpellIndex.BOW].talent) or 0
+					t.canKings = s[ppSpellIndex.BOK] and (s[ppSpellIndex.BOK].rank or 0) > 0
+					t.canSanctuary = s[ppSpellIndex.SAN] and (s[ppSpellIndex.SAN].rank or 0) > 0
+					t.impMight = (s[ppSpellIndex.BOM] and (s[ppSpellIndex.BOM].talent or 0) > 0 and s[ppSpellIndex.BOM].talent) or 0
+					t.impWisdom = (s[ppSpellIndex.BOW] and (s[ppSpellIndex.BOW].talent or 0) > 0 and s[ppSpellIndex.BOW].talent) or 0
 				end
 			end
 
