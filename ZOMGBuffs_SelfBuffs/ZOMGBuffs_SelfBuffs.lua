@@ -474,12 +474,14 @@ function zs:GetClassBuffs()
 		classBuffs = {
 			{id = 25218, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
 			{id = 25431, o = 2, duration = 10, who = "self", c = "FFA080"},									-- Inner Fire
-			{id = 28385, o = 3, duration = 10, who = "self", c = "FF80FF"},									-- Shadowguard
-			{id = 25461, o = 4, duration = 10, who = "self", c = "206080", nocombatnotice = true},			-- Touch of Weakness
-			{id = 2651,  o = 5, duration = 0.25, default = 1, who = "self", c = "8080FF", nocombatnotice = true},	-- Elune's Grace
-			{id = 25441, o = 7, duration = 0.25, default = 1, who = "self", c = "204060", nocombatnotice = true},	-- Feedback
 			{id = 45455, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
+		if (not wow3) then
+			tinsert(classBuffs, 3, {id = 28385, o = 3, duration = 10, who = "self", c = "FF80FF"})			-- Shadowguard
+			tinsert(classBuffs, 3, {id = 25461, o = 4, duration = 10, who = "self", c = "206080", nocombatnotice = true})		-- Touch of Weakness
+			tinsert(classBuffs, 5, {id = 2651,  o = 5, duration = 0.25, default = 1, who = "self", c = "8080FF", nocombatnotice = true})	-- Elune's Grace
+			tinsert(classBuffs, 6, {id = 25441, o = 7, duration = 0.25, default = 1, who = "self", c = "204060", nocombatnotice = true})	-- Feedback
+		end
 
 	elseif (playerClass == "WARLOCK") then
 		classBuffs = {
@@ -544,8 +546,10 @@ function zs:GetClassBuffs()
 			{id = 25505, o = 1, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
 			{id = 25489, o = 2, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
 			{id = 25500, o = 3, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
-			{id = 36502, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Rockbiter Weapon
 		}
+		if (not wow3) then
+			tinsert(classBuffs, {id = 36502, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Rockbiter Weapon
+		end
 		self.reagents = {
 			[R["Ankh"]] = {10, 1, 50},
 		}
@@ -579,12 +583,49 @@ function zs:GetClassBuffs()
 			classBuffs[6].id = 57982			-- Anesthetic
 			classBuffs[6].sequence = nil
 		end
-		self.reagents = {
-			[R["Flash Powder"]] = {20, 1, 100},
-		}
-		self.notifySpells = {
-			[GetSpellInfo(26889)] = R["Flash Powder"],										-- Vanish
-		}
+		if (wow3) then
+			self.reagents = {
+				[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
+				[6949] = {20, 1, 100, minLevel = 28, maxLevel = 35},			-- Instant Poison II
+				[6950] = {20, 1, 100, minLevel = 36, maxLevel = 43},			-- Instant Poison III
+				[8926] = {20, 1, 100, minLevel = 44, maxLevel = 51},			-- Instant Poison IV
+				[8927] = {20, 1, 100, minLevel = 52, maxLevel = 59},			-- Instant Poison V
+				[8928] = {20, 1, 100, minLevel = 60, maxLevel = 67},			-- Instant Poison VI
+				[21927]= {20, 1, 100, minLevel = 68, maxLevel = 72},			-- Instant Poison VII
+				[43230]= {20, 1, 100, minLevel = 73, maxLevel = 78},			-- Instant Poison VIII
+				[43231]= {20, 1, 100, minLevel = 79, maxLevel = 85},			-- Instant Poison IX
+
+				[2892] = {20, 1, 100, minLevel = 30, maxLevel = 37},			-- Deadly Poison I
+				[2893] = {20, 1, 100, minLevel = 38, maxLevel = 45},			-- Deadly Poison II
+				[8984] = {20, 1, 100, minLevel = 46, maxLevel = 53},			-- Deadly Poison III
+				[8985] = {20, 1, 100, minLevel = 54, maxLevel = 59},			-- Deadly Poison IV
+				[20844]= {20, 1, 100, minLevel = 60, maxLevel = 61},			-- Deadly Poison V
+				[22053]= {20, 1, 100, minLevel = 62, maxLevel = 69},			-- Deadly Poison VI
+				[22054]= {20, 1, 100, minLevel = 70, maxLevel = 75},			-- Deadly Poison VII
+				[43232]= {20, 1, 100, minLevel = 76, maxLevel = 82},			-- Deadly Poison VIII
+
+				[10918]= {20, 1, 100, minLevel = 32, maxLevel = 39},			-- Wound Poison I
+				[10920]= {20, 1, 100, minLevel = 40, maxLevel = 47},			-- Wound Poison II
+				[10921]= {20, 1, 100, minLevel = 48, maxLevel = 55},			-- Wound Poison III
+				[10922]= {20, 1, 100, minLevel = 56, maxLevel = 63},			-- Wound Poison IV
+				[22055]= {20, 1, 100, minLevel = 64, maxLevel = 71},			-- Wound Poison V
+				[43234]= {20, 1, 100, minLevel = 72, maxLevel = 77},			-- Wound Poison VI
+				[43235]= {20, 1, 100, minLevel = 78, maxLevel = 85},			-- Wound Poison VII
+
+				[21835]= {20, 1, 100, minLevel = 68, maxLevel = 76},			-- Anesthetic Poison
+				[43237]= {20, 1, 100, minLevel = 77, maxLevel = 85},			-- Anesthetic Poison II
+
+				[3775] = {20, 1, 100, minLevel = 20},							-- Crippling Poison
+				[5237] = {20, 1, 100, minLevel = 20},							-- Mind-numbing Poison
+			}
+		else
+			self.reagents = {
+				[R["Flash Powder"]] = {20, 1, 100},
+			}
+			self.notifySpells = {
+				[GetSpellInfo(26889)] = R["Flash Powder"],										-- Vanish
+			}
+		end
 
 	elseif (playerClass == "PALADIN") then
 		local function skipFunc()
