@@ -547,7 +547,9 @@ function zs:GetClassBuffs()
 			{id = 25489, o = 2, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
 			{id = 25500, o = 3, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
 		}
-		if (not wow3) then
+		if (wow3) then
+			tinsert(classBuffs, {id = 51993, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Earthliving Weapon
+		else
 			tinsert(classBuffs, {id = 36502, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Rockbiter Weapon
 		end
 		self.reagents = {
