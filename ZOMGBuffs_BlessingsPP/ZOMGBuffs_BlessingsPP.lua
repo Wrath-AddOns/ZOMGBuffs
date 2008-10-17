@@ -309,7 +309,7 @@ function mod:ScanSpells()
 
 		for t = 1,GetNumTalentTabs() do
 			for i = 1,GetNumTalents(t) do
-				nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(t, i)
+				local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(t, i)
 				local bless = strmatch(nameTalent, L["PP_TSEARCH"])
 				if (bless) then
 					self.initialized = true

@@ -3644,7 +3644,7 @@ local function DrawCell(self)
 	local doBlessings = z.db.profile.track.blessings
 	if (not UnitIsDeadOrGhost(partyid) and UnitIsConnected(partyid)) then
 		for i = 1,40 do
-			local name, rank, tex, count, _, maxDuration, endTime = z:UnitBuff(partyid, i)
+			local name, rank, tex, count, _, maxDuration, endTime, isMine = z:UnitBuff(partyid, i)
 			if (not name) then
 				break
 			end
@@ -3692,8 +3692,10 @@ local function DrawCell(self)
 						palaFlags[key] = tex
 						gotPalaBuffs = gotPalaBuffs + 1
 
-						if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
-							myMax, myEnd = maxDuration, endTime
+						if (playerClass == "PALADIN") then
+							if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
+								myMax, myEnd = maxDuration, endTime
+							end
 						end
 					end
 				end

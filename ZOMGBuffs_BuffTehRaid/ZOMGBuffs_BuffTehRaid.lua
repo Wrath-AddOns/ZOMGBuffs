@@ -978,6 +978,20 @@ function zg:RebuffQuery(unit)
 	return
 end
 
+-- GetEarthShieldStacks
+local function GetEarthShieldStacks()
+	local impES = GetSpellInfo(51560)
+	for tab = 1,GetNumTalentTabs() do
+		for talent = 1,GetNumTalents(t) do
+			local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(tab, talent)
+			if (nameTalent == impES) then
+				return 6 + (currRank or 0)
+			end
+		end			
+	end
+	return 6
+end
+
 -- OnModuleInitialize
 function zg:OnModuleInitialize()
 	playerClass = select(2, UnitClass("player"))
@@ -1113,7 +1127,7 @@ function zg:OnModuleInitialize()
 				colour = {0.7, 0.7, 0.2},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,					-- Can only be cast on 1 target
-				stacks = 6,							-- So, we had to hard code this eventually anyway huh..
+				stacks = GetEarthShieldStacks,		-- So, we had to hard code this eventually anyway huh..
 				keycode = "earthshield",
 			},
 			WATERWALK = {
@@ -2066,7 +2080,7 @@ do
 		self.target = target
 		self.key = key
 		self.spell = spell
-		self.initialStacks = buff.stacks
+		self.initialStacks = type(buff.stacks) == "function" and buff.stacks() or buff.stacks
 		self.count:Hide()
 		self.name:Hide()
 		local name, rank, tex = GetSpellInfo(buff.ids[1])
