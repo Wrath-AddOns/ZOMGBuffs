@@ -4326,7 +4326,7 @@ function man:OnReceiveSpec(sender, spec)
 end
 
 -- OnSelectTemplate
-function man:OnSelectTemplate(templateName)
+function man:OnSelectTemplate()
 	template = self.db.profile.templates.current
 	if (not template) then
 		if (not self.db.profile.templates[L["Default"]]) then

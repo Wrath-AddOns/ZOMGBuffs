@@ -982,7 +982,7 @@ end
 local function GetEarthShieldStacks()
 	local impES = GetSpellInfo(51560)
 	for tab = 1,GetNumTalentTabs() do
-		for talent = 1,GetNumTalents(t) do
+		for talent = 1,GetNumTalents(tab) do
 			local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(tab, talent)
 			if (nameTalent == impES) then
 				return 6 + (currRank or 0)
