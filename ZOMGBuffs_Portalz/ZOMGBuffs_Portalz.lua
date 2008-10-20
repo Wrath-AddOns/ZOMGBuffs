@@ -603,6 +603,19 @@ function module:CreateItemButtons()
 			self:CreateItemButton(35230)			-- Darnarian's Scroll of Teleportation (SSO daily reward)
 		end
 
+		if (GetItemCount(18984) > 0) then
+			self:CreateItemButton(18984, true)		-- Dimensional Ripper - Everlook
+		end
+		if (GetItemCount(30542) > 0) then
+			self:CreateItemButton(30542, true)		-- Dimensional Ripper - Area 52
+		end
+		if (GetItemCount(18986) > 0) then
+			self:CreateItemButton(18986, true)		-- Ultrasafe Transporter: Gadgetzan
+		end
+		if (GetItemCount(30544) > 0) then
+			self:CreateItemButton(30544, true)		-- Ultrasafe Transporter: Toshley's Station
+		end
+
 		if (wow3) then
 			if (GetItemCount(44315) > 0) then
 				self:CreateItemButton(44315)		-- Scroll of Recall 3 (Level 71-80)

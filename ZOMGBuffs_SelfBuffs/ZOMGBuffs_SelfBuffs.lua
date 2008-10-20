@@ -519,7 +519,6 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "HUNTER") then
 		classBuffs = {
-			{id = 27066, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
 			{id = 34074, o = 3, duration = -1, who = "self", dup = 1, c = "B080FF"},		-- Aspect of the Viper
 			{id = 27044, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
 			{id = 5118, o = 5, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
@@ -528,7 +527,12 @@ function zs:GetClassBuffs()
 			{id = 13161, o = 8, duration = -1, who = "self", dup = 1, c = "FFA0FF"},		-- Aspect of the Beast
 			{id = 13163, o = 9, duration = -1, who = "self", dup = 1, c = "808020"},		-- Aspect of the Monkey
 		}
-		
+		if (wow3) then
+			tinsert(classBuffs, 1, {id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"})		-- Trueshot Aura
+		else
+			tinsert(classBuffs, 1, {id = 27066, o = 1, duration = -1, who = "self", c = "FFFFFF"})		-- Trueshot Aura
+		end
+
 	elseif (playerClass == "SHAMAN") then
 		local onEnableShield = function() 
 			local btr = ZOMGBuffTehRaid
@@ -684,15 +688,18 @@ function zs:GetClassBuffs()
 		}
 	end
 
+	local errors
 	if (classBuffs) then
 		self.classBuffs = {}
 		for i,data in pairs(classBuffs) do
 			if (data.id) then
 				local name, _, icon = GetSpellInfo(data.id)
-				if (not name) then
-					error("No spell for spellID "..data.id)
+				if (name) then
+					self.classBuffs[name] = data
+				else
+					-- Store the errors now till end, so the rest will still function even with unknown spells
+					errors = (errors and (errors .. ", ") or "") .. tostring(data.id)
 				end
-				self.classBuffs[name] = data
 			else
 				self.classBuffs[i] = data
 			end
@@ -742,6 +749,14 @@ function zs:GetClassBuffs()
 	end
 
 	del(altList)
+
+	self:MakeSpellOptions()
+	self:MakeItemOptions()
+	z:CheckForChange(self)
+
+	if (errors) then
+		error("No spell for spellID "..errors.." (class:".. playerClass ..")")
+	end
 end
 
 -- OneOfYours
@@ -1117,11 +1132,6 @@ function zs:OnSpellsChanged()
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
 	self:GetClassBuffs()
-
-	self:MakeSpellOptions()
-	self:MakeItemOptions()
-
-	z:CheckForChange(self)
 end
 
 -- SpellCastSucceeded
