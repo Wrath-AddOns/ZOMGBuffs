@@ -5301,6 +5301,7 @@ function z:DefaultClickBindings()
 		breath = "SHIFT-BUTTON2",
 		freedom = "CTRL-BUTTON1",
 		sacrifice = "ALT-BUTTON1",
+		beacon = "SHIFT-BUTTON1",
 	}
 end
 

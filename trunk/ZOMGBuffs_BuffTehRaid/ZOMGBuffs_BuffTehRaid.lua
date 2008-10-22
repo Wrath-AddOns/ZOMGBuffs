@@ -223,8 +223,8 @@ do
 						passValue = "default",
 						min = 0,
 						max = 15 * 60,
-						step = 5,
-						bigStep = 60,
+						step = 1,
+						bigStep = 15,
 						order = 100,
 					},
 				},
@@ -413,8 +413,8 @@ function zg:MakeSpellOptions()
 						passValue = key,
 						min = 0,
 						max = 30 * 60,
-						step = 15,
-						bigStep = 60,
+						step = 1,
+						bigStep = 15,
 						order = 2,
 					},
 				}
@@ -1121,6 +1121,7 @@ function zg:OnModuleInitialize()
 				exclusive = true,					-- Can only be cast on 1 tarrget
 				notself = true,
 				keycode = "focusmagic",
+				defaultRebuff = 5,
 			} 		
 		}
 		self.reagents = {
@@ -1182,23 +1183,34 @@ function zg:OnModuleInitialize()
 
 	elseif (playerClass == "PALADIN") then
 		self.buffs = {
-			FREEDOM = {
+			BEACON = {
 				o = 1,
-				ids = {1044},						-- Blessing of Freedom
+				ids = {53563},						-- Beacon of Light
+				colour = {1, 1, 0.5},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,
+				keycode = "beacon",
+				defaultRebuff = 5,  -- TODO
+			},
+			FREEDOM = {
+				o = 2,
+				ids = {1044},						-- Hand of Freedom
 				colour = {1, 0.8, 0.1},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
 				keycode = "freedom",
+				defaultRebuff = 5,
 			},
 			SACRIFICE = {
-				o = 2,
-				ids = {wow3 and 6940 or 27148},		-- Blessing of Sacrifice
+				o = 3,
+				ids = {wow3 and 6940 or 27148},		-- Hand of Sacrifice
 				colour = {1, 0, 0},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
 				notself = true,
 				keycode = "sacrifice",
-			}
+				defaultRebuff = 5,
+			},
 		}	
 	end
 
@@ -2580,6 +2592,15 @@ function zg:OnResetDB()
 			if (k ~= "modified" and k ~= "state" and k ~= "limited") then
 				if (not self.buffs[k]) then
 					template[k] = nil
+				end
+			end
+		end
+
+		if (not self.db.char.firstRun) then
+			self.db.char.firstRun = true
+			for key,buff in pairs(self.buffs) do
+				if (buff.defaultRebuff) then
+					self.db.char.rebuff[key] = buff.defaultRebuff
 				end
 			end
 		end
