@@ -424,21 +424,23 @@ function zs:GetClassBuffs()
 			{id = 9846, o = 7, duration = 0.1, default = 1, who = "self", c = "FF8080", noauto = true}, -- Tiger's Fury
 		}
 		self.reagents = {
-			[R["Maple Seed"]]			= {20, 1, 50, minLevel = 20, maxLevel = 29},
-			[R["Stranglethorn Seed"]]	= {20, 1, 50, minLevel = 30, maxLevel = 39},
-			[R["Ashwood Seed"]]			= {20, 1, 50, minLevel = 40, maxLevel = 49},
-			[R["Hornbeam Seed"]]		= {20, 1, 50, minLevel = 50, maxLevel = 59},
-			[R["Ironwood Seed"]]		= {20, 1, 50, minLevel = 60, maxLevel = 69},
-			[R["Flintweed Seed"]]		= {20, 1, 50, minLevel = 70, maxLevel = 79},
+			[GetItemInfo(17034) or R["Maple Seed"]]			= {20, 1, 50, minLevel = 20, maxLevel = 29},
+			[GetItemInfo(17035) or R["Stranglethorn Seed"]]	= {20, 1, 50, minLevel = 30, maxLevel = 39},
+			[GetItemInfo(17036) or R["Ashwood Seed"]]			= {20, 1, 50, minLevel = 40, maxLevel = 49},
+			[GetItemInfo(17037) or R["Hornbeam Seed"]]		= {20, 1, 50, minLevel = 50, maxLevel = 59},
+			[GetItemInfo(17038) or R["Ironwood Seed"]]		= {20, 1, 50, minLevel = 60, maxLevel = 69},
+			[GetItemInfo(22147) or R["Flintweed Seed"]]		= {20, 1, 50, minLevel = 70, maxLevel = 79},
+			[GetItemInfo(44614) or R["Starleaf Seed"]]		= {20, 1, 50, minLevel = 70, maxLevel = 79},
 		}
 		self.notifySpells = {
 			[GetSpellInfo(26994)] = {		-- Rebirth
-				R["Maple Seed"],
-				R["Stranglethorn Seed"],
-				R["Ashwood Seed"],
-				R["Hornbeam Seed"],
-				R["Ironwood Seed"],
-				R["Flintweed Seed"],
+				GetItemInfo(17034) or R["Maple Seed"],
+				GetItemInfo(17035) or R["Stranglethorn Seed"],
+				GetItemInfo(17036) or R["Ashwood Seed"],
+				GetItemInfo(17037) or R["Hornbeam Seed"],
+				GetItemInfo(17038) or R["Ironwood Seed"],
+				GetItemInfo(22147) or R["Flintweed Seed"],
+				GetItemInfo(44614) or R["Starleaf Seed"],
 			},
 		}
 
@@ -454,8 +456,8 @@ function zs:GetClassBuffs()
 			{id = 27131, o = 12, duration = 1,   who = "self", default = 5, noauto = true, c = "FFB0B0", cancancel = true},	-- Mana Shield
 			{id = 11129, o = 14, duration = -1,  who = "self", noauto = true, c = "F5BC0B"},									-- Combustion
 		}
-		local singlePort = R["Rune of Teleportation"]
-		local groupPort = R["Rune of Portals"]
+		local singlePort = GetItemInfo(17031) or R["Rune of Teleportation"]
+		local groupPort = GetItemInfo(17032) or R["Rune of Portals"]
 		self.reagents = {
 			[groupPort]		= {20, 1, 100},
 			[singlePort]	= {20, 1, 100},
@@ -492,8 +494,8 @@ function zs:GetClassBuffs()
 			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
 		}
 		self.reagents = {
-			[R["Demonic Figurine"]]	= {5, 1, 100},
-			[R["Infernal Stone"]]	= {5, 1, 100},
+			[GetItemInfo(16583) or R["Demonic Figurine"]]	= {5, 1, 100},
+			[GetItemInfo(5565) or R["Infernal Stone"]]	= {5, 1, 100},
 		}
 		local shoulShard = R["Soul Shard"]
 		local warlockList = {
@@ -516,6 +518,8 @@ function zs:GetClassBuffs()
 		for i,id in pairs(warlockList) do
 			self.notifySpells[(GetSpellInfo(id))] = soulShard
 		end
+		self.notifySpells[GetSpellInfo(24670)] = GetItemInfo(5565) or R["Infernal Stone"]		-- Inferno
+		self.notifySpells[GetSpellInfo(18540)] = GetItemInfo(16583) or R["Demonic Figurine"]	-- Ritual of Doom
 
 	elseif (playerClass == "HUNTER") then
 		classBuffs = {
@@ -557,10 +561,10 @@ function zs:GetClassBuffs()
 			tinsert(classBuffs, {id = 36502, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Rockbiter Weapon
 		end
 		self.reagents = {
-			[R["Ankh"]] = {10, 1, 50},
+			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50},
 		}
 		self.notifySpells = {
-			[GetSpellInfo(27740)] = R["Ankh"],												-- Reincarnation
+			[GetSpellInfo(27740)] = GetItemInfo(17030) or R["Ankh"],										-- Reincarnation
 		}
 
 	elseif (playerClass == "WARRIOR") then
@@ -672,7 +676,7 @@ function zs:GetClassBuffs()
 		end
 
 		self.notifySpells = {
-			[GetSpellInfo(19752)] = R["Symbol of Divinity"],		-- Divine Intervention
+			[GetSpellInfo(19752)] = GetItemInfo(17033) or R["Symbol of Divinity"],		-- Divine Intervention
 		}
 	elseif (playerClass == "DEATHKNIGHT") then
 		classBuffs = {
@@ -681,10 +685,10 @@ function zs:GetClassBuffs()
 			{id = 57623, o = 3, duration = 2, who = "self", c = "808080"},			-- Horn of Winter
 		}
 		self.notifySpells = {
-			[GetSpellInfo(46584)] = R["Corpse Dust"],				-- Raise Dead
+			[GetSpellInfo(46584)] = GetItemInfo(37201) or R["Corpse Dust"],			-- Raise Dead
 		}
 		self.reagents = {
-			[R["Corpse Dust"]]	= {20, 1, 200},
+			[GetItemInfo(37201) or R["Corpse Dust"]]	= {20, 1, 200},
 		}
 	end
 
@@ -1046,20 +1050,35 @@ function zs:SpellCastFailed(spell, rank, manual)
 end
 
 if (wow3) then
+	function zs:CheckMounted()
+		-- self:Print("CheckMounted - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
+		if (not InCombatLockdown()) then
+			local m = IsMounted()
+			if (self.mounted ~= m) then
+				self.mounted = m
+				if (m) then
+					z:SetupForSpell()
+					self:CheckBuffs()
+					return
+				end
+			end
+		end
+	end
+
 	-- UNIT_AURA
 	function zs:UNIT_AURA(unit)
 		if (unit == "player") then
 			if (not InCombatLockdown()) then
-				local m = IsMounted()
-				if (self.mounted ~= m) then
-					self.mounted = m
-					if (m) then
-						z:SetupForSpell()
-						self:CheckBuffs()
-						return
-					end
+				-- self:Print("UNIT_AURA - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
+				self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
+				if (not self.mounted and not IsMounted()) then
+					-- Nasty hack, because IsMounted() does not work immediately after
+					-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
+					-- Currently, there are no events fired when IsMounted() is toggled on
+					-- Might have to do an OnUpdate check
+					self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.5, self)
 				end
-	
+				self:CheckMounted()
 				z:CheckForChange(self)
 			end
 		end
