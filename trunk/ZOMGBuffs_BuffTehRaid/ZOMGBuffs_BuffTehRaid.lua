@@ -274,14 +274,14 @@ local function ToggleKeyType(keytype, onoff)
 	end
 
 	if (onoff) then
-		local dup = zg.buffs[keytype].dup
-		if (dup) then
-			for j,z in pairs(zg.buffs) do
-				if (z.dup == dup) then
-					zg:ModifyTemplate(j, nil)
-				end
-			end
-		end
+		--local dup = zg.buffs[keytype].dup
+		--if (dup) then
+		--	for j,z in pairs(zg.buffs) do
+		--		if (z.dup == dup) then
+		--			zg:ModifyTemplate(j, nil)
+		--		end
+		--	end
+		--end
 
 		zg:ModifyTemplate(keytype, true)
 		z:SetupForSpell()
@@ -1006,9 +1006,10 @@ function zg:OnModuleInitialize()
 				ids = {25389, 25392},				-- Power Word: Fortitude, Prayer of Fortitude
 				group = true,
 				reagents = {nil, {
-						[1] = R["Holy Candle"],
-						[2] = R["Sacred Candle"],
-						[3] = R["Sacred Candle"],
+						[1] = GetItemInfo(17028) or R["Holy Candle"],
+						[2] = GetItemInfo(17029) or R["Sacred Candle"],
+						[3] = GetItemInfo(17029) or R["Sacred Candle"],
+						[4] = GetItemInfo(44615) or R["Devout Candle"],
 					},
 				},
 				required = true,
@@ -1044,8 +1045,9 @@ function zg:OnModuleInitialize()
 			}
 		}
 		self.reagents = {
-			[R["Holy Candle"]] = {0, 1, 500, maxLevel = 59},
-			[R["Sacred Candle"]] = {0, 1, 500},
+			[GetItemInfo(17028) or R["Holy Candle"]] = {20, 1, 500, minLevel = 48, maxLevel = 59},
+			[GetItemInfo(17029) or R["Sacred Candle"]] = {20, 1, 500, minLevel = 60, maxLevel = 79},
+			[GetItemInfo(44615) or R["Devout Candle"]] = {20, 1, 500, minLevel = 80, maxLevel = 89},
 		}
 
 	elseif (playerClass == "DRUID") then
@@ -1056,9 +1058,10 @@ function zg:OnModuleInitialize()
 				ids = {26990, 26991},				-- Mark of the Wild, Gift of the Wild
 				group = true,
 				reagents = {nil, {
-						[1] = R["Wild Berries"],
-						[2] = R["Wild Thornroot"],
-						[3] = R["Wild Quillvine"],
+						[1] = GetItemInfo(17021) or R["Wild Berries"],
+						[2] = GetItemInfo(17026) or R["Wild Thornroot"],
+						[3] = GetItemInfo(22148) or R["Wild Quillvine"],
+						[4] = GetItemInfo(44605) or R["Wild Spineleaf"],
 					},
 				},
 				required = true,
@@ -1074,9 +1077,10 @@ function zg:OnModuleInitialize()
 			}
 		}
 		self.reagents = {
-			[R["Wild Berries"]] = {0, 1, 500},
-			[R["Wild Thornroot"]] = {0, 1, 500},
-			[R["Wild Quillvine"]] = {0, 1, 500}
+			[GetItemInfo(17021) or R["Wild Berries"]] = {20, 1, 500, minLevel = 50, maxLevel = 59},
+			[GetItemInfo(17026) or R["Wild Thornroot"]] = {20, 1, 500, minLevel = 60, maxLevel = 69},
+			[GetItemInfo(22148) or R["Wild Quillvine"]] = {20, 1, 500, minLevel = 70, maxLevel = 79},
+			[GetItemInfo(44605) or R["Wild Spineleaf"]] = {20, 1, 500, minLevel = 80, maxLevel = 89},
 		}
 
 	elseif (playerClass == "MAGE") then
@@ -1095,7 +1099,7 @@ function zg:OnModuleInitialize()
 			DAMPEN = {
 				o = 2,
 				ids = {33944},						-- Dampen Magic
-				dup = 1,
+				dup = 1,							-- Dup ID: Matching IDs are mutually exclusive per player
 				colour = {0.3, 1, 0.8},
 				limited = true,						-- Allow limited targets config
 				keycode = "dampen",
@@ -1103,14 +1107,24 @@ function zg:OnModuleInitialize()
 			AMPLIFY = {
 				o = 3,
 				ids = {33946},						-- Amplify Magic
-				dup = 1,
+				dup = 1,							-- Dup ID: Matching IDs are mutually exclusive per player
 				colour = {1, 1, 0.25},
 				limited = true,						-- Allow limited targets config
 				keycode = "amplify",
-			}
+			},
+			FOCUSMAGIC = {
+				o = 4,
+				ids = {54646},						-- Focus Magic
+				onlyManaUsers = true,
+				colour = {0.80, 0.2, 1},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,					-- Can only be cast on 1 tarrget
+				notself = true,
+				keycode = "focusmagic",
+			} 		
 		}
 		self.reagents = {
-			[R["Arcane Powder"]] = {(UnitLevel("player") >= 56 and 20) or 0, 1, 500},
+			[GetItemInfo(17020) or R["Arcane Powder"]] = {20, 1, 500, minLevel = 56},
 		}
 	elseif (playerClass == "SHAMAN") then
 		self.buffs = {
@@ -1406,22 +1420,47 @@ local function tickOnClick(self, button)
 		self:SetChecked(nil)
 	else
 		local enable = self:GetChecked() and true or false
+		local offIndex
+
+		if (buff.dup and enable) then
+			-- If it's a dup type buff (amplify/dampen magic), then turn off the matching buff for what we turned on
+			for key2, buff2 in pairs(zg.buffs) do
+				if (buff2.dup == buff.dup and key2 ~= key) then
+					local index2 = zg:IsTickColumnRegistered(key2)
+					if (index2) then
+						offIndex = index2
+					end
+				end
+			end
+		end
+
 		if (not buff.exclusive and button == "LeftButton" and IsAltKeyDown()) then
 			local class = select(2, UnitClass(unitid))
-			zg:TickSome(index, function(unit) return select(2, UnitClass(unit)) == class end, enable)	-- Tick all of this class
+			local func = function(unit) return select(2, UnitClass(unit)) == class end
+			zg:TickSome(index, func, enable)	-- Tick all of this class
+			if (offIndex) then
+				zg:TickSome(offIndex, func, false)
+			end
 
 		elseif (not buff.exclusive and button == "LeftButton" and IsShiftKeyDown()) then
 			local group = z:GetGroupNumber(unitid)
-			zg:TickSome(index, function(unit)
-				local g1 = z:GetGroupNumber(unit)
-				return g1 and g1 == group
-			end, enable)
+			local func = function(unit) local g1 = z:GetGroupNumber(unit) return g1 and g1 == group end
+			zg:TickSome(index, func, enable)
+			if (offIndex) then
+				zg:TickSome(offIndex, func, false)
+			end
 
 		elseif (not buff.exclusive and button == "RightButton") then
 			zg:TickSome(index, nil, enable)												-- Tick everyone
+			if (offIndex) then
+				zg:TickSome(offIndex, nil, false)
+			end
 
 		else
 			zg:TickOne(index, UnitName(unitid), enable)									-- Tick this one
+			if (offIndex) then
+				zg:TickOne(offIndex, UnitName(unitid), false)
+			end
 		end
 
 		z:DrawAllCells()

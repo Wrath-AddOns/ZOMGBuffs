@@ -5294,6 +5294,7 @@ function z:DefaultClickBindings()
 		int2 = "BUTTON2",
 		dampen = "CTRL-BUTTON2",
 		amplify = "SHIFT-BUTTON2",
+		focusmagic = "CTRL-BUTTON1",
 		water = "ALT-BUTTON2",
 		earthshield = "BUTTON2",
 		seeinvis = "BUTTON2",
