@@ -70,9 +70,10 @@ do
 	zg.options = {
 		type = 'group',
 		order = 2,
-		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFFBuffTehRaid|r",
+		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rBuffTehRaid",
 		desc = L["Group Buff Configuration"],
 		handler = zg,
+		disabled = function() return z:IsDisabled() end,
 		args = {
 			groups = {
 				type = 'group',

@@ -50,9 +50,10 @@ zs.consoleCmd = L["Self"]
 zs.options = {
 	type = "group",
 	order = 1,
-	name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFFSelfBuffs|r",
+	name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rSelfBuffs",
 	desc = L["Self Buff Configuration"],
 	handler = zs,
+	disabled = function() return z:IsDisabled() end,
 	args = {
 		template = {
 			type = "group",
@@ -662,8 +663,9 @@ function zs:GetClassBuffs()
 			tinsert(classBuffs, 4, {id = 20165, o = 4,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]})	-- Seal of Light
 			tinsert(classBuffs, 5, {id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Corruption
 			tinsert(classBuffs, 6, {id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
+			tinsert(classBuffs, 7, {id = 31801, o = 7,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Vengeance
 		else
-			tinsert(classBuffs, #classBuffs - 1, {id = 20218, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "FFFF90", checkdups = true, skip = skipFunc})		-- Sanctity Aura
+			tinsert(classBuffs, {id = 20218, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "FFFF90", checkdups = true, skip = skipFunc})	-- Sanctity Aura
 
 			tinsert(classBuffs, 1, {id = 27155, o = 1,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]})	-- Seal of Righteousness
 			tinsert(classBuffs, 2, {id = 27170, o = 2,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Command (Old)
@@ -1430,7 +1432,6 @@ end
 -- OnModuleDisable
 function zs:OnModuleDisable()
 	z:CheckForChange(self)
-	playerName = nil
 	self.classBuffs = nil
 	self.activeEnchant = nil
 end

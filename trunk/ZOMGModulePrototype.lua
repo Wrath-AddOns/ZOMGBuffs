@@ -87,6 +87,7 @@ function z.modulePrototype:MakeReagentsOptions(args)
 						GameTooltip:Hide()
 					end
 				end
+
 				if (name) then
 					args[k] = {
 						type = "range",
@@ -94,6 +95,7 @@ function z.modulePrototype:MakeReagentsOptions(args)
 						desc = format(L["Auto purchase level for %s (will not exceed this amount)"], name),
 						get = function(k) return self.db.char.reagents[k] end,
 						set = function(k,n) self.db.char.reagents[k] = n end,
+						icon = select(10, GetItemInfo(k)),
 						passValue = k,
 						min = 0,
 						max = v[3],

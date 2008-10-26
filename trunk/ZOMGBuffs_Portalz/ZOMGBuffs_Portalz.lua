@@ -49,9 +49,10 @@ do
 	module.options = {
 		type = 'group',
 		order = 15,
-		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFFPortalz|r",
+		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rPortalz",
 		desc = L["Portal Configuration"],
 		handler = module,
+		disabled = function() return z:IsDisabled() end,
 		args = {
 			showall = {
 				type = 'toggle',
@@ -193,7 +194,7 @@ end
 
 -- Keybinding
 function module:Keybinding(keystate)
-	if (InCombatLockdown()) then
+	if (InCombatLockdown() or z:IsDisabled()) then
 		return
 	end
 
