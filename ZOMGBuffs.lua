@@ -258,10 +258,13 @@ z.version = tonumber(string.sub("$Revision$", 12, -3)) or 1
 z.versionCompat = 65478 - 82090				-- 65478 is the compat version check
 z.title = L["TITLE"]
 z.titleColour = L["TITLECOLOUR"]
-z.hasIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
+z.mainIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
 z.defaultMinimapPosition = 330
 z.cannotDetachTooltip = true
 z.clickableTooltip = true
+z.hasIcon = nil
+z.hasNoText = true						-- Reset later should we have Fubar icon enabled
+z.cannotAttachToMinimap = true
 z.versionRoster = {}
 z.zoneFlag = GetTime()
 
@@ -426,6 +429,7 @@ z.options = {
 			name = L["Behaviour"],
 			desc = L["General buffing behaviour"],
 			order = 220,
+			disabled = "IsDisabled",
 			args = {
 				reagentautobuy = {
 					type = 'toggle',
@@ -653,6 +657,7 @@ z.options = {
 			type = 'group',
 			name = L["Learning"],
 			desc = L["Setup spell learning behaviour"],
+			disabled = "IsDisabled",
 			args = {
 				ooc = {
 					type = 'toggle',
@@ -679,6 +684,7 @@ z.options = {
 			type = 'group',
 			name = L["Reminders"],
 			desc = L["Options to help you notice when things need doing"],
+			disabled = "IsDisabled",
 			args = {
 				sound = {
 					type = 'text',
@@ -748,6 +754,7 @@ z.options = {
 			type = 'group',
 			name = L["Display"],
 			desc = L["Display options"],
+			disabled = "IsDisabled",
 			args = {
 				manager = {
 					type = 'toggle',
@@ -1224,6 +1231,7 @@ z.options = {
 			type = 'group',
 			name = L["Actions"],
 			desc = L["Miscelaneous actions"],
+			disabled = "IsDisabled",
 			args = {
 				wipetalents = {
 					type = 'execute',
@@ -1240,6 +1248,7 @@ z.options = {
 			name = L["Report"],
 			desc = L["Report options"],
 			hidden = function() return not IsRaidOfficer() or not IsRaidLeader() end,
+			disabled = "IsDisabled",
 			args = {
 				missing = {
 					type = 'execute',
@@ -1266,6 +1275,15 @@ z.options = {
 				},
 			},
 		},
+		fubar = {
+			type = "toggle",
+			name = "Fubar Icon",
+			desc = "Show on Fubar/Minimap",
+			get = function() return z.db.profile.showFubar end,
+			set = function(v) z.db.profile.showFubar = v z:SetMainIcon() end,
+			hidden = function() return not z.ldbSource end,
+			order = -5000,
+		}
 	},
 }
 	if (Sink and (SinkVersion >= 62534 or SinkVersion < 10000)) then
@@ -2753,14 +2771,15 @@ function z:SetStatusIcon(t, spellIcon)
 	end
 
 	if (not spellIcon) then
+		local icon
 		if (self.db.profile.enabled) then
-			self.hasIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
+			icon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
 		else
-			self.hasIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\IconOff"
+			icon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\IconOff"
 		end
-		self:SetIcon(z.hasIcon)
+		self:SetMainIcon(icon)
 
-		local icon = self.hasIcon
+		local icon = self:GetMainIcon()
 		if (self.db.char.classIcon) then
 			local i = classIcons[playerClass]
 			if (not i) then
@@ -4804,6 +4823,10 @@ end
 
 -- PLAYER_ENTERING_WORLD
 function z:PLAYER_ENTERING_WORLD()
+	if (self.minimapFrame) then
+		self.minimapFrame:Hide()
+	end
+	self:SetMainIcon()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
 	self:DrawAllCells()
@@ -4853,6 +4876,10 @@ end
 
 -- OnClick
 function z:OnClick()
+	if (self:IsDisabled()) then
+		return
+	end
+
 	if (IsAltKeyDown()) then
 		if (bm) then
 			bm:ToggleFrame()
@@ -4913,10 +4940,12 @@ end
 
 -- OnTextUpdate
 function z:OnTextUpdate()
-	if (self:IsTextColored()) then
-		self:SetText(z.titleColour)
-	else
-		self:SetText(z.title)
+	if (not self.hasNoText) then
+		if (self:IsTextColored()) then
+			self:SetText(z.titleColour)
+		else
+			self:SetText(z.title)
+  		end
   	end
 end
 
@@ -5416,6 +5445,10 @@ function z:OnInitialize()
 	self.globalCooldownEnd = 0
 	playerClass = playerClass or select(2, UnitClass("player"))
 
+	if (self.minimapFrame) then
+		self.minimapFrame:Hide()
+	end
+
 	self.OnInitialize = nil
 end
 
@@ -5807,8 +5840,122 @@ function z:OnEnableOnce()
 		SetBinding("MOUSEWHEELDOWN", "CAMERAZOOMOUT")
 	end
 
+	local ldb = LibStub:GetLibrary("LibDataBroker-1.1", true)
+	if (ldb) then
+		self.ldbSource = ldb:NewDataObject("ZOMGBuffs", {
+			type = "data source",
+			text = L["TITLECOLOUR"],
+			icon = "Interface\\Addons\\ZOMGBuffs\\Textures\\Icon",
+		})
+	end
+
+	if (self.ldbSource) then
+		function self.ldbSource:Update()
+			self.text = L["TITLECOLOUR"]
+		end
+
+		self.ldbSource.OnClick = function(self, button)
+			if (button == "LeftButton") then
+				z:OnClick(button)
+			else
+				dewdrop:Open(self,
+					"children", function()
+						dewdrop:FeedAceOptionsTable(z.options)
+					end
+				)
+			end
+		end
+		self.ldbSource.OnEnter = function(self) z:UpdateTablet(self) end
+	else
+		self.db.profile.showFubar = true
+	end
+
 	self.linkSpells = true
 	self.OnEnableOnce = nil
+end
+
+-- RegisterTablet
+function z:RegisterTablet(ldbParent)
+	if (not ldbParent) then
+		return
+	end
+
+	if not tablet:IsRegistered(ldbParent) then
+		tablet:Register(ldbParent,
+			'children', function()
+				tablet:SetTitle(self:GetTitle())
+				if type(self.OnTooltipUpdate) == "function" then
+					if not self:IsDisabled() then
+						self:OnTooltipUpdate()
+					end
+				end
+			end,
+			'clickable', true,
+			'point', function(frame)
+				if frame:GetTop() > GetScreenHeight() / 2 then
+					local x = frame:GetCenter()
+					if x < GetScreenWidth() / 3 then
+						return "TOPLEFT", "BOTTOMLEFT"
+					elseif x < GetScreenWidth() * 2 / 3 then
+						return "TOP", "BOTTOM"
+					else
+						return "TOPRIGHT", "BOTTOMRIGHT"
+					end
+				else
+					local x = frame:GetCenter()
+					if x < GetScreenWidth() / 3 then
+						return "BOTTOMLEFT", "TOPLEFT"
+					elseif x < GetScreenWidth() * 2 / 3 then
+						return "BOTTOM", "TOP"
+					else
+						return "BOTTOMRIGHT", "TOPRIGHT"
+					end
+				end
+			end
+		)
+	end
+end
+
+-- UpdateTablet
+function z:UpdateTablet(ldbParent)
+	if (not ldbParent) then
+		return
+	end
+
+	self:RegisterTablet(ldbParent)
+	tablet:Refresh(ldbParent)
+end
+
+-- SetMainIcon
+function z:SetMainIcon(icon)
+	self.mainIcon = icon or self.mainIcon
+
+	if (self.ldbSource) then
+		self.ldbSource.icon = self.mainIcon
+	end
+
+	if (self.db.profile.showFubar) then
+		self.cannotAttachToMinimap = nil
+		self.hasIcon = true
+		self.hasNoText = nil
+		self:SetIcon(self.mainIcon)
+		self:Show()
+	else
+		self.cannotAttachToMinimap = true
+		self.hasIcon = nil
+		self.hasNoText = true
+		self.hideWithoutStandby = true
+		self:Hide()
+		self.hideWithoutStandby = nil
+	end
+end
+function z:GetMainIcon()
+	return self.mainIcon
+end
+
+do	-- Brute force attack on FuBar minimap icon to hide it should it be disabled:
+	local oneFrameOnly = CreateFrame("Frame")
+	oneFrameOnly:SetScript("OnUpdate", function(self) self:SetScript("OnUpdate", nil) z:SetMainIcon() self:Hide() end)
 end
 
 -- OnEnable
@@ -5894,6 +6041,10 @@ function z:OnEnable()
 	self:SetupAutoBuy()
 
 	self.icon:Show()
+
+	if (self.minimapFrame) then
+		self.minimapFrame:Hide()
+	end
 end
 
 -- OnDisable
