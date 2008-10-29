@@ -526,6 +526,295 @@ function zg:OnSelectTemplate(templateName)
 	self:TickInitForTemplate()
 end
 
+if (wow3) then
+
+-- GetBuffedMembers
+function zg:GetBuffedMembers()
+	local temp = new()
+	local totals = 0
+	local dbGroups = self.db.char.groups
+	local minTimeLeft
+	local totalMembers, totalPresent = 0, 0
+	local anyBlacklisted
+	local notInRaid = not UnitInRaid("player")
+
+	for unitid, unitname, unitclass, grp, index in z:IterateRoster() do
+		anyBlacklisted = anyBlacklisted or z:IsBlacklisted(unitname)
+		totalMembers = totalMembers + 1
+		totals = totals + 1
+
+		if (dbGroups[grp] or notInRaid) then
+			local pvpBlock = (z.db.profile.skippvp and UnitIsPVP(unitid)) and not UnitIsPVP("player")
+			local present = UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and not pvpBlock
+			local absent						-- They're not in zone, afk, or offline
+			if (not present and z.db.profile.ignoreabsent and z.db.profile.waitforclass) then
+				if (pvpBlock) then
+					absent = true
+				elseif (not UnitIsConnected(unitid)) then
+					absent = true
+				elseif (UnitIsAFK(unitid)) then
+					absent = true
+				end
+			end
+
+			if (present) then
+				local foundBuffs
+				local manaUser = z.manaClasses[unitclass]	--   UnitPowerType(unitid) == 0
+				totalPresent = totalPresent + 1
+
+				if (not manaUser) then
+					foundBuffs = new()
+				end
+
+				for i = 1,40 do
+					local name, rank, buff, count, _, maxDuration, endTime, isMine = z:UnitBuff(unitid, i)
+					if (not name) then
+						break
+					end
+					
+					local buff = self.lookup[name]
+					if (not buff) then
+						if (name == kiru) then		-- K'iru's Song of Victory counts as INT
+							if (playerClass == "MAGE") then
+								buff = self.buffs.INT
+							end
+						end
+					end
+					if (buff) then
+						local dur = maxDuration and maxDuration ~= 0 and endTime and (endTime - GetTime())
+						if (template[buff.type]) then
+							if (not manaUser) then
+								foundBuffs[buff.type] = true
+							end
+
+							local requiredTimeLeft = (self.db.char.rebuff and self.db.char.rebuff[buff.type]) or self.db.char.rebuff.default
+							local needsBuff = not buff.onlyManaUsers or manaUser
+							if (not needsBuff or (not requiredTimeLeft or not dur or dur > requiredTimeLeft)) then
+								temp[buff.type] = (temp[buff.type] or 0) + 1
+							end
+
+							if (needsBuff and dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
+								minTimeLeft = dur - requiredTimeLeft
+							end
+						end
+					end
+				end
+
+				if (not manaUser) then
+					for key,info in pairs(self.buffs) do
+						if (info.onlyManaUsers and not foundBuffs[key]) then
+							temp[key] = (temp[key] or 0) + 1
+						end
+					end
+					del(foundBuffs)
+				end
+
+			elseif (absent) then
+				totalPresent = totalPresent + 1
+				for code,info in pairs(self.buffs) do
+					temp[code] = (temp[code] or 0) + 1
+				end
+			end
+		end
+	end
+
+	return temp, totals, minTimeLeft, totalPresent / totalMembers, anyBlacklisted
+end
+
+-- FindUnitInRangeMissing
+function zg:FindUnitInRangeMissing(typ)
+	local t = self.buffs[typ]
+	if (not t) then
+		error(format("Unrecognised type %q", tostring(typ)), 2)
+	end
+	local buffEveryone = not t.onlyManaUsers
+	local list = t.list
+	local rangeCheckSpell = list[1]
+	local limitedPeople = t.limited and template.limited and template.limited[typ]
+
+	local requiredTimeLeft = (self.db.char.rebuff and self.db.char.rebuff[typ]) or self.db.char.rebuff.default
+
+	for unitid, unitname, unitclass in z:IterateRoster() do
+		local manaUser = z.manaClasses[unitclass]
+		if (buffEveryone or manaUser) then
+			if (not t.limited or (limitedPeople and limitedPeople[unitname])) then
+				if (not z:IsBlacklisted(unitname)) then
+					if (UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid) == 1 and ((not z.db.profile.skippvp or not UnitIsPVP(unitid)) or UnitIsPVP("player"))) then
+						local got
+						for i = 1,40 do
+							local name, rank, buff, count, _, max, endTime = z:UnitBuff(unitid, i)
+							if (not name) then
+								break
+							end
+
+							local buff = self.lookup[name]
+							if (not buff) then
+								if (name == kiru) then		-- K'iru's Song of Victory counts as INT
+									if (playerClass == "MAGE") then
+										buff = self.buffs.INT
+									end
+								end
+							end
+							if (buff and buff.type == typ) then
+								local dur = endTime and (endTime - GetTime())
+								if (max and max ~= 0 and dur and dur < requiredTimeLeft) then
+									return unitid
+								end
+								got = true
+								break
+							end
+						end
+
+						if (not got) then
+							return unitid
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+-- CheckBuffs
+function zg:CheckBuffs()
+	if (not self.db or not template or not z:CanCheckBuffs()) then
+		return
+	end
+
+	local temp, totals, minTimeLeft, percentPresent, anyBlacklisted = self:GetBuffedMembers()
+	local skipClassBuffs = z.db.profile.singlesAlways or (z.db.profile.singlesInBG and select(2, IsInInstance()) == "pvp") or (z.db.profile.singlesInArena and select(2, IsInInstance()) == "arena")
+	local db = self.db.char
+
+	if (z.db.profile.waitforraid > 0 and not skipClassBuffs and self.groupBuffer) then
+		-- See if enough of raid present
+		if (percentPresent < z.db.profile.waitforraid) then	-- Wait for % of raid before buffing
+			z.waitingForRaid = floor(percentPresent * 100)
+			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, 5, self)
+			return
+		end
+	end
+	z.waitingForRaid = nil
+
+	-- Now go through this and find anything we need to buff
+	local dbGroups = db.groups
+	local notInRaid = GetNumRaidMembers() == 0
+	local any
+	
+	if (totals > 0) then
+		for k,v in pairs(template) do			-- k = spellType (INT, STA etc.), v = buff data for that type
+			if (k ~= "modified" and k ~= "state" and k ~= "limited") then
+				local typeSpec = self.buffs[k]
+				if (typeSpec) then
+					local spell = typeSpec.list[1]
+					local start, dur = GetSpellCooldown(spell)
+					local now, later = IsUsableSpell(spell)
+					if (now and (start == 0 or GetTime() - 0.5 > start + dur)) then
+						local gotBuff = temp[k] or 0
+						if (not gotBuff or gotBuff < totals) then
+							local missingBuff = totals - gotBuff
+
+							local unit = self:FindUnitInRangeMissing(k)
+							if (unit) then
+								local buffSpec = typeSpec.list
+								local t1, t2
+								if (buffSpec[2]) then
+									t1, t2 = IsUsableSpell(buffSpec[2])
+								end
+
+								local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
+								if (skipClassBuffs or (missingBuff < db.groupcast or not (t1 or t2))) then
+									-- Do single buff
+									z:Notice(format(L["%s needs %s"], z:ColourUnit(unit), z:LinkSpell(buffSpec[1], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
+									z:SetupForSpell(unit, buffSpec[1], self)
+									any = true
+									break
+								else
+									-- Do group buff
+									z:Notice(format(L["%s needs %s"], RAID, z:LinkSpell(buffSpec[2], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
+									z:SetupForSpell(unit, buffSpec[2], self)
+									any = true
+									break
+								end
+							end
+						end
+					else
+						if (not now) then
+							minTimeLeft = 10		-- Check again in 10 secs, not enough mana atm
+						else
+							-- Set min time left to cooldown end for this spell
+							minTimeLeft = min((start + dur) - GetTime(), minTimeLeft or 0)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if (not any and z.db.profile.buffpets) then
+		-- Catch any pets that missed the group buffing
+		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
+			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid)) then
+ 				if (db.groups[subgroup]) then
+ 					local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
+					for i = 1,40 do
+						local name, rank, buff, count, _, max, endTime = z:UnitBuff(unitid, i)
+						if (not name) then
+							break
+						end
+
+						local buff = self.lookup[name]
+						if (not buff) then
+							if (name == kiru) then		-- K'iru's Song of Victory counts as INT
+								if (playerClass == "MAGE") then
+									buff = self.buffs.INT
+								end
+							end
+						end
+
+						if (buff) then
+							local dur = endTime and (endTime - GetTime())
+							if (template[buff.type]) then
+								local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
+								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
+									local colour = buff.colour and z:HexColour(unpack(buff.colour))
+									z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.list[1], colour, true, z.db.profile.short and buff.name)), "buffreminder")
+									z:SetupForSpell(unit, buff.list[1], self)
+									any = true
+									break
+								end
+
+								if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
+									minTimeLeft = dur - requiredTimeLeft
+								end
+							end
+						end
+					end
+					if (any) then
+						break
+					end
+				end
+			end
+		end
+	end
+
+	self:CancelScheduledEvent("ZOMGBuffTehRaid_CheckBuffs")
+	if (anyBlacklisted) then
+		minTimeLeft = 1.5
+	end
+	if (any) then
+		z.waitingForRaid = nil
+		z.waitingForClass = nil
+	else
+		if (z.waitingForClass) then
+			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, 5, self)
+		else
+			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, minTimeLeft or 60, self)
+		end
+	end
+end
+
+else -- if not wow3
+
 -- GetBuffedMembers
 function zg:GetBuffedMembers()
 	local temp = new()
@@ -739,7 +1028,7 @@ function zg:CheckBuffs()
 							local gotBuff = (temp[k] and temp[k][i]) or 0
 							if (not gotBuff or gotBuff < players) then
 								local missingBuff = players - gotBuff
-	
+
 								local unit = self:FindUnitInRangeMissing(i, k)
 								if (unit) then
 									local buffSpec = typeSpec.list
@@ -747,7 +1036,7 @@ function zg:CheckBuffs()
 									if (buffSpec[2]) then
 										t1, t2 = IsUsableSpell(buffSpec[2])
 									end
-									
+
 									local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
 									if (skipClassBuffs or (missingBuff < db.groupcast or not (t1 or t2))) then
 										-- Do single buff
@@ -844,10 +1133,11 @@ function zg:CheckBuffs()
 	end
 
 	deepDel(temp)
-	deepDel(groups)
 	del(totals)
 	del(skipGroups)
 end
+
+end -- wow3
 
 -- UNIT_AURA
 function zg:UNIT_AURA(unit)
@@ -1213,6 +1503,17 @@ function zg:OnModuleInitialize()
 				defaultRebuff = 5,
 			},
 		}	
+	elseif (playerClass == "WARRIOR") then
+		self.buffs = {
+			VIGILANCE = {
+				o = 1,
+				ids = {50720},						-- Vigilance
+				colour = {1, 1, 0.7},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,
+				keycode = "vigilance",
+			},
+		}
 	end
 
 	if (not self.buffs) then
@@ -1899,9 +2200,7 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 			end
 
 			if (found.group and spell == found.list[2] and (UnitInRaid(name) or UnitInParty(name))) then
-				local unitid = z:GetUnitID(name)
-				local subgroup = z:GetGroupNumber(unitid)
-	      		self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), z:ColourGroup(subgroup), reagentString)
+	      		self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), RAID, reagentString)
 			else
 				self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), z:ColourUnitByName(name), reagentString)
 			end

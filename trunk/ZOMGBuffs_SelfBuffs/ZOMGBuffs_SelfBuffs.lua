@@ -1041,7 +1041,7 @@ function zs:OnModifyTemplate(key, value)
 	end
 end
 
--- UNIT_SPELLCAST_FAILED
+-- SpellCastFailed
 function zs:SpellCastFailed(spell, rank, manual)
 	if (not manual) then
 		if (spell == lastEnchantSet) then
@@ -1158,6 +1158,12 @@ end
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
 	if (spell == lastEnchantSet and target == UnitName("player")) then
+		if (z.icon.mod == self) then
+			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
+				z:SetupForSpell()
+				z:RequestSpells()
+			end
+		end
 		self.activeEnchant = nil
 	end
 

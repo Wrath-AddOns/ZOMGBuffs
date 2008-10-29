@@ -3672,7 +3672,7 @@ local function DrawCell(self)
 				name = GetSpellInfo(27126)
 			end
 
-			if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
+			if (isMine and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
 				if (z:ShowBuffBar(self, name)) then
 					myMax, myEnd = maxDuration, endTime
 				end
@@ -3711,7 +3711,7 @@ local function DrawCell(self)
 						palaFlags[key] = tex
 						gotPalaBuffs = gotPalaBuffs + 1
 
-						if (playerClass == "PALADIN") then
+						if (isMine) then
 							if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
 								myMax, myEnd = maxDuration, endTime
 							end
@@ -5078,23 +5078,25 @@ end
 
 -- CHAT_MSG_WHISPER
 function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
- 	local got
-	for match in pairs(self.chatMatch) do
-		if (strsub(msg, 1, strlen(match)) == match) then
-			msg = strsub(msg, strlen(match) + 1)
-			while (strsub(msg, 1, 1) == " ") do
-				msg = strsub(msg, 2)
+	if (self.chatMatch) then
+	 	local got
+		for match in pairs(self.chatMatch) do
+			if (strsub(msg, 1, strlen(match)) == match) then
+				msg = strsub(msg, strlen(match) + 1)
+				while (strsub(msg, 1, 1) == " ") do
+					msg = strsub(msg, 2)
+				end
+				got = true
+				break
 			end
-			got = true
-			break
 		end
-	end
-	if (not got) then
-		return
-	end
+		if (not got) then
+			return
+		end
 
-	for name, module in self:IterateModulesWithMethod("BuffResponse") do
-		module:BuffResponse(sender, msg)
+		for name, module in self:IterateModulesWithMethod("BuffResponse") do
+			module:BuffResponse(sender, msg)
+		end
 	end
 end
 
@@ -6066,4 +6068,3 @@ function z:OnDisable()
 	self:UnhookAll()
 	self:UnhookChat()
 end
-
