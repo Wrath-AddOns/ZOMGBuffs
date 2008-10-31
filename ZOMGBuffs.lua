@@ -5056,6 +5056,7 @@ end
 -- For PallyPower Load on Demand support
 local ppPrefix = "PLPWR"
 local ignoreMeList = {}
+local ignoreMeToo
 function z:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 	if (prefix == "PLPWR") then
 		if (message == "ZOMG") then
@@ -5071,6 +5072,42 @@ function z:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 						ZOMGBlessingsPP:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 					end
 				end
+			end
+		end
+	elseif (prefix == "Utopia") then
+		-- Answer talent requests from Utopia if it's not loaded
+		if (not Utopia) then
+			if (sender == playerName) then
+				return
+			end
+
+			local cmd, str = message:match("^(%a+) *(.*)$")
+			if (not cmd) then
+				return
+			end
+
+			if (cmd == "HELLO") then
+				SendAddonMessage("Utopia", "HELLO ZOMG", "WHISPER", sender)
+
+			elseif (cmd == "REQUESTTALENTS") then
+				if (not ignoreMeToo) then
+					ignoreMeToo = {}
+				elseif (ignoreMeToo[sender] and ignoreMeToo[sender] > time() - 20) then
+					return
+				end
+				ignoreMeToo[sender] = time()
+
+				local t = new()
+				for tab = 1,GetNumTalentTabs() do
+					local str
+					for talent = 1,GetNumTalents(tab) do
+						local name, icon, tier, column, currentRank = GetTalentInfo(tab, talent)
+						str = (str or "") .. tostring(currentRank)
+					end
+					tinsert(t, str)
+				end
+				SendAddonMessage("Utopia", format("TALENTS %s", table.concat(t, ",")), "WHISPER", sender)
+				del(t)
 			end
 		end
 	end
@@ -5846,16 +5883,12 @@ function z:OnEnableOnce()
 	if (ldb) then
 		self.ldbSource = ldb:NewDataObject("ZOMGBuffs", {
 			type = "data source",
-			text = L["TITLECOLOUR"],
+			label = L["TITLECOLOUR"],
 			icon = "Interface\\Addons\\ZOMGBuffs\\Textures\\Icon",
 		})
 	end
 
 	if (self.ldbSource) then
-		function self.ldbSource:Update()
-			self.text = L["TITLECOLOUR"]
-		end
-
 		self.ldbSource.OnClick = function(self, button)
 			if (button == "LeftButton") then
 				z:OnClick(button)
