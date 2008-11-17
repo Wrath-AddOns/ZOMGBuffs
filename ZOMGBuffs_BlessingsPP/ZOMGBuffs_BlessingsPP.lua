@@ -3,8 +3,6 @@
 	return
 end
 
-local wow3 = select(4, GetBuildInfo()) >= 30000
-
 -- ZOMGBUffs, Pally Power comunication module, for those Paladins who've not yet seen the light
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsPP")
@@ -64,16 +62,9 @@ local ppPrefix = "PLPWR"
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
-local ppSpellOrder
+local ppSpellOrder = {"BOW", "BOM", "BOK", "SAN"}
+local ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "DEATHKNIGHT", "PET"}
 local ppSpellIndex
-local ppClassOrder
-if (wow3) then
-	ppSpellOrder = {"BOW", "BOM", "BOK", "SAN"}
-	ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "DEATHKNIGHT", "PET"}
-else
-	ppSpellOrder = {"BOW", "BOM", "BOS", "BOL", "BOK", "SAN"}
-	ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "PET"}
-end
 local ppClassIndex
 do
 	local function IndexArray(source)
@@ -105,7 +96,7 @@ function mod:ProcessChat(sender, msg)
 		if (numbers) then
 			self.AllPallys[sender] = {}
 			local s = self.AllPallys[sender]
-			for i = 1, wow3 and 4 or 6 do
+			for i = 1, 4 do
 				local rank = strsub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
 				local talent = strsub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
 				if (rank ~= "n") then
@@ -341,7 +332,7 @@ function mod:GetSelf()
 
 	local SkillInfo = self.AllPallys[self.player]
 	local s = ""
-	for i = 1,wow3 and 4 or 6 do
+	for i = 1,4 do
 		if (not SkillInfo[i]) then
 			s = s.."nn"
 		else

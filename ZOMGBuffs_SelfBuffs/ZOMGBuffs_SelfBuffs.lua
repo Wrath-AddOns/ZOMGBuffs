@@ -1,6 +1,4 @@
-﻿local wow3 = select(4, GetBuildInfo()) >= 30000
-
-if (ZOMGSelfBuffs) then
+﻿if (ZOMGSelfBuffs) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_SelfBuffs (Addons\ZOMGBuffs\ZOMGBuffs_SelfBuffs and Addons\ZOMGBuffs_SelfBuffs)")
 	return
 end
@@ -479,12 +477,6 @@ function zs:GetClassBuffs()
 			{id = 25431, o = 2, duration = 10, who = "self", c = "FFA080"},									-- Inner Fire
 			{id = 45455, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
-		if (not wow3) then
-			tinsert(classBuffs, 3, {id = 28385, o = 3, duration = 10, who = "self", c = "FF80FF"})			-- Shadowguard
-			tinsert(classBuffs, 3, {id = 25461, o = 4, duration = 10, who = "self", c = "206080", nocombatnotice = true})		-- Touch of Weakness
-			tinsert(classBuffs, 5, {id = 2651,  o = 5, duration = 0.25, default = 1, who = "self", c = "8080FF", nocombatnotice = true})	-- Elune's Grace
-			tinsert(classBuffs, 6, {id = 25441, o = 7, duration = 0.25, default = 1, who = "self", c = "204060", nocombatnotice = true})	-- Feedback
-		end
 
 	elseif (playerClass == "WARLOCK") then
 		classBuffs = {
@@ -524,6 +516,7 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "HUNTER") then
 		classBuffs = {
+			{id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
 			{id = 34074, o = 3, duration = -1, who = "self", dup = 1, c = "B080FF"},		-- Aspect of the Viper
 			{id = 27044, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
 			{id = 5118, o = 5, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
@@ -532,11 +525,6 @@ function zs:GetClassBuffs()
 			{id = 13161, o = 8, duration = -1, who = "self", dup = 1, c = "FFA0FF"},		-- Aspect of the Beast
 			{id = 13163, o = 9, duration = -1, who = "self", dup = 1, c = "808020"},		-- Aspect of the Monkey
 		}
-		if (wow3) then
-			tinsert(classBuffs, 1, {id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"})		-- Trueshot Aura
-		else
-			tinsert(classBuffs, 1, {id = 27066, o = 1, duration = -1, who = "self", c = "FFFFFF"})		-- Trueshot Aura
-		end
 
 	elseif (playerClass == "SHAMAN") then
 		local onEnableShield = function() 
@@ -555,12 +543,8 @@ function zs:GetClassBuffs()
 			{id = 25505, o = 1, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
 			{id = 25489, o = 2, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
 			{id = 25500, o = 3, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
+			{id = 51993, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
 		}
-		if (wow3) then
-			tinsert(classBuffs, {id = 51993, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Earthliving Weapon
-		else
-			tinsert(classBuffs, {id = 36502, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1})		-- Rockbiter Weapon
-		end
 		self.reagents = {
 			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50},
 		}
@@ -580,63 +564,45 @@ function zs:GetClassBuffs()
 		classBuffs = {
 			{id = 41189, o = 1, dup = 1, duration = 30, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
 			{id = 43581, o = 2, dup = 1, duration = 30, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
-			{id = 11202, o = 3, dup = 1, duration = 30, who = "weapon", c = "40C020", sequence = {"", " II"}},										-- Crippling Poison
-			{id = 41190, o = 4, dup = 1, duration = 30, who = "weapon", c = "40B040", sequence = {"", " II", " III"}},								-- Mind-numbing Poison
+			{id = 3408, o = 3, dup = 1, duration = 30, who = "weapon", c = "40C020"},																-- Crippling Poison
+			{id = 5761, o = 4, dup = 1, duration = 30, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
 			{id = 43461, o = 5, dup = 1, duration = 30, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
-			{id = 26786, o = 6, dup = 1, duration = 30, who = "weapon", c = "209080"},																-- Anesthetic Poison
+			{id = 57982, o = 6, dup = 1, duration = 30, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
 		}
-		if (wow3) then
-			-- TODO Crippling, Mind Numbing, Anesthetic Poisons being changed.. to what?
-			classBuffs[3].id = 3408				-- Crippling
-			classBuffs[3].sequence = nil
-			classBuffs[4].id = 5761				-- Mind-numbing
-			classBuffs[4].sequence = nil
-			classBuffs[6].id = 57982			-- Anesthetic
-			classBuffs[6].sequence = nil
-		end
-		if (wow3) then
-			self.reagents = {
-				[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
-				[6949] = {20, 1, 100, minLevel = 28, maxLevel = 35},			-- Instant Poison II
-				[6950] = {20, 1, 100, minLevel = 36, maxLevel = 43},			-- Instant Poison III
-				[8926] = {20, 1, 100, minLevel = 44, maxLevel = 51},			-- Instant Poison IV
-				[8927] = {20, 1, 100, minLevel = 52, maxLevel = 59},			-- Instant Poison V
-				[8928] = {20, 1, 100, minLevel = 60, maxLevel = 67},			-- Instant Poison VI
-				[21927]= {20, 1, 100, minLevel = 68, maxLevel = 72},			-- Instant Poison VII
-				[43230]= {20, 1, 100, minLevel = 73, maxLevel = 78},			-- Instant Poison VIII
-				[43231]= {20, 1, 100, minLevel = 79, maxLevel = 85},			-- Instant Poison IX
+		self.reagents = {
+			[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
+			[6949] = {20, 1, 100, minLevel = 28, maxLevel = 35},			-- Instant Poison II
+			[6950] = {20, 1, 100, minLevel = 36, maxLevel = 43},			-- Instant Poison III
+			[8926] = {20, 1, 100, minLevel = 44, maxLevel = 51},			-- Instant Poison IV
+			[8927] = {20, 1, 100, minLevel = 52, maxLevel = 59},			-- Instant Poison V
+			[8928] = {20, 1, 100, minLevel = 60, maxLevel = 67},			-- Instant Poison VI
+			[21927]= {20, 1, 100, minLevel = 68, maxLevel = 72},			-- Instant Poison VII
+			[43230]= {20, 1, 100, minLevel = 73, maxLevel = 78},			-- Instant Poison VIII
+			[43231]= {20, 1, 100, minLevel = 79, maxLevel = 85},			-- Instant Poison IX
 
-				[2892] = {20, 1, 100, minLevel = 30, maxLevel = 37},			-- Deadly Poison I
-				[2893] = {20, 1, 100, minLevel = 38, maxLevel = 45},			-- Deadly Poison II
-				[8984] = {20, 1, 100, minLevel = 46, maxLevel = 53},			-- Deadly Poison III
-				[8985] = {20, 1, 100, minLevel = 54, maxLevel = 59},			-- Deadly Poison IV
-				[20844]= {20, 1, 100, minLevel = 60, maxLevel = 61},			-- Deadly Poison V
-				[22053]= {20, 1, 100, minLevel = 62, maxLevel = 69},			-- Deadly Poison VI
-				[22054]= {20, 1, 100, minLevel = 70, maxLevel = 75},			-- Deadly Poison VII
-				[43232]= {20, 1, 100, minLevel = 76, maxLevel = 82},			-- Deadly Poison VIII
+			[2892] = {20, 1, 100, minLevel = 30, maxLevel = 37},			-- Deadly Poison I
+			[2893] = {20, 1, 100, minLevel = 38, maxLevel = 45},			-- Deadly Poison II
+			[8984] = {20, 1, 100, minLevel = 46, maxLevel = 53},			-- Deadly Poison III
+			[8985] = {20, 1, 100, minLevel = 54, maxLevel = 59},			-- Deadly Poison IV
+			[20844]= {20, 1, 100, minLevel = 60, maxLevel = 61},			-- Deadly Poison V
+			[22053]= {20, 1, 100, minLevel = 62, maxLevel = 69},			-- Deadly Poison VI
+			[22054]= {20, 1, 100, minLevel = 70, maxLevel = 75},			-- Deadly Poison VII
+			[43232]= {20, 1, 100, minLevel = 76, maxLevel = 82},			-- Deadly Poison VIII
 
-				[10918]= {20, 1, 100, minLevel = 32, maxLevel = 39},			-- Wound Poison I
-				[10920]= {20, 1, 100, minLevel = 40, maxLevel = 47},			-- Wound Poison II
-				[10921]= {20, 1, 100, minLevel = 48, maxLevel = 55},			-- Wound Poison III
-				[10922]= {20, 1, 100, minLevel = 56, maxLevel = 63},			-- Wound Poison IV
-				[22055]= {20, 1, 100, minLevel = 64, maxLevel = 71},			-- Wound Poison V
-				[43234]= {20, 1, 100, minLevel = 72, maxLevel = 77},			-- Wound Poison VI
-				[43235]= {20, 1, 100, minLevel = 78, maxLevel = 85},			-- Wound Poison VII
+			[10918]= {20, 1, 100, minLevel = 32, maxLevel = 39},			-- Wound Poison I
+			[10920]= {20, 1, 100, minLevel = 40, maxLevel = 47},			-- Wound Poison II
+			[10921]= {20, 1, 100, minLevel = 48, maxLevel = 55},			-- Wound Poison III
+			[10922]= {20, 1, 100, minLevel = 56, maxLevel = 63},			-- Wound Poison IV
+			[22055]= {20, 1, 100, minLevel = 64, maxLevel = 71},			-- Wound Poison V
+			[43234]= {20, 1, 100, minLevel = 72, maxLevel = 77},			-- Wound Poison VI
+			[43235]= {20, 1, 100, minLevel = 78, maxLevel = 85},			-- Wound Poison VII
 
-				[21835]= {20, 1, 100, minLevel = 68, maxLevel = 76},			-- Anesthetic Poison
-				[43237]= {20, 1, 100, minLevel = 77, maxLevel = 85},			-- Anesthetic Poison II
+			[21835]= {20, 1, 100, minLevel = 68, maxLevel = 76},			-- Anesthetic Poison
+			[43237]= {20, 1, 100, minLevel = 77, maxLevel = 85},			-- Anesthetic Poison II
 
-				[3775] = {20, 1, 100, minLevel = 20},							-- Crippling Poison
-				[5237] = {20, 1, 100, minLevel = 20},							-- Mind-numbing Poison
-			}
-		else
-			self.reagents = {
-				[R["Flash Powder"]] = {20, 1, 100},
-			}
-			self.notifySpells = {
-				[GetSpellInfo(26889)] = R["Flash Powder"],										-- Vanish
-			}
-		end
+			[3775] = {20, 1, 100, minLevel = 20},							-- Crippling Poison
+			[5237] = {20, 1, 100, minLevel = 20},							-- Mind-numbing Poison
+		}
 
 	elseif (playerClass == "PALADIN") then
 		local function skipFunc()
@@ -645,6 +611,13 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
+			{id = 21084, o = 1,  duration = 2, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
+			{id = 20375, o = 2,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
+			{id = 20166, o = 3,  duration = 2, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]},	-- Seal of Wisdom
+			{id = 20165, o = 4,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Light
+			{id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
+			{id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Blood
+			{id = 31801, o = 7,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Vengeance
 			{id = 25780, o = 10, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
 			{id = 27179, o = 11, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
 			{id = 27149, o = 13, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
@@ -655,27 +628,6 @@ function zs:GetClassBuffs()
 			{id = 27153, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
 			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
 		}
-
-		if (wow3) then
-			tinsert(classBuffs, 1, {id = 21084, o = 1,  duration = 2, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]})	-- Seal of Righteousness
-			tinsert(classBuffs, 2, {id = 20375, o = 2,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Command
-			tinsert(classBuffs, 3, {id = 20166, o = 3,  duration = 2, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]})	-- Seal of Wisdom
-			tinsert(classBuffs, 4, {id = 20165, o = 4,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]})	-- Seal of Light
-			tinsert(classBuffs, 5, {id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Corruption
-			tinsert(classBuffs, 6, {id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
-			tinsert(classBuffs, 7, {id = 31801, o = 7,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Vengeance
-		else
-			tinsert(classBuffs, {id = 20218, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "FFFF90", checkdups = true, skip = skipFunc})	-- Sanctity Aura
-
-			tinsert(classBuffs, 1, {id = 27155, o = 1,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]})	-- Seal of Righteousness
-			tinsert(classBuffs, 2, {id = 27170, o = 2,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]})	-- Seal of Command (Old)
-			tinsert(classBuffs, 3, {id = 27166, o = 3,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]})	-- Seal of Wisdom
-			tinsert(classBuffs, 4, {id = 27160, o = 4,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]})	-- Seal of Light
-			tinsert(classBuffs, 5, {id = 31895, o = 5,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFD020", rebuff = L["Seals"]})	-- Seal of Justice
-			tinsert(classBuffs, 6, {id = 27158, o = 6,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFFF30", rebuff = L["Seals"]})	-- Seal of the Crusader
-			tinsert(classBuffs, 7, {id = 31892, o = 7,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
-			tinsert(classBuffs, 8, {id = 31801, o = 8,  duration = 0.5, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Vengeance
-		end
 
 		self.notifySpells = {
 			[GetSpellInfo(19752)] = GetItemInfo(17033) or R["Symbol of Divinity"],		-- Divine Intervention
@@ -1051,50 +1003,9 @@ function zs:SpellCastFailed(spell, rank, manual)
 	end
 end
 
-if (wow3) then
-	function zs:CheckMounted()
-		-- self:Print("CheckMounted - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
-		if (not InCombatLockdown()) then
-			local m = IsMounted()
-			if (self.mounted ~= m) then
-				self.mounted = m
-				if (m) then
-					z:SetupForSpell()
-					self:CheckBuffs()
-					return
-				end
-			end
-		end
-	end
-
-	-- UNIT_AURA
-	function zs:UNIT_AURA(unit)
-		if (unit == "player") then
-			if (not InCombatLockdown()) then
-				-- self:Print("UNIT_AURA - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
-				self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
-				if (not self.mounted and not IsMounted()) then
-					-- Nasty hack, because IsMounted() does not work immediately after
-					-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
-					-- Currently, there are no events fired when IsMounted() is toggled on
-					-- Might have to do an OnUpdate check
-					self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.5, self)
-				end
-				self:CheckMounted()
-				z:CheckForChange(self)
-			end
-		end
-	end
-else
-	-- UNIT_AURA
-	function zs:UNIT_AURA(unit)
-		if (unit == "player" and not InCombatLockdown()) then
-			z:CheckForChange(self)
-		end
-	end
-	
-	-- UNIT_AURA
-	function zs:PLAYER_AURAS_CHANGED()
+function zs:CheckMounted()
+	-- self:Print("CheckMounted - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
+	if (not InCombatLockdown()) then
 		local m = IsMounted()
 		if (self.mounted ~= m) then
 			self.mounted = m
@@ -1104,8 +1015,25 @@ else
 				return
 			end
 		end
-	
-		z:CheckForChange(self)
+	end
+end
+
+-- UNIT_AURA
+function zs:UNIT_AURA(unit)
+	if (unit == "player") then
+		if (not InCombatLockdown()) then
+			-- self:Print("UNIT_AURA - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
+			self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
+			if (not self.mounted and not IsMounted()) then
+				-- Nasty hack, because IsMounted() does not work immediately after
+				-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
+				-- Currently, there are no events fired when IsMounted() is toggled on
+				-- Might have to do an OnUpdate check
+				self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.5, self)
+			end
+			self:CheckMounted()
+			z:CheckForChange(self)
+		end
 	end
 end
 
@@ -1384,27 +1312,6 @@ function zs:OnResetDB()
 	template = self.db.char.templates.current
 end
 
--- hookCancelPlayerBuff
-local hookCancelPlayerBuff
-if (not wow3) then
-	function hookCancelPlayerBuff(name, rank)
-		if (z:IsActive() and z:IsModuleActive(zs)) then
-			if (type(name) == "number") then
-				name = GetPlayerBuffName(name)
-			end
-	
-			if (type(name) == "string") then
-				local buff = z.classBuffs and z.classBuffs[name]
-				if (buff and buff.cancancel) then
-					if (template[name]) then
-						zs:ModifyTemplate(name, nil)
-					end
-				end
-			end
-		end
-	end
-end
-
 -- OnModuleEnable
 function zs:OnModuleEnable()
 	self:OnResetDB()
@@ -1424,15 +1331,7 @@ function zs:OnModuleEnable()
 
 	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-	if (not wow3) then
-		self:RegisterBucketEvent("PLAYER_AURAS_CHANGED", 0.2)
-	end
 	z:CheckForChange(self)
-
-	if (not wow3 and not self.hooked) then
-		self.hooked = true
-		hooksecurefunc("CancelPlayerBuff", hookCancelPlayerBuff)
-	end
 end
 
 -- OnModuleDisable

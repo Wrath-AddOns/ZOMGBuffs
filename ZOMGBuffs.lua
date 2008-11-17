@@ -1,14 +1,3 @@
-local wow3 = select(4, GetBuildInfo()) >= 30000
-
-if (wow3) then
-	-- Temporary fix while WoW's LoD stuff is broke
-	LoadAddOn("LibBabble-Class-3.0")
-	LoadAddOn("LibSink-2.0")
-	LoadAddOn("LibSharedMedia-3.0")
-	LoadAddOn("Tablet-2.0")
-	LoadAddOn("Dewdrop-2.0")
-end
-
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
 local BC = LibStub("LibBabble-Class-3.0"):GetLookupTable()
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
@@ -54,10 +43,7 @@ local classIcons = {
 	DEATHKNIGHT = "Interface\\Icons\\Spell_DeathKnight_Subversion",
 }
 
-local classOrder = {"WARRIOR", "ROGUE", "HUNTER", "DRUID", "SHAMAN", "PALADIN", "PRIEST", "MAGE", "WARLOCK"}
-if (wow3) then
-	tinsert(classOrder, 2, "DEATHKNIGHT")
-end
+local classOrder = {"WARRIOR", "DEATHKNIGHT", "ROGUE", "HUNTER", "DRUID", "SHAMAN", "PALADIN", "PRIEST", "MAGE", "WARLOCK"}
 if (type(CLASS_BUTTONS) == "table") then
 	for class in pairs(CLASS_BUTTONS) do
 		local got
@@ -109,9 +95,7 @@ do
 	function del(t)
 		if (t) then
 			setmetatable(t, nil)
-			for k in pairs(t) do
-				t[k] = nil
-			end
+			wipe(t)
 			t[''] = true
 			t[''] = nil
 			list[t] = true
@@ -206,23 +190,10 @@ do
 		{id = 27141, type = "BOM", dur = 30,	class = true},						-- Greater Blessing of Might
 		{id = 20217, type = "BOK", dur = 5,					short = L["Kings"]},	-- Blessing of Kings
 		{id = 25898, type = "BOK", dur = 30,	class = true},						-- Greater Blessing of Kings
+		{id = 20911, type = "SAN", dur = 5,					short = L["Sanctuary"]}, -- Blessing of Sanctuary
+		{id = 25899, type = "SAN", dur = 30,	class = true},						-- Greater Blessing of Sanctuary
+		{id = 10278, type = "BOP", dur = 0.2, noTemplate = true},					-- Hand of Protection
 	}
-
-	if (wow3) then
-		tinsert(blessings, {id = 10278, type = "BOP", dur = 0.2, noTemplate = true})	-- Hand of Protection
-		tinsert(blessings, {id = 20911, type = "SAN", dur = 5, short = L["Sanctuary"]}) -- Blessing of Sanctuary
-		tinsert(blessings, {id = 25899, type = "SAN", dur = 30,	class = true})			-- Greater Blessing of Sanctuary
-	else
-		tinsert(blessings, {id = 1044,  type = "BOF", dur = 0.267,	noTemplate = true})	-- Blessing of Freedom
-		tinsert(blessings, {id = 5599,  type = "BOP", dur = 0.2,	noTemplate = true})	-- Blessing of Protection
-		tinsert(blessings, {id = 27144, type = "BOL", dur = 5, short = L["Light"]})		-- Blessing of Light
-		tinsert(blessings, {id = 27145, type = "BOL", dur = 30,	class = true})			-- Greater Blessing of Light
-		tinsert(blessings, {id = 1038,  type = "BOS", dur = 5, short = L["Salvation"]}) -- Blessing of Salvation
-		tinsert(blessings, {id = 25895, type = "BOS", dur = 30,	class = true})			-- Greater Blessing of Salvation
-		tinsert(blessings, {id = 27148, type = "SAC", dur = 0.5,	noTemplate = true})	-- Blessing of Sacrifice
-		tinsert(blessings, {id = 27168, type = "SAN", dur = 5, short = L["Sanctuary"]})	-- Blessing of Sanctuary
-		tinsert(blessings, {id = 27169, type = "SAN", dur = 30,	class = true})			-- Greater Blessing of Sanctuary
-	end
 
 	z.blessings = {}
 	for i,info in pairs(blessings) do
@@ -1981,23 +1952,14 @@ end
 -- HideMeLaterz
 local function HideMeLaterz()
 	if (not InCombatLockdown()) then
-		if (wow3) then
-			z.members:Hide()
-		else
-			z.menu:SetAttribute("state", 0)
-		end
+		z.members:Hide()
 	end
 end
 
 -- OptionsShowList
 function z:OptionsShowList()
 	if (not InCombatLockdown()) then
-		if (wow3) then
-			self.members:Show()
-		else
-			self.menu:SetAttribute("state", 0)
-			self.menu:SetAttribute("state", 1)
-		end
+		self.members:Show()
 		self:ScheduleEvent("ZOMGBuffs_HideMeLaterz", HideMeLaterz, 5)
 	end
 end
@@ -2019,15 +1981,16 @@ function z:UnitHasBuff(unit, buffName)
 		buffName = GetSpellInfo(buffName)
 		assert(buffName, "Invalid spell ID")
 	end
-	for i = 1,40 do
-		local name = UnitBuff(unit, i)
-		if (not name) then
-			break
-		end
-		if (name == buffName) then
-			return true
-		end
-	end
+	return UnitBuff(unit, buffName)
+	--for i = 1,40 do
+	--	local name = UnitBuff(unit, i)
+	--	if (not name) then
+	--		break
+	--	end
+	--	if (name == buffName) then
+	--		return true
+	--	end
+	--end
 end
 
 -- MediaCallback
@@ -2326,17 +2289,7 @@ end
 
 -- UnitBuff
 function z:UnitBuff(...)
-	if (wow3) then
-		return UnitBuff(...)
-	else
-		-- Convert WoW 2.4 return format into WoW 3.0 format
-		local name, rank, buff, count, maxDuration, timeLeft = UnitBuff(...)
-		local endTime
-		if (maxDuration and timeLeft) then
-			endTime = GetTime() + timeLeft
-		end
-		return name, rank, buff, count, "", maxDuration, endTime, (maxDuration ~= nil) and 1 or nil, nil
-	end
+	return UnitBuff(...)
 end
 
 -- Report
@@ -2491,54 +2444,27 @@ end
 
 -- SetIconSize
 function z:SetIconSize()
-	if (not wow3) then
-		self.icon.auto:SetScale(1.2 * (self.db.char.iconsize / 32))
-	end
-
 	if (self.db.char.showicon) then
-		if (wow3) then
-			self.icon:Show()
-		else
-			self.menu:Show()
-		end
+		self.icon:Show()
 		self.icon.tex:Show()
 		self.icon:SetWidth(self.db.char.iconsize)
 		self.icon:SetHeight(self.db.char.iconsize)
-		if (not wow3) then
-			self.icon.auto:SetModel("Interface\\Buttons\\UI-AutoCastButton.mdx")
-		end
 		self.icon:SetAttribute("*childstate-OnEnter", "enter")
 	else
-		if (wow3) then
-			self.icon:Hide()
-		else
-			self.menu:Hide()
-		end
+		self.icon:Hide()
 		self.icon.tex:Hide()
 		self.icon:SetHeight(1)		-- Can't hide it, needs to be visible
 		self.icon:SetWidth(1)
-		if (not wow3) then
-			self.icon.auto:ClearModel()
-		end
 		self.icon:SetAttribute("*childstate-OnEnter", nil)
 	end
 
 	-- Border
 	local border
-	if (wow3) then
-		border = self.icon.border
-	else
-		border = self.menu.border
-	end
+	border = self.icon.border
 	if (self.db.char.iconborder) then
 		if (not border) then
-			if (wow3) then
-				border = self:CreateBorder(self.icon)
-				self.icon.border = border
-			else
-				border = self:CreateBorder(self.menu)
-				self.menu.border = border
-			end
+			border = self:CreateBorder(self.icon)
+			self.icon.border = border
 		end
 		border:Show()
 	else
@@ -2600,11 +2526,7 @@ end
 -- z:SetAnchors()
 function z:SetAnchors()
 	self.members:ClearAllPoints()
-	if (wow3) then
-		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
-	else
-		self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.menu, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
-	end
+	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
 end
 
 -- CanLearn
@@ -3023,8 +2945,6 @@ function z:SetSort(show)
 	end
 end
 
-if (wow3) then
-
 -- z:OnStartup
 function z:OnStartup()
 	local icon = CreateFrame("Button", "ZOMGBuffsButton", UIParent, "SecureUnitButtonTemplate,SecureHandlerEnterLeaveTemplate")
@@ -3196,13 +3116,7 @@ function z:OnStartup()
 
 	WorldFrame:HookScript("OnMouseDown", function()
 		if (not InCombatLockdown()) then
-			if (wow3) then
-				z.members:Hide()
-			else
-				if (z.menu:GetAttribute("state") == 1) then
-					z.menu:SetAttribute("state", 0)
-				end
-			end
+			z.members:Hide()
 		end
 	end)
 
@@ -3213,166 +3127,6 @@ function z:OnStartup()
 	end
 
 	self.OnStartup = nil
-end
-
-else
-	
--- z:OnStartup
-function z:OnStartup()
-	local icon = CreateFrame("Button", "ZOMGBuffsButton", UIParent, "SecureUnitButtonTemplate,SecureAnchorEnterTemplate")
-
-	self:UpdateListWidth()
-
-	self.icon = icon
-	icon:SetClampedToScreen(true)
-	icon:SetHeight(32)
-	icon:SetWidth(32)
-	icon.tex = icon:CreateTexture(nil, "BACKGROUND")
-	icon.tex:SetAllPoints()
-	icon.tex:SetTexture("Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon")
-	icon:SetPoint("CENTER")
-	icon:SetMovable(true)
-	icon:RegisterForClicks("AnyUp")
-
-	icon.name = icon:CreateTexture(nil, "OVERLAY")
-	icon.name:SetAllPoints()
-	icon.name:SetTexture("Interface\\AddOns\\ZOMGBuffs\\Textures\\IconText")
-
-	icon.status = icon:CreateTexture(nil, "OVERLAY")
-	icon.status:SetPoint("BOTTOMRIGHT", -1, 1)
-	icon.status:SetWidth(18)
-	icon.status:SetHeight(18)
-	icon.status:Hide()
-
-	icon.auto = CreateFrame("Model", nil, icon)
-	icon.auto:SetModel("Interface\\Buttons\\UI-AutoCastButton.mdx")
-	icon.auto:Hide()
-	icon.auto:SetAllPoints()
-	icon.auto:SetSequence(0)
-	icon.auto:SetSequenceTime(0, 0)
-	icon.auto:SetScale(1.2)
-
-	icon.count = icon:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-	icon.count:Hide()
-	icon.count:SetPoint("TOPLEFT")
-	icon.count:SetPoint("BOTTOMRIGHT", -2, 2)
-	icon.count:SetJustifyH("RIGHT")
-	icon.count:SetJustifyV("BOTTOM")
-
-	icon:SetScript("OnDragStart",
-		function(self)
-			if (not z.db.char.iconlocked) then
-				self:StartMoving()
-			end
-		end)
-	icon:SetScript("OnDragStop",
-		function(self)
-			self:StopMovingOrSizing()
-			z.db.char.pos = z:GetPosition(self)
-		end)
-	icon:HookScript("OnEnter", CellOnEnter)
-	icon:HookScript("OnLeave", CellOnLeave)
-	icon:HookScript("OnClick",
-		function(self, button)
-			local command
-			if (z.db.profile.mousewheel) then
-				command = GetBindingAction(button)
-			elseif (z.db.profile.keybinding) then
-				command = GetBindingAction(z.db.profile.keybinding)
-			end
-			if (command) then
-				pcall(RunBinding, command)
-			end
-
-			if (self:GetAttribute("*type*")) then
-				z.clickCast = true
-				z.clickList = nil
-
-				if (z.noticeWindow) then
-					z.noticeWindow:Hide()
-				end
-
-				z.globalCooldownEnd = GetTime() + (self.castTimeToGCD or 1.5)
-				z:GlobalCDSchedule()
-
-				z:SetupForSpell()
-			end
-		end)
-
-	icon.UpdateTooltip = CellOnEnter
-
-	icon:RegisterForDrag("LeftButton")
-
-	icon:SetAttribute("*childraise-OnEnter", true)
-	icon:SetAttribute("*childstate-OnEnter", "enter")
-	icon:SetAttribute("*childstate-OnLeave", "leave")
-
-	local menu = CreateFrame("Frame", "ZOMGBuffsState", icon, "SecureStateHeaderTemplate")
-	self.menu = menu
-	menu:SetAllPoints(icon)
-
-	menu:SetAttribute("statemap-anchor-enter", "1")
-	menu:SetAttribute("statemap-anchor-leave", ";") -- a nonempty statemap.  to work with the delay
-	menu:SetAttribute("delaystatemap-anchor-leave", "1:0")
-	menu:SetAttribute("delaytimemap-anchor-leave",  "1:1")
-	menu:SetAttribute("delayhovermap-anchor-leave", "1:true")
-
-	icon:SetAttribute("anchorchild", menu)
-
-	local members = CreateFrame("Frame", "ZOMGBuffsList", menu, "SecureRaidGroupHeaderTemplate")
-	self.members = members
-	self:SetVisibilityOption()
-	members:UnregisterEvent("UNIT_NAME_UPDATE")				-- Fix for that old lockup issue
-	members:SetClampedToScreen(true)
-	members:SetClampRectInsets(0, 8, z.db.char.height, 0)
-	members:SetWidth(z.totalListWidth or self.db.char.width)
-	members:SetHeight(self.db.char.height)
-	members:SetFrameStrata("DIALOG")
-
-	members:HookScript("OnShow", function(self) z:DrawGroupNumbers() z:RegisterEvent("MODIFIER_STATE_CHANGED") end)
-	members:HookScript("OnHide", function(self) z:UnregisterEvent("MODIFIER_STATE_CHANGED") end)
-
-	members.initialConfigFunction = function(self)
-		-- This is the only place we're allowed to set attributes whilst in combat
-
-		z:SetTargetClick(self, true)
-
-		self:SetAttribute("initial-width", z.totalListWidth or z.db.char.width)
-		self:SetAttribute("initial-height", z.db.char.height)
-
-		z:InitCell(self)
-
-		-- Get initial list item spell, even works in-combat! zomg
-		z.canChangeFlagsIC = true
-		z:UpdateOneCellSpells(self)
-		z.canChangeFlagsIC = nil
-	end
-
-	members:SetAttribute("template", "SecureUnitButtonTemplate")
-	members:SetAttribute("sortMethod", "NAME")
-	members:SetAttribute("hidestates", 0)
-	members:SetAttribute("showstates", 1)
-
-	menu:SetAttribute("addchild", members)
-
-	WorldFrame:HookScript("OnMouseDown", function()
-		if (not InCombatLockdown()) then
-			if (z.menu:GetAttribute("state") == 1) then
-				z.menu:SetAttribute("state", 0)
-			end
-		end
-	end)
-
-	self:SetAnchors()
-
-	if (not InCombatLockdown()) then
-		self.menu:SetAttribute("state", 1)
-		self.menu:SetAttribute("state", 0)
-	end
-
-	self.OnStartup = nil
-end
-
 end
 
 -- SetTargetClick
@@ -4602,10 +4356,8 @@ function z:UNIT_AURA(unit)
 		u:DrawCell()
 	end
 
-	if (wow3) then
-		if (unit == "player" and self:UnitHasBuff("player", 46755) or self:UnitHasBuff("player", 46898)) then	-- Food/Drink
-			self:SetupForSpell()
-		end
+	if (unit == "player" and self:UnitHasBuff("player", 46755) or self:UnitHasBuff("player", 46898)) then	-- Food/Drink
+		self:SetupForSpell()
 	end
 end
 
@@ -4768,15 +4520,6 @@ end
 function z:PLAYER_CONTROL_GAINED()
 	self.lostControl = nil
 	self:RequestSpells()
-end
-
-if (not wow3) then
-	-- PLAYER_AURAS_CHANGED
-	function z:PLAYER_AURAS_CHANGED()
-		if (self:UnitHasBuff("player", 46755) or self:UnitHasBuff("player", 46898)) then	-- Food/Drink
-			self:SetupForSpell()
-		end
-	end
 end
 
 -- UNIT_SPELLCAST_CHANNEL_START
@@ -5266,28 +5009,15 @@ z.OnCommReceive = {
 
 			local cap
 			if (playerClass == "PALADIN") then
-				if (wow3) then
-					-- Correct as of build 9061
-					local c1 = select(5, GetTalentInfo(2, 2)) == 4		-- Kings (Improved x4)
-					local c3 = select(5, GetTalentInfo(2, 12)) == 1		-- Sanctuary
-					local might = select(5, GetTalentInfo(3, 5))		-- Might
-					local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
-					cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
-				else
-					local c1 = select(5, GetTalentInfo(2, 6)) == 1		-- Kings
-					local c3 = select(5, GetTalentInfo(2, 14)) == 1		-- Sanctuary
-					local might = select(5, GetTalentInfo(3, 1))		-- Might
-					local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
-					cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
-				end
+				-- Correct as of build 9061
+				local c1 = select(5, GetTalentInfo(2, 2)) == 4		-- Kings (Improved x4)
+				local c3 = select(5, GetTalentInfo(2, 12)) == 1		-- Sanctuary
+				local might = select(5, GetTalentInfo(3, 5))		-- Might
+				local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
+				cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
 			elseif (playerClass == "PRIEST") then
-				if (wow3) then
-					local c1 = select(5, GetTalentInfo(1, 13)) == 1		-- Spirit
-					cap = {canSpirit = c1}
-				else
-					local c1 = select(5, GetTalentInfo(1, 14)) == 1		-- Spirit
-					cap = {canSpirit = c1}
-				end
+				local c1 = select(5, GetTalentInfo(1, 13)) == 1		-- Spirit
+				cap = {canSpirit = c1}
 			end
 			z:SendComm(sender, "CAPABILITY", cap)
 		end
@@ -6052,9 +5782,6 @@ function z:OnEnable()
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
 	self:RegisterEvent("CHAT_MSG_ADDON")				-- For PallyPower Load on Demand support
 	self:RegisterEvent("INSPECT_TALENT_READY")
-	if (not wow3) then
-		self:RegisterEvent("PLAYER_AURAS_CHANGED")
-	end
 	self:RegisterEvent("CHAT_MSG_WHISPER")
 	self:RegisterEvent("SPELLS_CHANGED")
 	self:RegisterEvent("CHARACTER_POINTS_CHANGED")
