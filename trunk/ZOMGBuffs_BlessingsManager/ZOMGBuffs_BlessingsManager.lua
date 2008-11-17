@@ -14,14 +14,7 @@ local abCount = 0
 -- Constants
 local SHOW_CELL_EXCEPTIONS_COUNT = 3
 
-local wow3 = select(4, GetBuildInfo()) >= 30000
-
-local blessingCycle
-if (wow3) then
-	blessingCycle = {"BOM", "BOK", "BOW", "SAN"}
-else
-	blessingCycle = {"BOM", "BOK", "BOW", "BOL", "BOS", "SAN"}
-end
+local blessingCycle = {"BOM", "BOK", "BOW", "SAN"}
 
 local blessingCycleIndex = {}
 for k,v in ipairs(blessingCycle) do blessingCycleIndex[v] = k end
@@ -41,15 +34,12 @@ do
 
 	man.classSplits = {
 		WARRIOR	= {[1] = {title = L["Tank"], discover = specWeight3},	[2] = {title = L["Melee DPS"],	code = "m", discover = specWeight1or2}},
+		DEATHKNIGHT = {[1] = {title = L["Tank"], discover = specWeight2}, [2] = {title = L["Melee DPS"],	code = "c", discover = specWeight1or3}},
 		DRUID	= {[1] = {title = L["Healer"], discover = specWeight3},	[2] = {title = L["Tank"],		code = "t", discover = specWeight2}, [3] = {title = L["Melee DPS"], code = "m", discover = specWeight2}, [4] = {title = L["Caster DPS"], code = "c", discover = specWeight1}},
 		SHAMAN	= {[1] = {title = L["Healer"], discover = specWeight3},	[2] = {title = L["Melee DPS"],	code = "m", discover = specWeight2}, [3] = {title = L["Caster DPS"], code = "c", discover = specWeight1}},
 		PALADIN	= {[1] = {title = L["Healer"], discover = specWeight1},	[2] = {title = L["Tank"],		code = "t", discover = specWeight2}, [3] = {title = L["Melee DPS"], code = "m", discover = specWeight3}},
 		PRIEST	= {[1] = {title = L["Healer"], discover = specWeight1or2}, [2] = {title = L["Caster DPS"],code = "c", discover = specWeight3}},
 	}
-
-	if (wow3) then	
-		man.classSplits.DEATHKNIGHT = {[1] = {title = L["Tank"], discover = specWeight2}, [2] = {title = L["Melee DPS"],	code = "c", discover = specWeight1or3}}
-	end
 end
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
@@ -257,93 +247,48 @@ local function SetClassIcon(icon, class)
 end
 
 -- DefaultTemplateSubclass
-local DefaultTemplateSubclass
-if (wow3) then
-	function DefaultTemplateSubclass()
-		return {
-			WARRIOR = {
-				m = {"BOM", "BOK", "SAN"},
-			},
-			DEATHKNIGHT = {
-				m = {"BOM", "BOK", "SAN"},
-			},
-			DRUID = {
-				c = {"BOW", "BOK", "SAN"},
-				m = {"BOM", "BOK", "SAN", "BOW"},
-				t = {"BOK", "BOM", "SAN", "BOW"},
-			},
-			SHAMAN = {
-				c = {"BOK", "BOW", "SAN"},
-				m = {"BOM", "BOK", "BOW", "SAN"},
-			},
-			PALADIN = {
-				m = {"BOM", "BOK", "BOW", "SAN"},
-				t = {"BOK", "BOW", "SAN", "BOM"},
-			},
-			PRIEST = {
-				c = {"BOW", "BOK", "SAN"},
-			},
-		}
-	end
-else
-	function DefaultTemplateSubclass()
-		return {
-			WARRIOR = {
-				m = {"BOS", "BOM", "BOK", "BOL", "SAN"},
-			},
-			DRUID = {
-				c = {"BOS", "BOW", "BOK", "BOL", "SAN"},
-				m = {"BOS", "BOM", "BOK", "BOL", "SAN", "BOW"},
-				t = {"BOK", "BOM", "BOL", "SAN", "BOW"},
-			},
-			SHAMAN = {
-				c = {"BOS", "BOK", "BOW", "BOL", "SAN"},
-				m = {"BOS", "BOM", "BOK", "BOW", "BOL", "SAN"},
-			},
-			PALADIN = {
-				m = {"BOS", "BOM", "BOK", "BOW", "BOL", "SAN"},
-				t = {"BOK", "BOW", "SAN", "BOL", "BOM"},
-			},
-			PRIEST = {
-				c = {"BOS", "BOW", "BOK", "BOL", "SAN"},
-			},
-		}
-	end
+local function DefaultTemplateSubclass()
+	return {
+		WARRIOR = {
+			m = {"BOM", "BOK", "SAN"},
+		},
+		DEATHKNIGHT = {
+			m = {"BOM", "BOK", "SAN"},
+		},
+		DRUID = {
+			c = {"BOW", "BOK", "SAN"},
+			m = {"BOM", "BOK", "SAN", "BOW"},
+			t = {"BOK", "BOM", "SAN", "BOW"},
+		},
+		SHAMAN = {
+			c = {"BOK", "BOW", "SAN"},
+			m = {"BOM", "BOK", "BOW", "SAN"},
+		},
+		PALADIN = {
+			m = {"BOM", "BOK", "BOW", "SAN"},
+			t = {"BOK", "BOW", "SAN", "BOM"},
+		},
+		PRIEST = {
+			c = {"BOW", "BOK", "SAN"},
+		},
+	}
 end
 
 -- DefaultTemplate
-local DefaultTemplate
-if (wow3) then
-	function DefaultTemplate()
-		return {
-			WARRIOR	= {"BOK", "BOM", "SAN"},
-			DEATHKNIGHT = {"BOK", "BOM", "SAN"},
-			ROGUE	= {"BOM", "BOK", "SAN"},
-			HUNTER	= {"BOM", "BOK", "BOW", "SAN"},
-			DRUID	= {"BOW", "BOK", "SAN"},
-			SHAMAN	= {"BOW", "BOK", "SAN", "BOM"},
-			PALADIN	= {"BOW", "BOK", "SAN", "BOM"},
-			PRIEST	= {"BOW", "BOK", "SAN"},
-			MAGE	= {"BOW", "BOK", "SAN"},
-			WARLOCK	= {"BOW", "BOK", "SAN"},
-			subclass = DefaultTemplateSubclass(),
-		}
-	end
-else
-	function DefaultTemplate()
-		return {
-			WARRIOR	= {"BOK", "BOL", "BOM", "SAN"},
-			ROGUE	= {"BOS", "BOM", "BOK", "BOL", "SAN"},
-			HUNTER	= {"BOS", "BOM", "BOK", "BOW", "BOL", "SAN"},
-			DRUID	= {"BOW", "BOK", "BOS", "BOL", "SAN"},
-			SHAMAN	= {"BOW", "BOK", "BOS", "BOL", "SAN", "BOM"},
-			PALADIN	= {"BOW", "BOK", "BOS", "BOL", "SAN", "BOM"},
-			PRIEST	= {"BOW", "BOK", "BOS", "BOL", "SAN"},
-			MAGE	= {"BOS", "BOW", "BOK", "BOL", "SAN"},
-			WARLOCK	= {"BOS", "BOW", "BOK", "BOL", "SAN"},
-			subclass = DefaultTemplateSubclass(),
-		}
-	end
+local function DefaultTemplate()
+	return {
+		WARRIOR	= {"BOK", "BOM", "SAN"},
+		DEATHKNIGHT = {"BOK", "BOM", "SAN"},
+		ROGUE	= {"BOM", "BOK", "SAN"},
+		HUNTER	= {"BOM", "BOK", "BOW", "SAN"},
+		DRUID	= {"BOW", "BOK", "SAN"},
+		SHAMAN	= {"BOW", "BOK", "SAN", "BOM"},
+		PALADIN	= {"BOW", "BOK", "SAN", "BOM"},
+		PRIEST	= {"BOW", "BOK", "SAN"},
+		MAGE	= {"BOW", "BOK", "SAN"},
+		WARLOCK	= {"BOW", "BOK", "SAN"},
+		subclass = DefaultTemplateSubclass(),
+	}
 end
 
 -- SetSelf
@@ -4345,42 +4290,38 @@ function man:OnSelectTemplate()
 end
 
 -- ValidateSubClassTemplate
-if (wow3) then
-	function man:ValidateSubClassTemplate(list)
-		for i = #list,1,-1 do
-			if (list[i] == "BOL" or list[i] == "BOS") then
-				tremove(list, i)
-			end
+function man:ValidateSubClassTemplate(list)
+	for i = #list,1,-1 do
+		if (list[i] == "BOL" or list[i] == "BOS") then
+			tremove(list, i)
 		end
 	end
 end
 
 -- ValidateTemplate
 function man:ValidateTemplate(template)
-	if (wow3) then
-		for class, buffs in pairs(template) do
-			if (class ~= "modified" and class ~= "state" and class ~= "subclass") then
-				self:ValidateSubClassTemplate(buffs)
-			end
+	for class, buffs in pairs(template) do
+		if (class ~= "modified" and class ~= "state" and class ~= "subclass") then
+			self:ValidateSubClassTemplate(buffs)
 		end
-
-		for class, list in pairs(template.subclass) do
-			for class, codes in pairs(list) do
-				self:ValidateSubClassTemplate(codes)
-			end
-		end
-
-		local defTemp
-		for i,class in pairs(classOrder) do
-			if (not template[class]) then
-				if (not defTemp) then
-					defTemp = DefaultTemplate()
-				end
-				template[class] = copy(defTemp[class])
-			end
-		end
-		deepDel(defTemp)
 	end
+
+	for class, list in pairs(template.subclass) do
+		for class, codes in pairs(list) do
+			self:ValidateSubClassTemplate(codes)
+		end
+	end
+
+	local defTemp
+	for i,class in pairs(classOrder) do
+		if (not template[class]) then
+			if (not defTemp) then
+				defTemp = DefaultTemplate()
+			end
+			template[class] = copy(defTemp[class])
+		end
+	end
+	deepDel(defTemp)
 end
 
 -- OnModifyTemplate
@@ -4482,6 +4423,9 @@ function man:OnRaidRosterUpdate()
 			if (any) then
 				-- If there's any PallyPower users, they should respond immediately to the 'REQ'
 				local Type = (GetNumRaidMembers() > 0 and "RAID") or "PARTY"
+				if (Type == "RAID" and select(2, IsInInstance()) == "pvp") then
+					Type = "BATTLEGROUND"
+				end
 				SendAddonMessage("PLPWR", "ZOMG", Type)
 				SendAddonMessage("PLPWR", "REQ", Type)
 			end

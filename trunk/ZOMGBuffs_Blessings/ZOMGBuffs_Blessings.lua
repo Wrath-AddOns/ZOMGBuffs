@@ -3,8 +3,6 @@ if (ZOMGBlessings) then
 	return
 end
 
-local wow3 = select(4, GetBuildInfo()) >= 30000
-
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
@@ -37,86 +35,45 @@ local UnitInRaid		= UnitInRaid
 local UnitIsUnit		= UnitIsUnit
 local UnitPowerType		= UnitPowerType
 
-local DefaultTemplates
-if (wow3) then
-	function DefaultTemplates()
-		return {
-			[L["DPS"]] = {
-				WARRIOR = "BOM",
-				DEATHKNIGHT = "BOM",
-				ROGUE = "BOM",
-				HUNTER = "BOM",
-				DRUID = "BOM",
-				SHAMAN = "BOM",
-				PALADIN = "BOW",
-				PRIEST = "BOW",
-				MAGE = "BOW",
-				WARLOCK = "BOW",
-			},
-			[L["5-Man"]] = {
-				WARRIOR = "BOK",
-				DEATHKNIGHT = "BOM",
-				ROGUE = "BOM",
-				HUNTER = "BOM",
-				DRUID = "BOM",
-				SHAMAN = "BOW",
-				PALADIN = "BOW",
-				PRIEST = "BOW",
-				MAGE = "BOW",
-				WARLOCK = "BOW",
-			},
-			[L["Kings"]] = {
-				WARRIOR = "BOK",
-				DEATHKNIGHT = "BOK",
-				ROGUE = "BOK",
-				HUNTER = "BOK",
-				DRUID = "BOK",
-				SHAMAN = "BOK",
-				PALADIN = "BOK",
-				PRIEST = "BOK",
-				MAGE = "BOK",
-				WARLOCK = "BOK",
-			},
-		}
-	end
-else
-	function DefaultTemplates()
-		return {
-			[L["DPS"]] = {
-				WARRIOR = "BOM",
-				ROGUE = "BOM",
-				HUNTER = "BOM",
-				DRUID = "BOM",
-				SHAMAN = "BOM",
-				PALADIN = "BOW",
-				PRIEST = "BOW",
-				MAGE = "BOW",
-				WARLOCK = "BOW",
-			},
-			[L["5-Man"]] = {
-				WARRIOR = "BOK",
-				ROGUE = "BOS",
-				HUNTER = "BOS",
-				DRUID = "BOS",
-				SHAMAN = "BOS",
-				PALADIN = "BOW",
-				PRIEST = "BOS",
-				MAGE = "BOS",
-				WARLOCK = "BOS",
-			},
-			[L["Kings"]] = {
-				WARRIOR = "BOK",
-				ROGUE = "BOK",
-				HUNTER = "BOK",
-				DRUID = "BOK",
-				SHAMAN = "BOK",
-				PALADIN = "BOK",
-				PRIEST = "BOK",
-				MAGE = "BOK",
-				WARLOCK = "BOK",
-			},
-		}
-	end
+local function DefaultTemplates()
+	return {
+		[L["DPS"]] = {
+			WARRIOR = "BOM",
+			DEATHKNIGHT = "BOM",
+			ROGUE = "BOM",
+			HUNTER = "BOM",
+			DRUID = "BOM",
+			SHAMAN = "BOM",
+			PALADIN = "BOW",
+			PRIEST = "BOW",
+			MAGE = "BOW",
+			WARLOCK = "BOW",
+		},
+		[L["5-Man"]] = {
+			WARRIOR = "BOK",
+			DEATHKNIGHT = "BOM",
+			ROGUE = "BOM",
+			HUNTER = "BOM",
+			DRUID = "BOM",
+			SHAMAN = "BOW",
+			PALADIN = "BOW",
+			PRIEST = "BOW",
+			MAGE = "BOW",
+			WARLOCK = "BOW",
+		},
+		[L["Kings"]] = {
+			WARRIOR = "BOK",
+			DEATHKNIGHT = "BOK",
+			ROGUE = "BOK",
+			HUNTER = "BOK",
+			DRUID = "BOK",
+			SHAMAN = "BOK",
+			PALADIN = "BOK",
+			PRIEST = "BOK",
+			MAGE = "BOK",
+			WARLOCK = "BOK",
+		},
+	}
 end
 
 local function getOption(v)
@@ -1392,15 +1349,13 @@ function zb:ValidateTemplate(template, tell)
 		deepDel(defTemp)
 		
 		for className,buff in pairs(template) do
-			if (wow3) then
-				if (buff == "BOS" or buff == "BOL") then
-					if (not any2) then
-						any2 = true
-						self:Print(L["Removed obsolete (pre Lich King) buffs from your template."])
-					end
-					template[className] = nil
-					buff = nil
+			if (buff == "BOS" or buff == "BOL") then
+				if (not any2) then
+					any2 = true
+					self:Print(L["Removed obsolete (pre Lich King) buffs from your template."])
 				end
+				template[className] = nil
+				buff = nil
 			end
 
 			if (buff) then
@@ -1410,7 +1365,7 @@ function zb:ValidateTemplate(template, tell)
 						if (buff == "BOK") then
 							newBuff = "BOM"
 						else
-							newBuff = wow3 and "BOM" or "BOS"
+							newBuff = "BOM"
 						end
 						local newSingle = z:GetBlessingFromType(newBuff)
 						if (not IsSpellInRange(newSingle, "player")) then	-- Is only <no value> if it doesn't exist, else it's 1 or 0

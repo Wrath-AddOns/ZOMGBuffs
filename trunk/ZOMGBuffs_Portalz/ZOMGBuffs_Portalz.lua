@@ -3,8 +3,6 @@ if (ZOMGPortalz) then
 	return
 end
 
-local wow3 = select(4, GetBuildInfo()) >= 30000
-
 local L = LibStub("AceLocale-2.2"):new("ZOMGPortalz")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
@@ -616,15 +614,20 @@ function module:CreateItemButtons()
 		if (GetItemCount(30544) > 0) then
 			self:CreateItemButton(30544, true)		-- Ultrasafe Transporter: Toshley's Station
 		end
-
-		if (wow3) then
-			if (GetItemCount(44315) > 0) then
-				self:CreateItemButton(44315)		-- Scroll of Recall 3 (Level 71-80)
-			elseif (GetItemCount(44314) > 0) then
-				self:CreateItemButton(44314)		-- Scroll of Recall 2 (Level 41-70)
-			elseif (GetItemCount(37118) > 0) then
-				self:CreateItemButton(37118)		-- Scroll of Recall (Level 1-40)
+		if (UnitLevel("player") >= 80) then
+			if (GetItemCount(40586) > 0) then
+				self:CreateItemButton(40586, true)		-- Band of the Kirin'Tor
+			elseif (GetItemCount(40585) > 0) then
+				self:CreateItemButton(40585, true)		-- Signet of the Kirin'Tor
 			end
+		end
+
+		if (GetItemCount(44315) > 0) then
+			self:CreateItemButton(44315)			-- Scroll of Recall 3 (Level 71-80)
+		elseif (GetItemCount(44314) > 0) then
+			self:CreateItemButton(44314)			-- Scroll of Recall 2 (Level 41-70)
+		elseif (GetItemCount(37118) > 0) then
+			self:CreateItemButton(37118)			-- Scroll of Recall (Level 1-40)
 		end
 
 		if (self.newPortals) then
