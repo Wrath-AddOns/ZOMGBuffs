@@ -587,7 +587,8 @@ function zs:GetClassBuffs()
 			[20844]= {20, 1, 100, minLevel = 60, maxLevel = 61},			-- Deadly Poison V
 			[22053]= {20, 1, 100, minLevel = 62, maxLevel = 69},			-- Deadly Poison VI
 			[22054]= {20, 1, 100, minLevel = 70, maxLevel = 75},			-- Deadly Poison VII
-			[43232]= {20, 1, 100, minLevel = 76, maxLevel = 82},			-- Deadly Poison VIII
+			[43232]= {20, 1, 100, minLevel = 76, maxLevel = 79},			-- Deadly Poison VIII
+			[43233]= {20, 1, 100, minLevel = 80, maxLevel = 87},			-- Deadly Poison IX
 
 			[10918]= {20, 1, 100, minLevel = 32, maxLevel = 39},			-- Wound Poison I
 			[10920]= {20, 1, 100, minLevel = 40, maxLevel = 47},			-- Wound Poison II
