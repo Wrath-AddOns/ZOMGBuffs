@@ -30,5 +30,10 @@ L:RegisterTranslations("enUS", function() return {
 	["Items"]									= true,
 	["Include appropriate items as castable portals (eg: %s or %s)"] = true,
 	["Click to equip. Click again when cooldown is up"] = true,
+
+	[">>> Created a Portal to %s <<<"]			= true,
+	[">>> %s created <<<"]						= true,
+	["Announce"]								= true,
+	["Announce when you've created a portal to someplace more fun and sunny than this dark damp dungeon."] = true,
 } end)
 
