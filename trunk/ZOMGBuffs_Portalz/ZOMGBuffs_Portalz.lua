@@ -138,6 +138,15 @@ do
 				set = function(n) module.db.char.sticky = n end,
 				order = 120,
 			},
+			announce = {
+				type = 'toggle',
+				name = L["Announce"],
+				desc = L["Announce when you've created a portal to someplace more fun and sunny than this dark damp dungeon."],
+				get = function() return module.db.char.announce end,
+				set = function(n) module.db.char.announce = n end,
+				hidden = function() return select(2,UnitClass("player")) ~= "MAGE" end,
+				order = 130,
+			}
 		},
 	}
 end
@@ -151,6 +160,7 @@ function module:InitFrames()
 	frame:SetMovable(true)
 
 	if (self.db.char.anchorPoint) then
+		self.db.char.anchorPoint[2] = "UIParent"
 		frame:SetPoint(unpack(self.db.char.anchorPoint))
 	else
 		frame:SetPoint("CENTER", 0, 155)
@@ -230,6 +240,7 @@ do
 	local function buttonOnDragStop(self)
 		module.frame:StopMovingOrSizing()
 		module.db.char.anchorPoint = {module.frame:GetPoint(1)}
+		module.db.char.anchorPoint[2] = "UIParent"
 	end
 
 	-- CreateButton
@@ -499,7 +510,13 @@ end
 -- CreatePortal
 function module:CreatePortal(info, single, city)
 	local spell = single and info.single or info.group
-	local show = self.db.char.showall or GetSpellInfo(spell)
+	local show
+
+	if (not single and GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0) then
+		show = nil
+	else
+		show = self.db.char.showall or GetSpellInfo(spell)
+	end
 
 	local button = single and info.singleButton or info.groupButton
 	if (not button) then
@@ -1054,6 +1071,9 @@ function module:OnModuleInitialize()
 		locked = true,
 		scale = 1,
 		showall = false,
+		useitems = true,
+		sticky = true,
+		announce = false,
 	})
 
 	z:RegisterChatCommand({"/zomgportalz", "/zomgport"}, self.options)
@@ -1106,6 +1126,7 @@ function module:OnModuleInitialize()
 		}
 	end
 
+	self.lookup = {}
 	if (self.portals) then
 		for name, info in pairs(self.portals) do
 			local s = GetSpellInfo(info.single)
@@ -1114,6 +1135,8 @@ function module:OnModuleInitialize()
 				info.spellIDGroup = info.group
 				info.single = info.single and GetSpellInfo(info.single)
 				info.group = info.group and GetSpellInfo(info.group)
+
+				self.lookup[info.group] = name
 			else
 				self.portals[name] = nil	-- Removes unknown spells (ie: running on live WoW will not know about Dalaran portal)
 			end
@@ -1123,6 +1146,45 @@ function module:OnModuleInitialize()
 	end
 
 	self.OnModuleInitialize = nil
+end
+
+do
+	local BZ
+	-- SpellCastSucceeded
+	function module:SpellCastSucceeded(spell)
+		if (self.db.char.announce) then
+			if (GetNumRaidMembers() + GetNumPartyMembers() > 0) then
+				local translated
+				if (not BZ) then
+					if (GetLocale() == "enUS" or GetLocale() == "enGB") then
+						translated = true
+					else
+						LoadAddOn("LibBabble-Zone-3.0")
+						BZ = LibStub("LibBabble-Zone-3.0"):GetUnstrictLookupTable()
+					end
+				end
+
+				local name = self.lookup and self.lookup[spell]
+				if (name) then
+					if (BZ) then
+						if (BZ[name]) then
+							name = BZ[name]
+							translated = true
+						end
+					end
+
+					local msg
+					if (translated or strfind(spell, name)) then
+						msg = format(L[">>> Created a Portal to %s <<<"], name)			-- When name is localized
+					else
+						msg = format(L[">>> %s created <<<"], name)						-- When it is not
+					end
+
+					SendChatMessage(msg, GetNumRaidMembers() > 0 and "RAID" or "PARTY")
+				end
+			end
+		end
+	end
 end
 
 -- OnModuleEnable
