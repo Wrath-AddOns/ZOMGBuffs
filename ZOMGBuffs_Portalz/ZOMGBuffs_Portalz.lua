@@ -876,7 +876,7 @@ function module:Draw()
 		end
 	end
 
-	if (self.db.char.useitems) then
+	if (self.db.char.useitems and self.itemButtons) then
 		for city,info in pairs(self.itemButtons) do
 			if (info.singleButton) then
 				if (info.pos and info.singleButton:IsShown()) then
@@ -969,7 +969,7 @@ function module:OnUpdate(elapsed)
 			self:OnUpdateCheckCooldown(info.singleButton)
 			self:OnUpdateCheckCooldown(info.groupButton)
 		end
-		if (self.db.char.useitems) then
+		if (self.db.char.useitems and self.itemButtons) then
 			for city,info in pairs(self.itemButtons) do
 				if (info.singleButton) then
 					self:CheckDistance(info.singleButton, x, y)
@@ -1034,7 +1034,7 @@ function module:SPELL_UPDATE_COOLDOWN()
 		self:UpdateCooldown(info.singleButton)
 		self:UpdateCooldown(info.groupButton)
 	end
-	if (self.db.char.useitems) then
+	if (self.db.char.useitems and self.itemButtons) then
 		for city,info in pairs(self.itemButtons) do
 			if (info.singleButton) then
 				self:UpdateCooldown(info.singleButton)
@@ -1129,14 +1129,15 @@ function module:OnModuleInitialize()
 	self.lookup = {}
 	if (self.portals) then
 		for name, info in pairs(self.portals) do
-			local s = GetSpellInfo(info.single)
+			local s = info.single and GetSpellInfo(info.single)
 			if (s) then
 				info.spellIDSingle = info.single
 				info.spellIDGroup = info.group
-				info.single = info.single and GetSpellInfo(info.single)
+				info.single = s
 				info.group = info.group and GetSpellInfo(info.group)
-
-				self.lookup[info.group] = name
+                if (info.group) then
+					self.lookup[info.group] = name
+				end
 			else
 				self.portals[name] = nil	-- Removes unknown spells (ie: running on live WoW will not know about Dalaran portal)
 			end
