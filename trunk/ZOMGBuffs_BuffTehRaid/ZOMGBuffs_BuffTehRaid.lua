@@ -1151,10 +1151,19 @@ function zg:OnModuleInitialize()
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
 				keycode = "beacon",
-				defaultRebuff = 5,  -- TODO
+				defaultRebuff = 5,
+			},
+			SACREDSHIELD = {
+				o = 2,
+				ids = {53601},						-- Sacred Shield
+				colour = {0.7, 0.7, 0.2},
+				limited = true,
+				exclusive = true,
+				keycode = "sacredshield",
+				defaultRebuff = 5,
 			},
 			FREEDOM = {
-				o = 2,
+				o = 3,
 				ids = {1044},						-- Hand of Freedom
 				colour = {1, 0.8, 0.1},
 				limited = true,						-- Allow limited targets config
@@ -1163,7 +1172,7 @@ function zg:OnModuleInitialize()
 				defaultRebuff = 5,
 			},
 			SACRIFICE = {
-				o = 3,
+				o = 4,
 				ids = {6940},						-- Hand of Sacrifice
 				colour = {1, 0, 0},
 				limited = true,						-- Allow limited targets config
