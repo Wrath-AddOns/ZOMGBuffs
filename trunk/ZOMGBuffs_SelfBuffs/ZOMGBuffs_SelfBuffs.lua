@@ -519,11 +519,12 @@ function zs:GetClassBuffs()
 			{id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
 			{id = 34074, o = 3, duration = -1, who = "self", dup = 1, c = "B080FF"},		-- Aspect of the Viper
 			{id = 27044, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
-			{id = 5118, o = 5, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
-			{id = 13159, o = 6, duration = -1, who = "self", dup = 1, c = "B0B0B0"},		-- Aspect of the Pack
-			{id = 27045, o = 7, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
-			{id = 13161, o = 8, duration = -1, who = "self", dup = 1, c = "FFA0FF"},		-- Aspect of the Beast
-			{id = 13163, o = 9, duration = -1, who = "self", dup = 1, c = "808020"},		-- Aspect of the Monkey
+			{id = 61846, o = 5, duration = -1, who = "self", dup = 1, c = "808090"},		-- Aspect of the Dragonhawk
+			{id = 5118, o = 6, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
+			{id = 13159, o = 7, duration = -1, who = "self", dup = 1, c = "B0B0B0"},		-- Aspect of the Pack
+			{id = 27045, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
+			{id = 13161, o = 9, duration = -1, who = "self", dup = 1, c = "FFA0FF"},		-- Aspect of the Beast
+			{id = 13163, o = 10, duration = -1, who = "self", dup = 1, c = "808020"},		-- Aspect of the Monkey
 		}
 
 	elseif (playerClass == "SHAMAN") then

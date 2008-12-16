@@ -29,8 +29,6 @@ local UnitIsPVP			= UnitIsPVP
 local UnitInRaid		= UnitInRaid
 local UnitIsUnit		= UnitIsUnit
 
-local kiru = GetSpellInfo(46302)			-- Counts as INT (Ignoring STA because talented is still better)
-
 local function getOption(k)
 	return zg.db.char[k]
 end
@@ -569,13 +567,6 @@ function zg:GetBuffedMembers()
 					end
 					
 					local buff = self.lookup[name]
-					if (not buff) then
-						if (name == kiru) then		-- K'iru's Song of Victory counts as INT
-							if (playerClass == "MAGE") then
-								buff = self.buffs.INT
-							end
-						end
-					end
 					if (buff) then
 						local dur = maxDuration and maxDuration ~= 0 and endTime and (endTime - GetTime())
 						if (template[buff.type]) then
@@ -644,13 +635,6 @@ function zg:FindUnitInRangeMissing(typ)
 							end
 
 							local buff = self.lookup[name]
-							if (not buff) then
-								if (name == kiru) then		-- K'iru's Song of Victory counts as INT
-									if (playerClass == "MAGE") then
-										buff = self.buffs.INT
-									end
-								end
-							end
 							if (buff and buff.type == typ) then
 								local dur = endTime and (endTime - GetTime())
 								if (max and max ~= 0 and dur and dur < requiredTimeLeft) then
@@ -721,13 +705,13 @@ function zg:CheckBuffs()
 								if (skipClassBuffs or (missingBuff < db.groupcast or not (t1 or t2))) then
 									-- Do single buff
 									z:Notice(format(L["%s needs %s"], z:ColourUnit(unit), z:LinkSpell(buffSpec[1], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									z:SetupForSpell(unit, buffSpec[1], self)
+									z:SetupForSpell(unit, typeSpec.spellPrefs and typeSpec.spellPrefs[buffSpec[1]] or buffSpec[1], self)
 									any = true
 									break
 								else
 									-- Do group buff
 									z:Notice(format(L["%s needs %s"], RAID, z:LinkSpell(buffSpec[2], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									z:SetupForSpell(unit, buffSpec[2], self)
+									z:SetupForSpell(unit, typeSpec.spellPrefs and typeSpec.spellPrefs[buffSpec[2]] or buffSpec[2], self)
 									any = true
 									break
 								end
@@ -759,14 +743,6 @@ function zg:CheckBuffs()
 						end
 
 						local buff = self.lookup[name]
-						if (not buff) then
-							if (name == kiru) then		-- K'iru's Song of Victory counts as INT
-								if (playerClass == "MAGE") then
-									buff = self.buffs.INT
-								end
-							end
-						end
-
 						if (buff) then
 							local dur = endTime and (endTime - GetTime())
 							if (template[buff.type]) then
@@ -774,7 +750,7 @@ function zg:CheckBuffs()
 								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
 									local colour = buff.colour and z:HexColour(unpack(buff.colour))
 									z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.list[1], colour, true, z.db.profile.short and buff.name)), "buffreminder")
-									z:SetupForSpell(unit, buff.list[1], self)
+									z:SetupForSpell(unit, buff.spellPrefs and buff.spellPrefs[buff.list[1]] or buff.list[1], self)
 									any = true
 									break
 								end
@@ -832,10 +808,6 @@ function zg:UNIT_AURA(unit)
 								local name = UnitBuff(unitid, i)
 								if (not name) then
 									break
-								end
-
-								if (name == kiru) then
-									name = GetSpellInfo(27126)
 								end
 
 								local buff2 = self.lookup[name]
@@ -905,12 +877,6 @@ function zg:RebuffQuery(unit)
 			local info = self.lookup[name]
 			if (info) then
 				got[info.type] = true
-			else
-				if (name == kiru) then		-- K'iru's Song of Victory counts as INT
-					if (playerClass == "MAGE") then
-						got.INT = true
-					end
-				end
 			end
 		end
 
@@ -1050,6 +1016,10 @@ function zg:OnModuleInitialize()
 				o = 1,
 				name = SPELL_STAT4_NAME,
 				ids = {27126, 27127},				-- Arcane Intellect, Arcane Brilliance
+				spellPrefs = {
+					[GetSpellInfo(27126)] = GetSpellInfo(61024),	-- Dalaran Intellect
+					[GetSpellInfo(27127)] = GetSpellInfo(61316),	-- Dalaran Brilliance
+				},
 				group = true,
 				reagents = {nil, R["Arcane Powder"]},
 				required = true,
@@ -1269,6 +1239,12 @@ function zg:OnModuleInitialize()
 		for i,buff in pairs(v.list) do
 			self.lookup[buff] = v
 		end
+	end
+	if (playerClass == "MAGE") then
+		self.lookup[GetSpellInfo(46302)] = self.buffs.INT			-- Kiru's Song of Victory
+		self.lookup[GetSpellInfo(61024)] = self.buffs.INT			-- Dalaran Intellect
+		self.lookup[GetSpellInfo(61316)] = self.buffs.INT			-- Dalaran Brilliance
+		--self.lookup[GetSpellInfo(57567)] = self.buffs.INT			-- Fel Intellegence	(only for improved.. need to detect who cast it... sigh)
 	end
 
 	--z.OnCommReceive.AUTOGROUPASSIGNED = function(self, prefix, sender, channel, class, displayList)
