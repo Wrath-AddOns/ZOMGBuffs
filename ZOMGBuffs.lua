@@ -76,6 +76,9 @@ local function ShortDesc(a)
 end
 
 local kiru = GetSpellInfo(46302)			-- Counts as INT (Ignoring STA because talented is still better)
+local dalbless1 = GetSpellInfo(61024)		-- Dalaran Intellect
+local dalbless2 = GetSpellInfo(61316)		-- Dalaran Brilliance
+local felint = GetSpellInfo(57567)			-- Fel Intelligence
 
 local new, del, copy, deepDel
 do
@@ -3422,7 +3425,7 @@ local function DrawCell(self)
 				break
 			end
 
-			if (name == kiru) then
+			if (name == kiru or name == dalbless1 or name == dalbless2 or name == felint) then
 				name = GetSpellInfo(27126)
 			end
 
@@ -5100,6 +5103,7 @@ function z:DefaultClickBindings()
 		freedom = "CTRL-BUTTON1",
 		sacrifice = "ALT-BUTTON1",
 		beacon = "SHIFT-BUTTON1",
+		sacredshield = "SHIFT-ALT-BUTTON1",
 	}
 end
 

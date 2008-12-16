@@ -694,7 +694,7 @@ function module:SetPoints()
 			if ((j == 2) == (pat == "arc")) then
 				if (self.itemButtons) then
 					for name,info in pairs(self.itemButtons) do
-						if (info.singleButton:IsShown()) then
+						if (info.singleButton and info.singleButton:IsShown()) then
 							if (GetItemCount(name) > 0) then
 								tinsert(list, name)
 							end
