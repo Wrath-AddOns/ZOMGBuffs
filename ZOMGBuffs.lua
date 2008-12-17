@@ -2290,11 +2290,6 @@ function z:Notice(notice, sound)
 	end
 end
 
--- UnitBuff
-function z:UnitBuff(...)
-	return UnitBuff(...)
-end
-
 -- Report
 function z:Report(option)
 	if (not IsRaidOfficer() and not IsRaidLeader()) then
@@ -2328,7 +2323,7 @@ function z:Report(option)
 			if (UnitIsConnected(partyid) and not UnitIsDeadOrGhost(partyid)) then
 				groupCounts[subgroup] = groupCounts[subgroup] + 1
 				for i = 1,40 do
-					local name, rank, buff, count, _, max, endTime = self:UnitBuff(partyid, i)
+					local name, rank, buff, count, _, max, endTime = UnitBuff(partyid, i)
 					if (not name) then
 						break
 					end
@@ -3420,7 +3415,7 @@ local function DrawCell(self)
 	local doBlessings = z.db.profile.track.blessings
 	if (not UnitIsDeadOrGhost(partyid) and UnitIsConnected(partyid)) then
 		for i = 1,40 do
-			local name, rank, tex, count, _, maxDuration, endTime, isMine = z:UnitBuff(partyid, i)
+			local name, rank, tex, count, _, maxDuration, endTime, isMine = UnitBuff(partyid, i)
 			if (not name) then
 				break
 			end

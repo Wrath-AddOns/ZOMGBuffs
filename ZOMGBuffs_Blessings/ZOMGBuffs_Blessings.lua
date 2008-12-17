@@ -311,7 +311,7 @@ end
 local function GetUnitPalaBuffs(unitid, other)
 	local myBuff, otherBuffs, myBuffTimeLeft, myBuffTimeMax
 	for i = 1,40 do
-		local name, rank, buff, count, _, maxDuration, endTime, isMine = z:UnitBuff(unitid, i)
+		local name, rank, buff, count, _, maxDuration, endTime, isMine = UnitBuff(unitid, i)
 		if (not name) then
 			break
 		end

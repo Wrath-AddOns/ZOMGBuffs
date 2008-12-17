@@ -561,7 +561,7 @@ function zg:GetBuffedMembers()
 				end
 
 				for i = 1,40 do
-					local name, rank, buff, count, _, maxDuration, endTime, isMine = z:UnitBuff(unitid, i)
+					local name, rank, buff, count, _, maxDuration, endTime, isMine = UnitBuff(unitid, i)
 					if (not name) then
 						break
 					end
@@ -629,7 +629,7 @@ function zg:FindUnitInRangeMissing(typ)
 					if (UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid) == 1 and ((not z.db.profile.skippvp or not UnitIsPVP(unitid)) or UnitIsPVP("player"))) then
 						local got
 						for i = 1,40 do
-							local name, rank, buff, count, _, max, endTime = z:UnitBuff(unitid, i)
+							local name, rank, buff, count, _, max, endTime = UnitBuff(unitid, i)
 							if (not name) then
 								break
 							end
@@ -737,7 +737,7 @@ function zg:CheckBuffs()
  				if (db.groups[subgroup]) then
  					local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
 					for i = 1,40 do
-						local name, rank, buff, count, _, max, endTime = z:UnitBuff(unitid, i)
+						local name, rank, buff, count, _, max, endTime = UnitBuff(unitid, i)
 						if (not name) then
 							break
 						end
@@ -1911,7 +1911,7 @@ do
 
 	local function iconGetSpellFromUnit(self)
 		for i = 1,40 do
-			local name, rank, buff, count, _, maxDuration, endTime = z:UnitBuff(self.target, i)
+			local name, rank, buff, count, _, maxDuration, endTime = UnitBuff(self.target, i)
 			if (not name) then
 				return
 			end
