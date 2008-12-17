@@ -377,6 +377,7 @@ function zs:CheckBuffs()
 			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then		-- self.trackingBuffs[k] or
 				if (not cb.skip or not cb.skip()) then
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
+
 					local timeLeft = endTime and (endTime - GetTime())
 
 					--local timeLeft = myBuffs and myBuffs[k]
@@ -575,12 +576,12 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
-			{id = 41189, o = 1, dup = 1, duration = 30, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
-			{id = 43581, o = 2, dup = 1, duration = 30, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
-			{id = 3408, o = 3, dup = 1, duration = 30, who = "weapon", c = "40C020"},																-- Crippling Poison
-			{id = 5761, o = 4, dup = 1, duration = 30, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 43461, o = 5, dup = 1, duration = 30, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
-			{id = 57982, o = 6, dup = 1, duration = 30, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
+			{id = 41189, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
+			{id = 43581, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
+			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
+			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
+			{id = 43461, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
+			{id = 57982, o = 6, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
 		}
 		self.reagents = {
 			[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
@@ -647,10 +648,15 @@ function zs:GetClassBuffs()
 			[GetSpellInfo(19752)] = GetItemInfo(17033) or R["Symbol of Divinity"],		-- Divine Intervention
 		}
 	elseif (playerClass == "DEATHKNIGHT") then
+		local strOfEarth = GetSpellInfo(8076)										-- Strength of Earth
 		classBuffs = {
 			{id = 49222, o = 1, duration = 5, who = "self", c = "209020"},			-- Bone Armor
 			{id = 49142, o = 2, duration = 30, who = "weapon", c = "204090"},		-- Frozen Rune Weapon
-			{id = 57623, o = 3, duration = 2, who = "self", c = "808080"},			-- Horn of Winter
+			{id = 57623, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
+				skip = function()
+					return UnitBuff("player", strOfEarth) ~= nil
+				end,
+			},
 		}
 		self.notifySpells = {
 			[GetSpellInfo(46584)] = GetItemInfo(37201) or R["Corpse Dust"],			-- Raise Dead
