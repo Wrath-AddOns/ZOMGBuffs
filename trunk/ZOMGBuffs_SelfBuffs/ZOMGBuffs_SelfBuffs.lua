@@ -8,6 +8,13 @@ local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local playerClass, playerName
 local template
 
+local InCombatLockdown	= InCombatLockdown
+local IsUsableSpell		= IsUsableSpell
+local GetSpellCooldown	= GetSpellCooldown
+local GetSpellInfo		= GetSpellInfo
+local UnitBuff			= UnitBuff
+local UnitClass			= UnitClass
+
 local z = ZOMGBuffs
 local zs = z:NewModule("ZOMGSelfBuffs")
 ZOMGSelfBuffs = zs
@@ -118,39 +125,39 @@ zs.options = {
 zs.moduleOptions = zs.options
 
 -- GetMyBuffs
-function zs:GetMyBuffs()
-	local myBuffs
-	for i = 1,40 do
-		local name, rank, buff, count, _, max, endTime, isMine, isStealable = z:UnitBuff("player", i)
-		if (not name) then
-			break
-		end
-		if (isMine) then
-			local dur = endTime and (endTime - GetTime())
-			if (not myBuffs) then
-				myBuffs = new()
-			end
-			myBuffs[name] = (max > 0 and dur) or 99999
-		else
-			if (not z.zoneFlag) then	-- We can't warn immediately on zoning because time info often not available immediately
-				local t = self.classBuffs[name]
-				if (t) then
-					if (t.checkdups) then
-						if (template[name]) then
-							-- Another paladin using our defined aura
-							if (not myBuffs) then
-								myBuffs = new()
-							end
-							myBuffs[name] = 99999	-- We won't buff it because we have what we think we want
-						end
-					end
-				end
-			end
-		end
-	end
-
-	return myBuffs
-end
+--function zs:GetMyBuffs()
+--	local myBuffs
+--	for i = 1,40 do
+--		local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
+--		if (not name) then
+--			break
+--		end
+--		if (endTime) then		-- isMine) then
+--			local dur = endTime and (endTime - GetTime())
+--			if (not myBuffs) then
+--				myBuffs = new()
+--			end
+--			myBuffs[name] = (max > 0 and dur) or 99999
+--		else
+--			if (not z.zoneFlag) then	-- We can't warn immediately on zoning because time info often not available immediately
+--				local t = self.classBuffs[name]
+--				if (t) then
+--					if (t.checkdups) then
+--						if (template[name]) then
+--							-- Another paladin using our defined aura
+--							if (not myBuffs) then
+--								myBuffs = new()
+--							end
+--							myBuffs[name] = 99999	-- We won't buff it because we have what we think we want
+--						end
+--					end
+--				end
+--			end
+--		end
+--	end
+--
+--	return myBuffs
+--end
 
 -- GetExistingItemWithSequence
 local function GetExistingItemWithSequence(k, v)
@@ -314,7 +321,7 @@ function zs:CheckBuffs()
 		return
 	end
 
-	local myBuffs
+	--local myBuffs
 	if (self.db.char.useauto and not InCombatLockdown()) then
 		if (z.globalCooldownEnd > GetTime()) then
 			z:GlobalCDSchedule()
@@ -322,17 +329,19 @@ function zs:CheckBuffs()
 		end
 
 		-- Special case for Crusader Aura when mounted, and Aspect of Cheetah when resting
-		myBuffs = self:GetMyBuffs()
+		--myBuffs = self:GetMyBuffs()
 		for k,v in pairs(self.classBuffs) do
 			if (v.auto) then
-				if (not myBuffs or not myBuffs[k]) then
+				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
+				if (not name or not isMine) then
+				--if (not myBuffs or not myBuffs[k]) then
 					if (v.auto()) then
 						if (not UnitOnTaxi("player")) then
 							z:SetupForSpell()
 							z:SetupForSpell("player", k, self)
 							z:Notice(format(L["You need %s"], z:LinkSpell(k, nil, true)), "buffreminder")
 							z.icon.autospell = true
-							del(myBuffs)
+							--del(myBuffs)
 							return
 						end
 					end
@@ -346,7 +355,7 @@ function zs:CheckBuffs()
 		if (IsMounted() and not z.db.profile.notmounted) then
 			z:SetupForSpell()
 		end
-		del(myBuffs)
+		--del(myBuffs)
 		return
 	end
 
@@ -357,9 +366,9 @@ function zs:CheckBuffs()
 	end
 
 	local any
-	if (not myBuffs) then
-		myBuffs = self:GetMyBuffs()
-	end
+	--if (not myBuffs) then
+	--	myBuffs = self:GetMyBuffs()
+	--end
 
 	local minTimeLeft
 	for k,v in pairs(template) do
@@ -367,9 +376,12 @@ function zs:CheckBuffs()
 			local cb = self.classBuffs[k]
 			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then		-- self.trackingBuffs[k] or
 				if (not cb.skip or not cb.skip()) then
-					local timeLeft = myBuffs and myBuffs[k]
+					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
+					local timeLeft = endTime and (endTime - GetTime())
+
+					--local timeLeft = myBuffs and myBuffs[k]
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
-					if (not timeLeft or timeLeft < requiredTimeLeft) then
+					if (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft)) then
 						-- Need recast
 						local start, duration, enable = GetSpellCooldown(k)
 						if ((start == 0 or start + duration <= GetTime()) and enable == 1 and IsUsableSpell(k)) then
@@ -409,7 +421,7 @@ function zs:CheckBuffs()
 		self:ScheduleEvent("ZOMGBuffs_SelfCheckBuffs", self.CheckBuffs, minTimeLeft, self)
 	end
 
-	del(myBuffs)
+	--del(myBuffs)
 end
 
 -- GetClassBuffs
