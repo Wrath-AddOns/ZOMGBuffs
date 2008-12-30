@@ -702,17 +702,27 @@ function zg:CheckBuffs()
 								end
 
 								local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
+								local toBuff
 								if (skipClassBuffs or (missingBuff < db.groupcast or not (t1 or t2))) then
 									-- Do single buff
 									z:Notice(format(L["%s needs %s"], z:ColourUnit(unit), z:LinkSpell(buffSpec[1], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									z:SetupForSpell(unit, typeSpec.spellPrefs and typeSpec.spellPrefs[buffSpec[1]] or buffSpec[1], self)
+									toBuff = buffSpec[1]
 									any = true
-									break
 								else
 									-- Do group buff
 									z:Notice(format(L["%s needs %s"], RAID, z:LinkSpell(buffSpec[2], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									z:SetupForSpell(unit, typeSpec.spellPrefs and typeSpec.spellPrefs[buffSpec[2]] or buffSpec[2], self)
+									toBuff = buffSpec[2]
 									any = true
+								end
+
+								local special = typeSpec.spellPrefs and typeSpec.spellPrefs[toBuff]
+								if (special and IsUsableSpell(special)) then
+									z:SetupForSpell(unit, special, self)
+								else
+									z:SetupForSpell(unit, toBuff, self)
+								end
+
+								if (any) then
 									break
 								end
 							end
@@ -750,7 +760,12 @@ function zg:CheckBuffs()
 								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
 									local colour = buff.colour and z:HexColour(unpack(buff.colour))
 									z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.list[1], colour, true, z.db.profile.short and buff.name)), "buffreminder")
-									z:SetupForSpell(unit, buff.spellPrefs and buff.spellPrefs[buff.list[1]] or buff.list[1], self)
+									local special = buff.spellPrefs and buff.spellPrefs[buff.list[1]]
+									if (special and IsUsableSpell(special)) then
+										z:SetupForSpell(unit, special, self)
+									else
+										z:SetupForSpell(unit, buff.list[1], self)
+									end
 									any = true
 									break
 								end

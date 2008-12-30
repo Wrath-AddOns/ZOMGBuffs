@@ -61,4 +61,6 @@ L:RegisterTranslations("enUS", function() return {
 	["Removed obsolete (pre Lich King) buffs from your template."] = true,
 	["Replaced %s with %s"]								= true,
 	["Removed %s"]										= true,
+	["Felguard"]										= true,
+	["Voidwalker"]										= true,
 } end)

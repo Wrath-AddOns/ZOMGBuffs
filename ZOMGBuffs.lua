@@ -2538,6 +2538,16 @@ function z:GlobalCDSchedule()
 	self:ScheduleEvent("ZOMGBuffs_GlobalCooldownEnd", self.GlobalCooldownEnd, self.globalCooldownEnd - GetTime() + 0.1, self)
 end
 
+local HasIllusionBuff
+do
+	local worgIllusion = GetSpellInfo(43369)			-- Worg Disguise
+	local murlocIllusion = GetSpellInfo(42365)			-- Murloc Costume
+	
+	function HasIllusionBuff()
+		return UnitAura("player", worgIllusion) or UnitAura("player", murlocIllusion)
+	end
+end
+
 -- CanCheckBuffs
 function z:CanCheckBuffs(allowCombat, soloBuffs)
 	lastCheckFail = nil
@@ -2564,7 +2574,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (InCombatLockdown() and not allowCombat) then
 		lastCheckFail = L["COMBAT"]
 		icon = "combat"
-	elseif (UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) then
+	elseif ((UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) or HasIllusionBuff()) then
 		lastCheckFail = L["REMOTECONTROL"]
 		icon = "remote"
 	elseif (UnitIsCharmed("player")) then
