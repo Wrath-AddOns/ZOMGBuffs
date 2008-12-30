@@ -580,6 +580,13 @@ function zb:CheckBuffs()
 					local masterClass = select(2, UnitClass(masterUnit))
 					if (masterClass == "HUNTER") then
 						masterClass = "WARRIOR"
+					elseif (masterClass == "DEATHKNIGHT") then
+						masterClass = "ROGUE"
+					elseif (masterClass == "WARLOCK") then
+						local family = UnitCreatureFamily(unitid)
+						if (family == L["Felguard"] or family == L["Voidwalker"]) then
+							masterClass = "WARRIOR"
+						end
 					end
 					if (masterClass) then
 						if ((classesCheckPresent[masterClass] or 0) == (z.classcount[masterClass] or 0)) then
