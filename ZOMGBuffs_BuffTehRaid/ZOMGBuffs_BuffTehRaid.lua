@@ -846,6 +846,16 @@ function zg:UNIT_AURA(unit)
 	end
 end
 
+-- GetActionInsert
+function zg:GetActionInsert(buff, index)
+	local spellname = buff.list[index]
+	local altbuff = buff.spellPrefs and buff.spellPrefs[spellname]
+	if (altbuff and IsUsableSpell(altbuff)) then
+		spellname = altbuff
+	end
+	tinsert(self.actions, {name = spellname, type = buff.keycode})
+end
+
 -- GetActions
 function zg:GetActions()
 	if (self.buffs and not self.actions) then
@@ -859,10 +869,10 @@ function zg:GetActions()
 				if (buff.keycode) then
 					if (buff.group and buff.list[2]) then
 						for j = 1,#buff.list do
-							tinsert(self.actions, {name = buff.list[j], type = buff.keycode..j})
+							self:GetActionInsert(buff, j)
 						end
 					else
-						tinsert(self.actions, {name = buff.list[1], type = buff.keycode})
+						self:GetActionInsert(buff, 1)
 					end
 				end
 			end

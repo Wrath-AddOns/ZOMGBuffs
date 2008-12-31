@@ -503,15 +503,8 @@ function zb:CheckBuffs()
 		local needType = template[unitname] or template[unitclass]
 		if (needType) then
 			local myBuff, otherBuffs, myBuffTimeLeft = GetUnitPalaBuffs(unitid, true)
-			local ignore
-			if (myBuff and (myBuff.type == "BOP" or myBuff.type == "BOF" or myBuff.type == "SAC")) then
-				ignore = true
-			elseif (btr and btr:IsTrackingPlayer(unitname)) then
-				-- BOF or SAC expected on this person
-				ignore = true
-			end
 
-			if (not ignore and ((needType and needType ~= (myBuff and myBuff.type)) or (myBuff and (myBuff.class and myBuffTimeLeft < zb.db.char.greater * 60) or (not myBuff.class and myBuffTimeLeft < zb.db.char.single * 60)))) then
+			if ((needType and needType ~= (myBuff and myBuff.type)) or (myBuff and (myBuff.class and myBuffTimeLeft < zb.db.char.greater * 60) or (not myBuff.class and myBuffTimeLeft < zb.db.char.single * 60))) then
 				-- Doesn't have ours, or ours is soon to expire
 				if (not otherBuffs or not otherBuffs[needType]) then
 					-- Has noone else's buff of same type
