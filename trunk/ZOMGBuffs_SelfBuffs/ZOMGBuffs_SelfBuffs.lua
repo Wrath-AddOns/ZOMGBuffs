@@ -385,7 +385,7 @@ function zs:CheckBuffs()
 					if (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft)) then
 						-- Need recast
 						local start, duration, enable = GetSpellCooldown(k)
-						if ((start == 0 or start + duration <= GetTime()) and enable == 1 and IsUsableSpell(k)) then
+						if ((start and (start == 0 or start + duration <= GetTime())) and enable == 1 and IsUsableSpell(k)) then
 							if (not InCombatLockdown() or not cb.nocombatnotice) then
 								z:Notice(format(L["You need %s"], z:LinkSpell(k, nil, true)), "buffreminder")
 							end
