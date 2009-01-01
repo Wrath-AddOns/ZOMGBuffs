@@ -641,7 +641,13 @@ function zs:GetClassBuffs()
 			{id = 27151, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Shadow Resistance Aura
 			{id = 27152, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
 			{id = 27153, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
-			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
+			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
+			{id = 54428, o = 21, duration = 0.25, who = "self", c = "FFFF70", noauto = true,
+				skip = function()
+					local mana, maxmana = UnitMana("player"), UnitManaMax("player")
+					return (mana / maxmana) > 0.75					-- Skip if over 75% mana
+				end
+			},
 		}
 
 		self.notifySpells = {
