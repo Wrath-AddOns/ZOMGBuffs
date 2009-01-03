@@ -1054,19 +1054,18 @@ do
 		if (self:IsShown()) then
 			local unit = self:GetAttribute("unit")
 			if (unit) then
+				self:UpdateBar()
 				if (UnitCanAssist("player", unit)) then
 					local myBuff, otherBuffs, myBuffTimeLeft, myBuffTimeMax = GetUnitPalaBuffs(unit)
 					if (myBuff and myBuff.type == self.needType and myBuffTimeLeft and myBuffTimeMax) then
 						self.timer:SetMinMaxValues(0, myBuffTimeMax)
 						self.timer:SetValue(myBuffTimeLeft)
 						self.timer:Show()
-						self:UpdateBar()
 						return
 					end
 				end
 
 				self.timer:Hide()
-				self:SetAlpha(1)
 			end
 		end
 	end
@@ -1076,7 +1075,9 @@ do
 		local Min, Max = self.timer:GetMinMaxValues()
 		local a = self.timer:GetValue()
 
-		if (a < zb.db.char.single * 60) then
+		local spell = self:GetAttribute("spell")
+		local unit = self:GetAttribute("unit")
+		if (UnitCanAssist("player", unit) and IsSpellInRange(spell, unit) and a < zb.db.char.single * 60) then
 			self:SetAlpha(1)
 		else
 			self:SetAlpha(zb.db.char.iconfade)
