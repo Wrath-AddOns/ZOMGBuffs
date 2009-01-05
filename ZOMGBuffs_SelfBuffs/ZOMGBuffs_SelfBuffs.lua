@@ -1029,13 +1029,19 @@ function zs:SpellCastFailed(spell, rank, manual)
 	end
 end
 
+-- CheckMounted
 function zs:CheckMounted()
-	-- self:Print("CheckMounted - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
+	if (self.checkMountedCounter and self.checkMountedCounter > 0) then
+		self.checkMountedCounter = self.checkMountedCounter - 1
+		self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+	end
+
 	if (not InCombatLockdown()) then
 		local m = IsMounted()
 		if (self.mounted ~= m) then
 			self.mounted = m
 			if (m) then
+				self.checkMountedCounter = nil
 				z:SetupForSpell()
 				self:CheckBuffs()
 				return
@@ -1055,7 +1061,8 @@ function zs:UNIT_AURA(unit)
 				-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
 				-- Currently, there are no events fired when IsMounted() is toggled on
 				-- Might have to do an OnUpdate check
-				self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.5, self)
+				self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+				self.checkMountedCounter = 10
 			end
 			self:CheckMounted()
 			z:CheckForChange(self)
