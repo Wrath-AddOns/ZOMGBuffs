@@ -2574,7 +2574,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (InCombatLockdown() and not allowCombat) then
 		lastCheckFail = L["COMBAT"]
 		icon = "combat"
-	elseif ((UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) or HasIllusionBuff()) then
+	elseif (HasIllusionBuff()) then		-- (UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) or 
 		lastCheckFail = L["REMOTECONTROL"]
 		icon = "remote"
 	elseif (UnitIsCharmed("player")) then
@@ -5162,6 +5162,7 @@ function z:OnInitialize()
 		showroles = true,
 		iconname = true,
 		iconswirl = true,
+		showFubar = true,
 	} )
 	self:RegisterDefaults("char", {
 		firstStartup = true,
