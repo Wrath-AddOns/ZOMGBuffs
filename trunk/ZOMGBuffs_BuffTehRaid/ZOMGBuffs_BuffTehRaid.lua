@@ -2091,6 +2091,7 @@ do
 	local function iconOnHide(self)
 		self:UnregisterEvent("UNIT_AURA")
 		self:UnregisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+		self.key = nil
 	end
 
 	local function iconSetPosition(self)

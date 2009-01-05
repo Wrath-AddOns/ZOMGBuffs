@@ -259,6 +259,5 @@ L:RegisterTranslations("zhCN", function() return {
 							"分类：{X-Category}\r"..
 							"E-mail：{X-Email}\r"..
 							"网站：{X-Website}\r"..
-							"汉化：|cFFFFFF80Kurax Kuang - http://www.cwowaddon.com|r\r"..
 							"授权: {X-License}\r"
 } end)
