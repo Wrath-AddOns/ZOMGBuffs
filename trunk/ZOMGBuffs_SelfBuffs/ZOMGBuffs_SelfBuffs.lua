@@ -382,7 +382,7 @@ function zs:CheckBuffs()
 
 					--local timeLeft = myBuffs and myBuffs[k]
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
-					if (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft)) then
+					if ((cb.needStacks and (count or 0) < cb.needStacks) or (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft))) then
 						-- Need recast
 						local start, duration, enable = GetSpellCooldown(k)
 						if ((start and (start == 0 or start + duration <= GetTime())) and enable == 1 and IsUsableSpell(k)) then
@@ -576,12 +576,13 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
-			{id = 41189, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
-			{id = 43581, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
-			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
-			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 43461, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
-			{id = 57982, o = 6, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
+			{id = 51662, o = 1, duration = 0.5, needStacks = 3, who = "self", c = "FFFF80"},	-- Hunger for Blood
+			{id = 41189, o = 3, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
+			{id = 43581, o = 4, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
+			{id = 3408, o = 5, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
+			{id = 5761, o = 6, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
+			{id = 43461, o = 7, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
+			{id = 57982, o = 8, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
 		}
 		self.reagents = {
 			[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
@@ -1353,10 +1354,15 @@ function zs:OnModuleEnable()
 	playerClass = select(2, UnitClass("player"))
 
 	if (playerClass == "ROGUE") then
-		if (self.db.char.reagents.flashpowder == nil) then
-			self.db.char.reagents.flashpowder = 20
+		self.db.char.reagents.flashpowder = nil
+
+		if (not self.db.char.hfbdone) then
+			-- New default for Hunger for Blood
+			self.db.char.hfbdone = true
+			self.db.char.rebuff[GetSpellInfo(51662)] = 5
 		end
 	end
+
 	self:OnSpellsChanged()
 	z:MakeOptionsReagentList()
 
