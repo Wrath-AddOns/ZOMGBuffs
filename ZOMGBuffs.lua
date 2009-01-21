@@ -79,6 +79,7 @@ local kiru = GetSpellInfo(46302)			-- Counts as INT (Ignoring STA because talent
 local dalbless1 = GetSpellInfo(61024)		-- Dalaran Intellect
 local dalbless2 = GetSpellInfo(61316)		-- Dalaran Brilliance
 local felint = GetSpellInfo(57567)			-- Fel Intelligence
+local battleshout = GetSpellInfo(6673)		-- Battle Shout
 
 local new, del, copy, deepDel
 do
@@ -2523,8 +2524,10 @@ end
 
 -- z:SetAnchors()
 function z:SetAnchors()
+	local d = self.db.char.iconborder and 3 or 0
 	self.members:ClearAllPoints()
-	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, 0 + (self.db.char.iconborder and 3 or 0))
+	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, d)
+	self.icon:SetHitRectInsets(-d, -d, -d, -d)
 end
 
 -- CanLearn
@@ -2541,12 +2544,14 @@ end
 local HasIllusionBuff
 do
 	local worgIllusion = GetSpellInfo(43369)			-- Worg Disguise
-	local murlocIllusion = GetSpellInfo(42365)			-- Murloc Costume
-	
+	local murlocIllusion = GetSpellInfo(45278)			-- King Mrgl-Mrgl's Spare Suit
+
 	function HasIllusionBuff()
 		return UnitAura("player", worgIllusion) or UnitAura("player", murlocIllusion)
 	end
 end
+
+local invisibility = GetSpellInfo(32612)
 
 -- CanCheckBuffs
 function z:CanCheckBuffs(allowCombat, soloBuffs)
@@ -2583,6 +2588,10 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (IsStealthed() and self.db.profile.notstealthed) then
 		lastCheckFail = L["STEALTHED"]
 		icon = "stealth"
+	elseif (UnitBuff("player", invisibility)) then
+		lastCheckFail = L["INVIS"]
+		icon = "icon"
+		icontex = select(3, GetSpellInfo(32612))
 	elseif (GetShapeshiftForm() > 0 and (playerClass == "DRUID" or playerClass == "SHAMAN") and self.db.profile.notshifted) then
 		lastCheckFail = L["SHAPESHIFTED"]
 		icon = "icon"
@@ -3035,57 +3044,19 @@ function z:OnStartup()
 	icon.UpdateTooltip = CellOnEnter
 
 	icon:RegisterForDrag("LeftButton")
-	--icon:SetAttribute("closeTime", nil)
 
-	icon:SetAttribute("_onenter",
-		[[ 
-			self:GetFrameRef("list"):SetAlpha(1)
-			self:GetFrameRef("list"):Show()
-			self:SetAttribute("closeTime", nil)
-			control:SetAnimating(true)
-		]]
-	)
-	icon:SetAttribute("_onleave",
-		[[
-			self:SetAttribute("closeTime", 1)
-			self:SetAttribute("fadeTime", nil)
-		]]
-	)
-
-	-- TODO timer dispatch when that's fixed
-	icon:SetAttribute("_onupdate",
-		[[
+	icon:SetAttribute("_onenter", [[
 			local list = self:GetFrameRef("list")
-			if (list:IsUnderMouse(true)) then
-				list:SetAlpha(1)
-				self:SetAttribute("closeTime", 1)
-				return
+			if (list) then
+				list:Show()
 			end
-
-			local closeTime = self:GetAttribute("closeTime")
-			if (closeTime) then
-				closeTime = closeTime - elapsed
-				if (closeTime <= 0) then
-					closeTime = nil
-					self:SetAttribute("fadeTime", 0.33)
-				end
-				self:SetAttribute("closeTime", closeTime)
-			else
-				local fadeTime = self:GetAttribute("fadeTime")
-				if (fadeTime) then
-					fadeTime = fadeTime - elapsed
-					list:SetAlpha(fadeTime * 3)
-					if (fadeTime <= 0) then
-						fadeTime = nil
-						list:Hide()
-						list:SetAlpha(1)
-						control:SetAnimating(false)
-					end
-					self:SetAttribute("fadeTime", fadeTime)
-				end
+		]])
+	icon:SetAttribute("_onleave", [[
+			local list = self:GetFrameRef("list")
+			if (list and not list:IsUnderMouse(true)) then
+				list:Hide()
 			end
-		]]
-	)
+		]])
 
 	local members = CreateFrame("Frame", "ZOMGBuffsList", icon, "SecureRaidGroupHeaderTemplate")
 	members:Hide()
@@ -3117,6 +3088,14 @@ function z:OnStartup()
 		z.canChangeFlagsIC = true
 		z:UpdateOneCellSpells(self)
 		z.canChangeFlagsIC = nil
+
+		SecureHandlerWrapScript(self, "OnEnter", members, "")
+		SecureHandlerWrapScript(self, "OnLeave", members, [[
+			local list = self:GetParent()
+			if (list and not list:IsUnderMouse(true)) then
+				list:Hide()
+			end
+		]])
 	end
 
 	members:SetAttribute("template", "SecureUnitButtonTemplate")
@@ -3465,7 +3444,12 @@ local function DrawCell(self)
 			end
 
 			if (doBlessings) then
-				local b = z.blessings[name]
+				local b
+				if (name == battleshout) then
+					b = z.blessings.BOM
+				else
+					b = z.blessings[name]
+				end
 				if (b) then
 					-- We use a flag system for the paladin buffs, so we can make them always display in the same order
 					local key = palaKeys[b.type]

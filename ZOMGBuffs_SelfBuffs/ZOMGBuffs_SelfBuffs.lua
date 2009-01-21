@@ -634,6 +634,7 @@ function zs:GetClassBuffs()
 			{id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
 			{id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Blood
 			{id = 31801, o = 7,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Vengeance
+			{id = 20164, o = 8,  duration = 2, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
 			{id = 25780, o = 10, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
 			{id = 27179, o = 11, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
 			{id = 27149, o = 13, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
@@ -643,7 +644,7 @@ function zs:GetClassBuffs()
 			{id = 27152, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
 			{id = 27153, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
 			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
-			{id = 54428, o = 21, duration = 0.25, who = "self", c = "FFFF70", noauto = true,
+			{id = 54428, o = 21, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
 				skip = function()
 					local mana, maxmana = UnitMana("player"), UnitManaMax("player")
 					return (mana / maxmana) > 0.75					-- Skip if over 75% mana
