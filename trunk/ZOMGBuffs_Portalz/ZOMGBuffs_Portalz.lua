@@ -636,6 +636,10 @@ function module:CreateItemButtons()
 				self:CreateItemButton(40586, true)		-- Band of the Kirin'Tor
 			elseif (GetItemCount(40585) > 0) then
 				self:CreateItemButton(40585, true)		-- Signet of the Kirin'Tor
+			elseif (GetItemCount(44925) > 0) then
+				self:CreateItemButton(44925, true)		-- Ring of the Kirin'Tor
+			elseif (GetItemCount(44934) > 0) then
+				self:CreateItemButton(44934, true)		-- Loop of the Kirin'Tor
 			end
 		end
 
