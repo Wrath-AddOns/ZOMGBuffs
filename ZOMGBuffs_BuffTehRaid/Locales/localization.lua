@@ -40,6 +40,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Reset on Clear"]								= true,
 	["If noone is selected for this buff when you disable it, then the next time it is enabled, everyone will default to ON. If disabled, the last settings will be remembered"] = true,
 	["%d of %d stacks remain"]						= true,
+	["%s remains"]									= true,
 	["Tracker"]										= true,
 	["Tracker Icon for single target exclusive buffs"] = true,
 	["Enable"]										= true,

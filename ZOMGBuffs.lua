@@ -2524,7 +2524,7 @@ end
 
 -- z:SetAnchors()
 function z:SetAnchors()
-	local d = self.db.char.iconborder and 3 or 0
+	local d = self.db.char.iconborder and 5 or 0
 	self.members:ClearAllPoints()
 	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, d)
 	self.icon:SetHitRectInsets(-d, -d, -d, -d)
@@ -3053,7 +3053,7 @@ function z:OnStartup()
 		]])
 	icon:SetAttribute("_onleave", [[
 			local list = self:GetFrameRef("list")
-			if (list and not list:IsUnderMouse(true)) then
+			if (list and not list:IsUnderMouse(true) and not self:IsUnderMouse(true)) then
 				list:Hide()
 			end
 		]])
@@ -3092,7 +3092,7 @@ function z:OnStartup()
 		SecureHandlerWrapScript(self, "OnEnter", members, "")
 		SecureHandlerWrapScript(self, "OnLeave", members, [[
 			local list = self:GetParent()
-			if (list and not list:IsUnderMouse(true)) then
+			if (list and not list:IsUnderMouse(true) and not list:GetParent():IsUnderMouse(true)) then
 				list:Hide()
 			end
 		]])
@@ -4873,18 +4873,22 @@ function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
 end
 
 do
-	local function chatFilter(msg)
+	local function chatFilter(...)
+		local msg = ...
 		for match in pairs(z.chatMatch) do
 			if (strsub(msg, 1, strlen(match)) == match) then
-				return true
+				return true, ...
 			end
 		end
+		return false, ...
 	end
 
-	local function chatFilterInform(msg)
+	local function chatFilterInform(...)
+		local msg = ...
 		if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
-			return true
+			return true, ...
 		end
+		return false, ...
 	end
 
 	-- MatchChat

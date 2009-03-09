@@ -2000,6 +2000,7 @@ do
 	local function iconUpdateTooltip(self)
 		local got, count, endTime, maxDuration = self:GetSpellFromUnit()
 		local buff = zg.buffs[self.key]
+		if (not buff) then return end
 		local buffColour = z:HexColour(unpack(buff.colour))
 		local keyb
 		if (zg.db.char.keybinding and self.keybinding) then
@@ -2022,7 +2023,7 @@ do
 			end
 			if (endTime) then
 				local r, g, b = SmoothColour((endTime - GetTime()) / maxDuration)
-				GameTooltip:AddLine(format("%s remains", date("%M:%S", endTime - GetTime())), r, g, b)
+				GameTooltip:AddLine(format(L["%s remains"], date("%M:%S", endTime - GetTime()) or "0:00"), r, g, b)
 			end
 		end
 

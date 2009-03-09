@@ -336,7 +336,7 @@ function zs:CheckBuffs()
 				if (not name or not isMine) then
 				--if (not myBuffs or not myBuffs[k]) then
 					if (v.auto()) then
-						if (not UnitOnTaxi("player")) then
+						if (not UnitOnTaxi("player") and not UnitIsDeadOrGhost("player")) then
 							z:SetupForSpell()
 							z:SetupForSpell("player", k, self)
 							z:Notice(format(L["You need %s"], z:LinkSpell(k, nil, true)), "buffreminder")
@@ -552,7 +552,7 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
-			{id = 26372, o = 1, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
+			{id = 49281, o = 1, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
 			{id = 33736, o = 4, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
 			{id = 25505, o = 1, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
 			{id = 25489, o = 2, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
