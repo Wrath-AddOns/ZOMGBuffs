@@ -318,6 +318,9 @@ local function GetUnitPalaBuffs(unitid, other)
 
 		local b = z.blessings[name]
 		if (b) then
+			if (isWoW3dot1) then
+				isMine = isMine == "player"
+			end
 			if (isMine) then
 				myBuff = b
 				myBuffTimeLeft = endTime - GetTime()

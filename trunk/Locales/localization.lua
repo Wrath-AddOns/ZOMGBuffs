@@ -65,6 +65,8 @@ L:RegisterTranslations("enUS", function() return {
 	["General buffing behaviour"] = true,
 	["Not When Resting"]	= true,
 	["Don't auto buff when Resting"] = true,
+	["...unless PvP"]		= true,
+	["Allow auto buffing when resting when your PvP is enabled"] = true,
 	["Not When Mounted"]	= true,
 	["Don't auto buff when Mounted"] = true,
 	["Not When Stealthed"]	= true,

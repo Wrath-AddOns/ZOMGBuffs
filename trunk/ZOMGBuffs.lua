@@ -3,6 +3,8 @@ local BC = LibStub("LibBabble-Class-3.0"):GetLookupTable()
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
+local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
+
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
 BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
@@ -525,6 +527,15 @@ z.options = {
 					passValue = "notresting",
 					order = 112,
 				},
+				restingpvp = {
+					type = 'toggle',
+					name = L["...unless PvP"],
+					desc = L["Allow auto buffing when resting when your PvP is enabled"],
+					get = getOption,
+					set = setOptionUpdate,
+					passValue = "restingpvp",
+					order = 113,
+				},
 				notmounted = {
 					type = 'toggle',
 					name = L["Not When Mounted"],
@@ -532,7 +543,7 @@ z.options = {
 					get = getOption,
 					set = setOptionUpdate,
 					passValue = "notmounted",
-					order = 113,
+					order = 114,
 				},
 				notstealthed = {
 					type = 'toggle',
@@ -542,7 +553,7 @@ z.options = {
 					set = setOptionUpdate,
 					hidden = function() return playerClass ~= "DRUID" and playerClass ~= "ROGUE" end,
 					passValue = "notstealthed",
-					order = 114,
+					order = 115,
 				},
 				notshifted = {
 					type = 'toggle',
@@ -552,7 +563,7 @@ z.options = {
 					set = setOptionUpdate,
 					hidden = function() return playerClass ~= "DRUID" and playerClass ~= "SHAMAN" end,
 					passValue = "notshifted",
-					order = 115,
+					order = 116,
 				},
 				notWithSpiritTap = {
 					type = 'toggle',
@@ -2557,7 +2568,8 @@ local invisibility = GetSpellInfo(32612)
 function z:CanCheckBuffs(allowCombat, soloBuffs)
 	lastCheckFail = nil
 	local icon, icontex
-	
+	local p = self.db.profile
+
 	if (self.rosterInvalid and not soloBuffs) then
 		return false, "Waiting for RosterLib update"
 	elseif (self.zoneFlag and self.zoneFlag < GetTime() - 5) then
@@ -2567,7 +2579,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 		icon = "skull"
 	elseif (not self.icon) then
 		lastCheckFail = L["ERRORICON"]
-	elseif (not self.db.profile.enabled) then
+	elseif (not p.enabled) then
 		lastCheckFail = L["DISABLED"]
 		icon = "disabled"
 	elseif (UnitOnTaxi("player")) then
@@ -2585,14 +2597,14 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (UnitIsCharmed("player")) then
 		lastCheckFail = L["NOCONTROL"]
 		icon = "nocontrol"
-	elseif (IsStealthed() and self.db.profile.notstealthed) then
+	elseif (IsStealthed() and p.notstealthed) then
 		lastCheckFail = L["STEALTHED"]
 		icon = "stealth"
 	elseif (UnitBuff("player", invisibility)) then
 		lastCheckFail = L["INVIS"]
 		icon = "icon"
 		icontex = select(3, GetSpellInfo(32612))
-	elseif (GetShapeshiftForm() > 0 and (playerClass == "DRUID" or playerClass == "SHAMAN") and self.db.profile.notshifted) then
+	elseif (GetShapeshiftForm() > 0 and (playerClass == "DRUID" or playerClass == "SHAMAN") and p.notshifted) then
 		lastCheckFail = L["SHAPESHIFTED"]
 		icon = "icon"
 		icontex = GetShapeshiftFormInfo(GetShapeshiftForm())
@@ -2604,10 +2616,10 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	end
 
 	if (not lastCheckFail and not InCombatLockdown()) then
-		if (IsResting() and self.db.profile.notresting) then
+		if (IsResting() and p.notresting and not (p.restingpvp and UnitIsPVP("player"))) then
 			lastCheckFail = L["RESTING"]
 			icon = "resting"
-		elseif ((IsMounted() or IsFlying()) and self.db.profile.notmounted) then
+		elseif ((IsMounted() or IsFlying()) and p.notmounted) then
 			lastCheckFail = L["MOUNTED"]
 			icon = "mounted"
 		elseif (self:UnitHasBuff("player", 46755)) then		-- Drink
@@ -2621,7 +2633,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 			local name, nameSubtext, text, texture, startTime, endTime, isTradeSkill = UnitChannelInfo("player")
 			icon = "icon"
 			icontex = texture
-		elseif (playerClass == "PRIEST" and self.db.profile.notWithSpiritTap) then
+		elseif (playerClass == "PRIEST" and p.notWithSpiritTap) then
 			if (self:UnitHasBuff("player", 15338)) then		-- Spirit Tap
 				lastCheckFail = L["SPIRITTAP"]
 				icon = "spirittap"
@@ -3413,6 +3425,9 @@ local function DrawCell(self)
 				name = GetSpellInfo(27126)
 			end
 
+			if (isWoW3dot1) then
+				isMine = isMine == "player"
+			end
 			if (isMine and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
 				if (z:ShowBuffBar(self, name)) then
 					myMax, myEnd = maxDuration, endTime
@@ -4873,22 +4888,43 @@ function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
 end
 
 do
-	local function chatFilter(...)
-		local msg = ...
-		for match in pairs(z.chatMatch) do
-			if (strsub(msg, 1, strlen(match)) == match) then
+	local chatFilter, chatFilterInform
+	if (isWoW3dot1) then
+		function chatFilter(self, event, ...)
+			local msg = ...
+			for match in pairs(z.chatMatch) do
+				if (strsub(msg, 1, strlen(match)) == match) then
+					return true, ...
+				end
+			end
+			return false, ...
+		end
+
+		function chatFilterInform(self, event, ...)
+			local msg = ...
+			if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
 				return true, ...
 			end
+			return false, ...
 		end
-		return false, ...
-	end
+	else
+		function chatFilter(...)
+			local msg = ...
+			for match in pairs(z.chatMatch) do
+				if (strsub(msg, 1, strlen(match)) == match) then
+					return true, ...
+				end
+			end
+			return false, ...
+		end
 
-	local function chatFilterInform(...)
-		local msg = ...
-		if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
-			return true, ...
+		function chatFilterInform(...)
+			local msg = ...
+			if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
+				return true, ...
+			end
+			return false, ...
 		end
-		return false, ...
 	end
 
 	-- MatchChat
