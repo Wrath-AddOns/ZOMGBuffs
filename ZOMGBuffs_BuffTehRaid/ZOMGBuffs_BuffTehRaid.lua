@@ -1,4 +1,4 @@
-if (ZOMGBuffTehRaid) then
+﻿if (ZOMGBuffTehRaid) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_BuffTehRaid (Addons\ZOMGBuffs\ZOMGBuffs_BuffTehRaid and Addons\ZOMGBuffs_BuffTehRaid)")
 	return
 end
@@ -960,8 +960,7 @@ function zg:OnModuleInitialize()
 				reagents = {nil, {
 						[1] = GetItemInfo(17028) or R["Holy Candle"],
 						[2] = GetItemInfo(17029) or R["Sacred Candle"],
-						[3] = GetItemInfo(17029) or R["Sacred Candle"],
-						[4] = GetItemInfo(44615) or R["Devout Candle"],
+						[3] = GetItemInfo(44615) or R["Devout Candle"],
 					},
 				},
 				required = true,
