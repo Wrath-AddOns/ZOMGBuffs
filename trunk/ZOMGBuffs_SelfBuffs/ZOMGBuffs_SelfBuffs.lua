@@ -443,9 +443,9 @@ function zs:GetClassBuffs()
 			[GetItemInfo(17035) or R["Stranglethorn Seed"]]	= {20, 1, 50, minLevel = 30, maxLevel = 39},
 			[GetItemInfo(17036) or R["Ashwood Seed"]]			= {20, 1, 50, minLevel = 40, maxLevel = 49},
 			[GetItemInfo(17037) or R["Hornbeam Seed"]]		= {20, 1, 50, minLevel = 50, maxLevel = 59},
-			[GetItemInfo(17038) or R["Ironwood Seed"]]		= {20, 1, 50, minLevel = 60, maxLevel = 69},
-			[GetItemInfo(22147) or R["Flintweed Seed"]]		= {20, 1, 50, minLevel = 70, maxLevel = 79},
-			[GetItemInfo(44614) or R["Starleaf Seed"]]		= {20, 1, 50, minLevel = 70, maxLevel = 79},
+			[GetItemInfo(17038) or R["Ironwood Seed"]]		= {20, 1, 50, minLevel = 60, maxLevel = 68},
+			[GetItemInfo(22147) or R["Flintweed Seed"]]		= {20, 1, 50, minLevel = 69, maxLevel = 78},
+			[GetItemInfo(44614) or R["Starleaf Seed"]]		= {20, 1, 50, minLevel = 79, maxLevel = 88},
 		}
 		self.notifySpells = {
 			[GetSpellInfo(26994)] = {		-- Rebirth
@@ -580,11 +580,11 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
 			{id = 51662, o = 1, duration = 0.5, needStacks = 3, who = "self", c = "FFFF80"},	-- Hunger for Blood
-			{id = 41189, o = 3, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Instant Poison
-			{id = 43581, o = 4, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},	-- Deadly Poison
+			{id = 41189, o = 3, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Instant Poison
+			{id = 43581, o = 4, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Deadly Poison
 			{id = 3408, o = 5, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
 			{id = 5761, o = 6, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 43461, o = 7, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V"}},					-- Wound Poison
+			{id = 43461, o = 7, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},					-- Wound Poison
 			{id = 57982, o = 8, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
 		}
 		self.reagents = {
