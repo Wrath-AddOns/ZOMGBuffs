@@ -85,31 +85,51 @@ local battleshout = GetSpellInfo(6673)		-- Battle Shout
 
 local new, del, copy, deepDel
 do
+--@debug@
+	local protect = {
+		__newindex = function(self) error("Attempt to assign to a recycled table") end,
+		__index = function(self) error("Attempt to access a recycled table") end,
+	}
+--@no-debug@
+
+	local next, select, pairs, type = next, select, pairs, type
 	local list = setmetatable({},{__mode='k'})
+
 	function new(...)
 		local t = next(list)
 		if t then
 			list[t] = nil
+--@debug@
+			setmetatable(t, nil)
+			assert(not next(t))
+--@no-debug@
 			for i = 1, select('#', ...) do
 				t[i] = select(i, ...)
 			end
 			return t
 		else
-			return {...}
+			t = {...}
+			return t
 		end
 	end
 	function del(t)
 		if (t) then
 			setmetatable(t, nil)
+
 			wipe(t)
 			t[''] = true
 			t[''] = nil
 			list[t] = true
+--@debug@
+			assert(not next(t))
+			setmetatable(t, protect)
+--@no-debug@
 		end
 	end
 	function deepDel(t)
 		if (t) then
 			setmetatable(t, nil)
+
 			for k,v in pairs(t) do
 				if type(v) == "table" then
 					deepDel(v)
@@ -119,6 +139,10 @@ do
 			t[''] = true
 			t[''] = nil
 			list[t] = true
+--@debug@
+			assert(not next(t))
+			setmetatable(t, protect)
+--@no-debug@
 		end
 	end
 	function copy(old)

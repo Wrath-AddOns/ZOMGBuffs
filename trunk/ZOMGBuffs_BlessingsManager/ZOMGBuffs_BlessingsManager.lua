@@ -3,6 +3,8 @@ if (ZOMGBlessingsManager) then
 	return
 end
 
+local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
+
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsManager")
 local ZFrame
 local dewdrop = LibStub("Dewdrop-2.0")
@@ -1600,7 +1602,11 @@ function man:AssignPaladins()
 		else
 			local t = z:GetTalentSpec(name)
 			if (t) then
-				pala.canKings = t.canKings
+				if (isWoW3dot1) then
+					pala.canKings = true
+				else
+					pala.canKings = t.canKings
+				end
 				pala.canSanctuary = t.canSanctuary
 				pala.improvedWisdom = t.impWisdom
 				pala.improvedMight = t.impMight
@@ -1892,9 +1898,14 @@ function man:CanKingsCanSanc()
 	kingList = new()
 	sancList = new()
 	for k,v in pairs(self.pala) do
-		if (v.canKings) then
+		if (isWoW3dot1) then
 			canK = true
 			kingList[k] = true
+		else
+			if (v.canKings) then
+				canK = true
+				kingList[k] = true
+			end
 		end
 		if (v.canSanctuary) then
 			canS = true
@@ -2092,9 +2103,14 @@ function man:AssignTemplateToPaladins()
 	local canSanctuary = new()
 	local palaList = new()
 	for k,pala in pairs(self.pala) do
-		if (pala.canKings) then
+		if (isWoW3dot1) then
 			kingCount = kingCount + 1
 			canKings[k] = true
+		else
+			if (pala.canKings) then
+				kingCount = kingCount + 1
+				canKings[k] = true
+			end
 		end
 		if (pala.canSanctuary) then
 			sancCount = sancCount + 1
@@ -2122,8 +2138,12 @@ function man:AssignTemplateToPaladins()
 			local pala = self.pala[palaList[i]]
 
 			if (buff == "BOK") then
-				if (pala.canKings) then
+				if (isWoW3dot1) then
 					count = count + 1
+				else
+					if (pala.canKings) then
+						count = count + 1
+					end
 				end
 			elseif (buff == "SAN") then
 				if (pala.canSanctuary) then
@@ -4249,7 +4269,11 @@ function man:OnReceiveCapability(sender, cap)
 	self:AssignPaladins()
 
 	if (self.pala and self.pala[sender]) then
-		self.pala[sender].canKings = cap.canKings			-- true/nil
+		if (isWoW3dot1) then
+			self.pala[sender].canKings = true
+		else
+			self.pala[sender].canKings = cap.canKings			-- true/nil
+		end
 		self.pala[sender].canSanctuary = cap.canSanctuary		-- true/nil
 		self.pala[sender].improvedMight = cap.impMight			-- 0 - 5
 		self.pala[sender].improvedWisdom = cap.impWisdom		-- 0 - 2
