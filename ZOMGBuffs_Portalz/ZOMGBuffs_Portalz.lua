@@ -659,7 +659,7 @@ function module:CreateItemButtons()
 					buttonSingle = button,
 				}
 			end
-			del(self.newPortals)
+			self.newPortals = del(self.newPortals)
 		end
 	end
 end

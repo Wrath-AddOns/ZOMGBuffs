@@ -3,6 +3,8 @@
 	return
 end
 
+local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
+
 -- ZOMGBUffs, Pally Power comunication module, for those Paladins who've not yet seen the light
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsPP")
@@ -112,11 +114,11 @@ function mod:ProcessChat(sender, msg)
 				if (not t) then
 					t = {}
 					z.talentSpecs[sender] = t
-					t.canKings = s[ppSpellIndex.BOK] and (s[ppSpellIndex.BOK].rank or 0) > 0
-					t.canSanctuary = s[ppSpellIndex.SAN] and (s[ppSpellIndex.SAN].rank or 0) > 0
-					t.impMight = (s[ppSpellIndex.BOM] and (s[ppSpellIndex.BOM].talent or 0) > 0 and s[ppSpellIndex.BOM].talent) or 0
-					t.impWisdom = (s[ppSpellIndex.BOW] and (s[ppSpellIndex.BOW].talent or 0) > 0 and s[ppSpellIndex.BOW].talent) or 0
 				end
+				t.canKings = s[ppSpellIndex.BOK] and (s[ppSpellIndex.BOK].rank or 0) > 0
+				t.canSanctuary = s[ppSpellIndex.SAN] and (s[ppSpellIndex.SAN].rank or 0) > 0
+				t.impMight = (s[ppSpellIndex.BOM] and (s[ppSpellIndex.BOM].talent or 0) > 0 and s[ppSpellIndex.BOM].talent) or 0
+				t.impWisdom = (s[ppSpellIndex.BOW] and (s[ppSpellIndex.BOW].talent or 0) > 0 and s[ppSpellIndex.BOW].talent) or 0
 			end
 
 			bm:OnReceiveCapability(sender, t)
@@ -285,7 +287,6 @@ function mod:ScanSpells()
 					if (id) then
 						if (not RankInfo[id]) then
 							RankInfo[id] = {}
-						else
 						end
 						if (not RankInfo[id].rank or (zomgBlessing.class and not RankInfo[id].greater) or ((RankInfo[id].greater == zomgBlessing.class) and rank > (RankInfo[id].rank or 0))) then
 							RankInfo[id].rank = rank

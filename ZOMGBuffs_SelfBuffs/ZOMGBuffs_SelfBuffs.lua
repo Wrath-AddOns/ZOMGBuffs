@@ -397,7 +397,7 @@ function zs:CheckBuffs()
 							end
 							any = true
 							break
-						elseif (start ~= 0) then
+						elseif (start and start ~= 0) then
 							local temp = (start + duration) - GetTime()
 							if (not minTimeLeft or temp < minTimeLeft) then
 								minTimeLeft = temp	-- Soon to cooldown spells caught here
@@ -630,24 +630,25 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
-			{id = 21084, o = 1,  duration = 2, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
-			{id = 20375, o = 2,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
-			{id = 20166, o = 3,  duration = 2, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]},	-- Seal of Wisdom
-			{id = 20165, o = 4,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Light
-			{id = 53736, o = 5,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
-			{id = 31892, o = 6,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Blood
-			{id = 31801, o = 7,  duration = 2, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Vengeance
-			{id = 20164, o = 8,  duration = 2, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
-			{id = 25780, o = 10, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
-			{id = 27179, o = 11, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
-			{id = 27149, o = 13, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
-			{id = 27150, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
-			{id = 19746, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
-			{id = 27151, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Shadow Resistance Aura
-			{id = 27152, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
-			{id = 27153, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
-			{id = 32223, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
-			{id = 54428, o = 21, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
+			{id = 21084, o = 1,  duration = 30, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
+			{id = 20375, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
+			{id = 20166, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]},	-- Seal of Wisdom
+			{id = 20165, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Light
+			{id = 53736, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
+			{id = 31892, o = 6,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Blood
+			{id = 31801, o = 8,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Vengeance
+			{id = 53720, o = 9,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of the Martyr
+			{id = 20164, o = 10,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
+			{id = 25780, o = 11, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
+			{id = 27179, o = 12, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
+			{id = 27149, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
+			{id = 27150, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
+			{id = 19746, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
+			{id = 27151, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Shadow Resistance Aura
+			{id = 27152, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
+			{id = 27153, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
+			{id = 32223, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
+			{id = 54428, o = 22, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
 				skip = function()
 					local mana, maxmana = UnitMana("player"), UnitManaMax("player")
 					return (mana / maxmana) > 0.75					-- Skip if over 75% mana
@@ -1325,7 +1326,7 @@ function zs:OnModuleInitialize()
 		combatnotice = true,
 		rebuff = {
 			default = 30,
-			[L["Seals"]] = 5,
+			[L["Seals"]] = 60,
 		},
 		reagentNotices = true,
 	} )
