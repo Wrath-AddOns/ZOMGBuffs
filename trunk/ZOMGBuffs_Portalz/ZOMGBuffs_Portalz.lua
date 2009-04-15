@@ -500,7 +500,7 @@ function module:CheckForWarning(button)
 	end
 end
 
--- getItemCooldown
+-- getSpellCooldown
 local function getSpellCooldown(self)
 	if (self.spell) then
 		return GetSpellCooldown(self.spell)
@@ -556,7 +556,9 @@ local function getItemCooldown(self)
 	if (self.item) then
 		if (self.equiped) then
 			if (not IsItemEquiped(self.item)) then
-				return 0, 0, 1						-- Not equiped, and needs to be, so pretend it's ready (to equiped)
+				if (GetTime() - GetItemCooldown(self.item) < 60) then
+					return 0, 0, 1		-- Not equiped, and cooldown is up soon anyway
+				end
 			end
 		end
 

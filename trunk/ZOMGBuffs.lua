@@ -86,9 +86,13 @@ local battleshout = GetSpellInfo(6673)		-- Battle Shout
 local new, del, copy, deepDel
 do
 --@debug@
+	local errorTable = setmetatable({},{
+		__newindex = function(self) error("Attempt to assign to a recycled table (2)") end,
+		__index = function(self) return "bad table" end,
+	})
 	local protect = {
 		__newindex = function(self) error("Attempt to assign to a recycled table") end,
-		__index = function(self) error("Attempt to access a recycled table") end,
+		__index = function(self) return errorTable end,		--error("Attempt to access a recycled table") end,
 	}
 --@no-debug@
 
@@ -1657,7 +1661,11 @@ end
 -- AnalyzeTalents
 local function AnalyzeTalents(dest, data)
 	if (data.class == "PALADIN") then
-		dest.canKings = data[2][6] ~= 0 or nil
+		if (isWoW3dot1) then
+			dest.canKings = true
+		else
+			dest.canKings = data[2][6] ~= 0 or nil
+		end
 		dest.canSanctuary = data[2][14] ~= 0 or nil
 		dest.impMight = data[3][1]
 		dest.impWisdom = data[1][10]
@@ -1701,7 +1709,7 @@ do
 				if (UnitInRaid(unit) or UnitInParty(unit)) then
 					z:RemoveFromInspectQueue(lastInspectName)		-- Remove from (probably) front
 					if (not z.inspectQueue) then
-						z.inspectQueue = {}
+						z.inspectQueue = new()
 					end
 					tinsert(z.inspectQueue, lastInspectName)		-- Put back at end
 				end
@@ -1787,71 +1795,124 @@ do
 			end
 		end
 	end
-	
-	talentMeta = {__index = function(self, name)
---z:Print("Need "..name)
-		if (lastInspectPending == 0 or GetTime() > lastInspectTime + 15) then
---z:Print("- Clear pending queue")
-			lastInspectPending = 0
-		elseif (lastInspectPending > 0) then
---z:Print("- Pending inspect, scheduling new one")
-			z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
+
+	-- ImportUtopiaTalents
+	local function ImportUtopiaTalents(name, t)
+		local _, class = UnitClass(name)
+		if (not class) then
 			return
 		end
 
-		if (UnitIsConnected(name)) then
-			if (UnitIsUnit("player", name)) then
-				z:ReadTalents(playerName, name)
+		assert(type(name) == "string")
+		assert(type(t) == "table")
 
-			elseif (UnitExists(name) and UnitIsVisible(name) and (not InspectFrame or not InspectFrame.unit) and lastInspectPending == 0 and not UnitIsUnit("player", name) and CheckInteractDistance(name, 4)) then
---z:Print("- IN range, do real inspect")
-				lastInspectInvalid = nil
-				lastInspectTime = 0
-				-- Setup for inspect in case we can't ask them via RockComm
-				NotifyInspect(name)
-
-			elseif (InspectFrame and InspectFrame.unit and UnitIsUnit(InspectFrame.unit, name)) then
---z:Print("- IN inspect frame")
-				z:ReadTalents(name, name, true)
-
-			else
---z:Print("- Add to queue")
-				if (not z.inspectQueue) then
-					z.inspectQueue = {}
-				else
-					z:RemoveFromInspectQueue(name)
-				end
-				tinsert(z.inspectQueue, name)
---z:Print("- Schedule check in 2 secs")
-				z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
-			end
-
-			if (not rawget(self, name) and not z.inspectAsked[name]) then
-				z.inspectAsked[name] = true
-
-				if (RockComm) then
---z:Print("- Ask rock")
-					local name, server = UnitName(name)
-					if (server and server ~= "") then
-						if (z:IsInBattlegrounds()) then
-							name = format("%s-%s", name, server)
-						else
-							return false
-						end
-					end
-					RockComm:QueryTalents("WHISPER", name)
-				end
-			end
-
-			return rawget(self, name)
-		elseif (unit and z.inspectQueue) then
-			z:RemoveFromInspectQueue(name)
-			if (next(z.inspectQueue)) then
---z:Print("- Schedule check in 2 secs")
-				z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
+		local ret = new(0,0,0)
+		for i = 1,3 do
+			for j = 1,#t[i] do
+				ret[i] = ret[i] + tonumber(t[i]:sub(j,j))
 			end
 		end
-	end}
+
+		ret.string = format("%d/%d/%d", ret[1], ret[2], ret[3])
+
+		if (class == "PALADIN") then
+			if (isWoW3dot1) then
+				ret.canKings = true
+			else
+				ret.canKings = Utopia:HasTalent(name, GetSpellInfo(20217))			-- Blessing of Kings
+			end
+			ret.impMight = Utopia:HasTalent(name, GetSpellInfo(20045))				-- Improved Blessing of Might
+			ret.impWisdom = Utopia:HasTalent(name, GetSpellInfo(20245))				-- Improved Blessing of Wisdom
+		elseif (class == "PRIEST") then
+			if (isWoW3dot1) then
+				ret.canSpirit = true
+			else
+				ret.canSpirit = Utopia:HasTalent(name, GetSpellInfo(48073))			-- Divine Spirit
+			end
+		elseif (class == "DRUID") then
+			ret.impMark = Utopia:HasTalent(name, GetSpellInfo(17051))				-- Improved Mark of the Wild
+		end
+
+		return ret
+	end
+
+	talentMeta = {
+		__index = function(self, name)
+--z:Print("Need "..name)
+			if (Utopia and Utopia.talents) then
+--z:Print("- Utopia loaded, will ask it for their talents")
+				local t = Utopia.talents[name]
+				local ret
+				if (t) then
+					ret = ImportUtopiaTalents(name, t)
+					self[name] = ret
+				end
+				return ret
+			end
+
+			if (lastInspectPending == 0 or GetTime() > lastInspectTime + 15) then
+--z:Print("- Clear pending queue")
+				lastInspectPending = 0
+			elseif (lastInspectPending > 0) then
+--z:Print("- Pending inspect, scheduling new one")
+				z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
+				return
+			end
+
+			if (UnitIsConnected(name)) then
+				if (UnitIsUnit("player", name)) then
+					z:ReadTalents(playerName, name)
+
+				elseif (UnitExists(name) and UnitIsVisible(name) and (not InspectFrame or not InspectFrame.unit) and lastInspectPending == 0 and not UnitIsUnit("player", name) and CheckInteractDistance(name, 4)) then
+--z:Print("- IN range, do real inspect")
+					lastInspectInvalid = nil
+					lastInspectTime = 0
+					-- Setup for inspect in case we can't ask them via RockComm
+					NotifyInspect(name)
+
+				elseif (InspectFrame and InspectFrame.unit and UnitIsUnit(InspectFrame.unit, name)) then
+--z:Print("- IN inspect frame")
+					z:ReadTalents(name, name, true)
+
+				else
+--z:Print("- Add to queue")
+					if (not z.inspectQueue) then
+						z.inspectQueue = {}
+					else
+						z:RemoveFromInspectQueue(name)
+					end
+					tinsert(z.inspectQueue, name)
+--z:Print("- Schedule check in 2 secs")
+					z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
+				end
+
+				if (not rawget(self, name) and not z.inspectAsked[name]) then
+					z.inspectAsked[name] = true
+
+					if (RockComm) then
+--z:Print("- Ask rock")
+						local name, server = UnitName(name)
+						if (server and server ~= "") then
+							if (z:IsInBattlegrounds()) then
+								name = format("%s-%s", name, server)
+							else
+								return false
+							end
+						end
+						RockComm:QueryTalents("WHISPER", name)
+					end
+				end
+
+				return rawget(self, name)
+			elseif (unit and z.inspectQueue) then
+				z:RemoveFromInspectQueue(name)
+				if (next(z.inspectQueue)) then
+--z:Print("- Schedule check in 2 secs")
+					z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
+				end
+			end
+		end
+	}
 
 	-- RemoveFromInspectQueue
 	function z:RemoveFromInspectQueue(name)
@@ -1917,11 +1978,16 @@ do
 
 	-- GetSpec
 	function z:GetTalentSpec(unitname)
-		if (self.InitTalentQuery) then
-			self:InitTalentQuery()
-		end
 		if (not self.talentSpecs) then
 			self.talentSpecs = setmetatable({}, talentMeta)
+		end
+
+		if (Utopia) then
+			self.InitTalentQuery = nil
+		else
+			if (self.InitTalentQuery) then
+				self:InitTalentQuery()
+			end
 		end
 		return z.talentSpecs[unitname]
 	end
