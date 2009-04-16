@@ -3,6 +3,8 @@ if (ZOMGBlessings) then
 	return
 end
 
+local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
+
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
