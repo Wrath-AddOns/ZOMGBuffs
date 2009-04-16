@@ -2491,7 +2491,7 @@ function zg:ValidateTemplate(template)
 		if (not GetSpellInfo(info.list[1])) then
 			if (template[key]) then
 				self:ModifyTemplate(key, nil)
-				if (z.icon:GetAttribute("spell") == info.list[1]) then
+				if (z.icon and z.icon:GetAttribute("spell") == info.list[1]) then
 					z:SetupForSpell()			-- Clear loaded icon
 				end
 			end
