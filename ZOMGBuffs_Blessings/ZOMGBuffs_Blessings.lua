@@ -14,6 +14,8 @@ local template
 local clickList
 local singleRangeTest = GetSpellInfo(27140)			-- Blessing of Might, earliest spell we get
 
+local manaspring = GetSpellInfo(58777)				-- Mana Spring (totem buff)
+
 -- Make it future proof for additional classes (eg: Death Knight)
 
 local z = ZOMGBuffs
@@ -316,6 +318,10 @@ local function GetUnitPalaBuffs(unitid, other)
 		local name, rank, buff, count, _, maxDuration, endTime, isMine = UnitBuff(unitid, i)
 		if (not name) then
 			break
+		end
+
+		if (name == manaspring) then
+			name = GetSpellInfo(27142)					-- Blessing of Wisdom
 		end
 
 		local b = z.blessings[name]
