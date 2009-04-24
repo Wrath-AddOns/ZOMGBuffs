@@ -3,8 +3,6 @@ local BC = LibStub("LibBabble-Class-3.0"):GetLookupTable()
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
-local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
-
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
 BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
@@ -66,6 +64,11 @@ for k,v in pairs(classOrder) do classIndex[v] = k end
 
 local CellOnEnter, CellOnLeave, CellBarOnUpdate, CellOnMouseUp, CellOnMouseDown
 
+local specChangers = {
+	[GetSpellInfo(63645) or "Fake"] = true,			-- Activate Primary Spec
+	[GetSpellInfo(63644) or "Fake"] = true,			-- Activate Secondary Spec
+}
+
 -- ShortDesc
 local function ShortDesc(a)
 	if (a == "MARK") then		return L["Mark"]
@@ -82,6 +85,7 @@ local dalbless1 = GetSpellInfo(61024)		-- Dalaran Intellect
 local dalbless2 = GetSpellInfo(61316)		-- Dalaran Brilliance
 local felint = GetSpellInfo(57567)			-- Fel Intelligence
 local battleshout = GetSpellInfo(6673)		-- Battle Shout
+local manaspring = GetSpellInfo(58777)		-- Mana Spring (totem buff)
 
 local new, del, copy, deepDel
 do
@@ -1661,11 +1665,7 @@ end
 -- AnalyzeTalents
 local function AnalyzeTalents(dest, data)
 	if (data.class == "PALADIN") then
-		if (isWoW3dot1) then
-			dest.canKings = true
-		else
-			dest.canKings = data[2][6] ~= 0 or nil
-		end
+		dest.canKings = true
 		dest.canSanctuary = data[2][14] ~= 0 or nil
 		dest.impMight = data[3][1]
 		dest.impWisdom = data[1][10]
@@ -1756,7 +1756,21 @@ do
 	end
 
 	-- INSPECT_TALENT_READY
-	function z:INSPECT_TALENT_READY()
+	function z:INSPECT_TALENT_READY(guid)
+		if (guid) then
+			-- Blue said they'd include GUID here at some point, let's see...
+			self:Print("INSPECT_TALENT_READY with GUID: %s", guid)
+
+			for unit in self:IterateRoster() do
+				local g = UnitGUID(unit)
+				if (g == guid) then
+					self:ReadTalents(UnitName(unit), unit, true)
+					self:CheckTalentQueue()
+					return
+				end
+			end
+		end
+
 		lastInspectPending = lastInspectPending - 1
 --z:Print("INSPECT_TALENT_READY - lastName = %q", tostring(lastInspectName))
 		if (not lastInspectInvalid) then
@@ -1768,7 +1782,7 @@ do
 		if (lastInspectPending == 0) then
 			lastInspectInvalid = nil
 		end
-		z:CheckTalentQueue()
+		self:CheckTalentQueue()
 	end
 
 	function z:CheckTalentQueue()
@@ -1816,19 +1830,11 @@ do
 		ret.string = format("%d/%d/%d", ret[1], ret[2], ret[3])
 
 		if (class == "PALADIN") then
-			if (isWoW3dot1) then
-				ret.canKings = true
-			else
-				ret.canKings = Utopia:HasTalent(name, GetSpellInfo(20217))			-- Blessing of Kings
-			end
+			ret.canKings = true
 			ret.impMight = Utopia:HasTalent(name, GetSpellInfo(20045))				-- Improved Blessing of Might
 			ret.impWisdom = Utopia:HasTalent(name, GetSpellInfo(20245))				-- Improved Blessing of Wisdom
 		elseif (class == "PRIEST") then
-			if (isWoW3dot1) then
-				ret.canSpirit = true
-			else
-				ret.canSpirit = Utopia:HasTalent(name, GetSpellInfo(48073))			-- Divine Spirit
-			end
+			ret.canSpirit = true
 		elseif (class == "DRUID") then
 			ret.impMark = Utopia:HasTalent(name, GetSpellInfo(17051))				-- Improved Mark of the Wild
 		end
@@ -3176,6 +3182,13 @@ function z:OnStartup()
 	members:HookScript("OnShow", function(self) z:DrawGroupNumbers() z:RegisterEvent("MODIFIER_STATE_CHANGED") end)
 	members:HookScript("OnHide", function(self) z:UnregisterEvent("MODIFIER_STATE_CHANGED") end)
 
+	self.onLeaveFuncString = [[
+			local list = self:GetParent()
+			if (list and not list:IsUnderMouse(true) and not list:GetParent():IsUnderMouse(true)) then
+				list:Hide()
+			end
+		]]
+
 	members.initialConfigFunction = function(self)
 		-- This is the only place we're allowed to set attributes whilst in combat
 
@@ -3191,13 +3204,11 @@ function z:OnStartup()
 		z:UpdateOneCellSpells(self)
 		z.canChangeFlagsIC = nil
 
-		SecureHandlerWrapScript(self, "OnEnter", members, "")
-		SecureHandlerWrapScript(self, "OnLeave", members, [[
-			local list = self:GetParent()
-			if (list and not list:IsUnderMouse(true) and not list:GetParent():IsUnderMouse(true)) then
-				list:Hide()
-			end
-		]])
+		if (not InCombatLockdown()) then
+			self.wrapped = true
+			SecureHandlerWrapScript(self, "OnEnter", members, "")
+			SecureHandlerWrapScript(self, "OnLeave", members, z.onLeaveFuncString)
+		end
 	end
 
 	members:SetAttribute("template", "SecureUnitButtonTemplate")
@@ -3212,6 +3223,10 @@ function z:OnStartup()
 	self:SetAnchors()
 
 	if (not InCombatLockdown()) then
+		if (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0) then
+			self.members:Hide()
+			self.members:Show()
+		end
 		self.members:Hide()
 	end
 
@@ -3515,9 +3530,7 @@ local function DrawCell(self)
 				name = GetSpellInfo(27126)
 			end
 
-			if (isWoW3dot1) then
-				isMine = isMine == "player"
-			end
+			isMine = isMine == "player"
 			if (isMine and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
 				if (z:ShowBuffBar(self, name)) then
 					myMax, myEnd = maxDuration, endTime
@@ -3551,7 +3564,9 @@ local function DrawCell(self)
 			if (doBlessings) then
 				local b
 				if (name == battleshout) then
-					b = z.blessings.BOM
+					b = z.blessings[GetSpellInfo(47436)]			-- Blessing of Might
+				elseif (name == manaspring) then
+					b = z.blessings[GetSpellInfo(27142)]			-- Blessing of Wisdom
 				else
 					b = z.blessings[name]
 				end
@@ -3929,6 +3944,14 @@ function z:UpdateOneCellSpells(frame)
 	self:SetTargetClick(frame)
 	if (self.SetClickSpells) then
 		self:SetClickSpells(frame)
+	end
+
+	if (self.members and not frame.wrapped) then
+		if (not InCombatLockdown()) then
+			frame.wrapped = true
+			SecureHandlerWrapScript(frame, "OnEnter", self.members, "")
+			SecureHandlerWrapScript(frame, "OnLeave", self.members, self.onLeaveFuncString)
+		end
 	end
 end
 
@@ -4475,6 +4498,19 @@ end
 
 -- UNIT_SPELLCAST_SUCCEEDED
 function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
+	if (specChangers[spell]) then
+		-- Detect spec changing spellcasts. This will only work if the player is in sight (combat log range)
+		local name = UnitName(player)
+		z.talentSpecs[name] = del(z.talentSpecs[name])
+		if (not z.inspectQueue) then
+			z.inspectQueue = {}
+		else
+			z:RemoveFromInspectQueue(name)
+		end
+		tinsert(z.inspectQueue, name)
+		self:CheckTalentQueue()
+	end
+
 	if (player == "player") then
 		if (self.clickCast) then
 			z:SayWhatWeDid(spell, self.lastCastN, rank)
@@ -4978,43 +5014,22 @@ function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
 end
 
 do
-	local chatFilter, chatFilterInform
-	if (isWoW3dot1) then
-		function chatFilter(self, event, ...)
-			local msg = ...
-			for match in pairs(z.chatMatch) do
-				if (strsub(msg, 1, strlen(match)) == match) then
-					return true, ...
-				end
-			end
-			return false, ...
-		end
-
-		function chatFilterInform(self, event, ...)
-			local msg = ...
-			if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
+	local function chatFilter(self, event, ...)
+		local msg = ...
+		for match in pairs(z.chatMatch) do
+			if (strsub(msg, 1, strlen(match)) == match) then
 				return true, ...
 			end
-			return false, ...
 		end
-	else
-		function chatFilter(...)
-			local msg = ...
-			for match in pairs(z.chatMatch) do
-				if (strsub(msg, 1, strlen(match)) == match) then
-					return true, ...
-				end
-			end
-			return false, ...
-		end
+		return false, ...
+	end
 
-		function chatFilterInform(...)
-			local msg = ...
-			if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
-				return true, ...
-			end
-			return false, ...
+	local function chatFilterInform(self, event, ...)
+		local msg = ...
+		if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
+			return true, ...
 		end
+		return false, ...
 	end
 
 	-- MatchChat
