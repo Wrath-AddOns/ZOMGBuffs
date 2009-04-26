@@ -704,7 +704,22 @@ end
 
 -- ShowBuffBar
 function zb:ShowBuffBar(cell, name)
-	return z.blessings[name] ~= nil
+	local unit = cell:GetAttribute("unit")
+	if (unit) then
+		local unitname = UnitName(unit)
+		local _, class = UnitClass(unit)
+		if (class and unitname) then
+			local need = template[name] or template[class]
+			if (need) then
+				local got = z.blessings[name]
+				if (got) then
+					return got.type == need
+				end
+			end
+		end
+	end
+
+	-- return z.blessings[name] ~= nil
 end
 
 -- OutOfRangeCheck

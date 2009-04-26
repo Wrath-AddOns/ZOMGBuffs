@@ -62,7 +62,7 @@ end
 local classIndex = {}
 for k,v in pairs(classOrder) do classIndex[v] = k end
 
-local CellOnEnter, CellOnLeave, CellBarOnUpdate, CellOnMouseUp, CellOnMouseDown
+local CellOnEnter, IconOnEnter, CellOnLeave, CellBarOnUpdate, CellOnMouseUp, CellOnMouseDown
 
 local specChangers = {
 	[GetSpellInfo(63645) or "Fake"] = true,			-- Activate Primary Spec
@@ -197,6 +197,7 @@ do
 		{opt = "flask",												type = "FLASK",		icon = "Interface\\Icons\\INV_Potion_1"},
 	}
 
+	z.buffsLookup = {}
 	z.allBuffs = {}
 	for i,info in pairs(allBuffs) do
 		if (info.ids) then
@@ -211,6 +212,7 @@ do
 			for j,id in ipairs(info.ids) do
 				local name = GetSpellInfo(id)
 				info.list[name] = true
+				z.buffsLookup[name] = info
 			end
 			info.list[name] = true
 		end
@@ -3120,8 +3122,8 @@ function z:OnStartup()
 			self:StopMovingOrSizing()
 			z.db.char.pos = z:GetPosition(self)
 		end)
-	icon:HookScript("OnEnter", CellOnEnter)
-	icon:HookScript("OnLeave", CellOnLeave)
+	icon:HookScript("OnEnter", IconOnEnter)
+	icon:HookScript("OnLeave", IconOnLeave)
 	icon:HookScript("OnClick",
 		function(self, button)
 			local command
@@ -3149,7 +3151,7 @@ function z:OnStartup()
 			end
 		end)
 
-	icon.UpdateTooltip = CellOnEnter
+	icon.UpdateTooltip = IconOnEnter
 
 	icon:RegisterForDrag("LeftButton")
 
@@ -3430,15 +3432,6 @@ local function IsFlaskOrPot(name, icon)
 	return strfind(icon, "INV_Potion_")
 end
 
--- ShowBuffBar
-function z:ShowBuffBar(cell, spellName)
-	for name, module in z:IterateModulesWithMethod("ShowBuffBar") do
-		if (module:ShowBuffBar(cell, spellName)) then
-			return true
-		end
-	end
-end
-
 -- DrawCell(self)
 local palaFlags = {false, false, false, false, false, false, false}
 local palaKeys = {BOK = 1, BOM = 2, BOS = 3, BOW = 4, BOL = 5, SAN = 6, SAC = 7}
@@ -3477,6 +3470,7 @@ local function DrawCell(self)
 
 	local got, need = 0, 0
 	for j,icon in ipairs(self.buff) do
+		icon.spellName = nil
 		local b = z.buffs[j]
 		if (not b or (b.class and z.classcount[b.class] == 0)) then
 			icon:SetTexture(nil)
@@ -3521,7 +3515,7 @@ local function DrawCell(self)
 	local doBlessings = z.db.profile.track.blessings
 	if (not UnitIsDeadOrGhost(partyid) and UnitIsConnected(partyid)) then
 		for i = 1,40 do
-			local name, rank, tex, count, _, maxDuration, endTime, isMine = UnitBuff(partyid, i)
+			local name, rank, tex, count, _, maxDuration, endTime, caster = UnitBuff(partyid, i)
 			if (not name) then
 				break
 			end
@@ -3530,10 +3524,9 @@ local function DrawCell(self)
 				name = GetSpellInfo(27126)
 			end
 
-			isMine = isMine == "player"
-			if (isMine and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
-				if (z:ShowBuffBar(self, name)) then
-					myMax, myEnd = maxDuration, endTime
+			if ((caster == "player" or z.overrideBuffBar) and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
+				if (z:ShowBuffBar(self, name, tex)) then
+					myMax, myEnd, mySource = maxDuration, endTime, caster
 				end
 			end
 
@@ -3544,6 +3537,7 @@ local function DrawCell(self)
 						if (buff.list and buff.list[name]) then
 							icon:Show()
 							icon:SetAlpha(onAlpha)
+							icon.spellName = name
 							got = got + 1
 						elseif (buff.type == "FLASK") then
 							if (IsFlaskOrPot(name, tex)) then
@@ -3577,11 +3571,11 @@ local function DrawCell(self)
 						palaFlags[key] = tex
 						gotPalaBuffs = gotPalaBuffs + 1
 
-						if (isMine) then
-							if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
-								myMax, myEnd = maxDuration, endTime
-							end
-						end
+						--if (caster == "player") then
+						--	if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
+						--		myMax, myEnd = maxDuration, endTime
+						--	end
+						--end
 					end
 				end
 			end
@@ -3604,8 +3598,10 @@ local function DrawCell(self)
 							b:Show()
 							if (Type[1] == 1) then
 								tex = z.blessings[single].icon
+								b.spellName = single
 							else
 								tex = z.blessings[class].icon
+								b.spellName = class
 							end
 							b:SetTexture(tex)
 
@@ -3628,6 +3624,7 @@ local function DrawCell(self)
 							end
 						else
 							b:SetTexture(nil)
+							b.spellName = nil
 						end
 						palaIcon = palaIcon + 1
 					end
@@ -3994,112 +3991,102 @@ function z:GetSpellColour(spellName)
 	end
 end
 
--- CellOnEnter
 -- Shfit, Alt, Ctrl <--- order is important
-local leftModsDesc = {"", L["Shift-"], L["Alt-"], L["Ctrl-"]}
-local leftMods = {"", "shift-", "alt-", "ctrl-"}
-local combos = {"000", "010", "100", "001", "011", "110", "101", "111"}
-local rightModDesc = {L["Left Button"], L["Right Button"], L["Middle Button"], L["Button Four"], L["Button Five"]}
-rightModDesc["*"] = ""
-leftModsDesc["*"] = ""
-function CellOnEnter(self)
+do
+	local leftModsDesc = {"", L["Shift-"], L["Alt-"], L["Ctrl-"]}
+	local leftMods = {"", "shift-", "alt-", "ctrl-"}
+	local combos = {"000", "010", "100", "001", "011", "110", "101", "111"}
+	local rightModDesc = {L["Left Button"], L["Right Button"], L["Middle Button"], L["Button Four"], L["Button Five"]}
+	rightModDesc["*"] = ""
+	leftModsDesc["*"] = ""
 
-	GameTooltip:SetOwner(self, "ANCHOR_"..(z.db.char.anchor or "TOPLEFT"))
+	local function cellOrIconTooltip(self)
+		GameTooltip:SetOwner(self, "ANCHOR_"..(z.db.char.anchor or "TOPLEFT"))
 
-	local unit1 = self:GetAttribute("unit")
-	local name = unit1 and UnitExists(unit1) and UnitName(unit1)
+		local unit1 = self:GetAttribute("unit")
+		local name = unit1 and UnitExists(unit1) and UnitName(unit1)
 
-	if (unit1) then
-		local c = z:GetClassColour(select(2, UnitClass(unit1)))
-		GameTooltip:SetText(name or "", c.r, c.g, c.b)
-	else
-		GameTooltip:ClearLines()
-	end
-
-	local spec
-	if (name and self ~= z.icon and z.talentSpecs) then
-		if (UnitExists(unit1) and UnitIsConnected(unit1)) then
-			spec = z.talentSpecs[name]
-			if (spec) then
-				spec = spec.string
-			end
+		if (unit1) then
+			local c = z:GetClassColour(select(2, UnitClass(unit1)))
+			GameTooltip:SetText(name or "", c.r, c.g, c.b)
+		else
+			GameTooltip:ClearLines()
 		end
-	end
 
-	local line = 1
-	for rightMod = 1,5 do
-		local lastSpell
-		for ind,c in ipairs(combos) do
-			local j = c:sub(1, 1) == "1" and 2 or 1
-			local k = c:sub(2, 2) == "1" and 3 or 1
-			local l = c:sub(3, 3) == "1" and 4 or 1
-			local leftMod = format("%s%s%s", leftMods[j], leftMods[k], leftMods[l])
-
-			local Type = self:GetAttribute(leftMod, "type", rightMod)
-			if (not Type and self == z.icon) then
-				Type = self:GetAttribute("*", "type", "*")
-				if (Type) then
-					leftMod = "*"
-					rightMod = "*"
-				end
-			end
-			if (Type) then
-				local spell = self:GetAttribute(leftMod, "spell", rightMod)
-				if (spell or Type == "target") then
-					local unit = self:GetAttribute(leftMod, "unit", rightMod)
-					if (spell ~= lastSpell or Type == "target") then
-						local leftModDesc = format("%s%s%s", leftModsDesc[j], leftModsDesc[k], leftModsDesc[l])
-						lastSpell = spell
-
-						local match1 = tostring(strfind(leftMod, "ctrl-") and 1 or 0) .. tostring(strfind(leftMod, "shift-") and 1 or 0) .. tostring(strfind(leftMod, "alt-") and 1 or 0)
-						local match2 = tostring(IsControlKeyDown() and 1 or 0) .. tostring(IsShiftKeyDown() and 1 or 0) .. tostring(IsAltKeyDown() and 1 or 0)
-
-						local buttonColour = ((match1 == match2) and "|cFFFFFFFF") or "|cFF808080"
-
-						local unitShow
-						if (unit and unit ~= unit1) then
-							unitShow = format(L[" on %s"], z:ColourUnit(unit))
-						else
-							unitShow = ""
-						end
-
-						if (spec and line == 1 and Type ~= "target") then
-							GameTooltip:AddDoubleLine(" ", spec, nil, nil, nil, 0.5, 0.5, 0.5)
-							spec = nil
-						end
-						
-						local spellColour = z:GetSpellColour(spell) or "|cFFFFFF80"
-						if (Type == "target") then
-							if (spec and line == 1) then
-								GameTooltip:AddDoubleLine(format(L["%s%s%s|r to target"], buttonColour, leftModDesc, rightModDesc[rightMod]), spec, nil, nil, nil, 0.5, 0.5, 0.5)
-								spec = nil
-							else
-								GameTooltip:AddLine(format(L["%s%s%s|r to target"], buttonColour, leftModDesc, rightModDesc[rightMod]))
-							end
-						else
-							--GameTooltip:AddLine(format(L["%s%s%s|r to cast %s%s|r%s"], buttonColour, leftModDesc, rightModDesc[rightMod], spellColour, spell, unitShow))
-							GameTooltip:AddDoubleLine(format("%s%s%s|r", buttonColour, leftModDesc, rightModDesc[rightMod]),
-													format("%s%s|r%s", spellColour, spell, unitShow))
-						end
-						line = line + 1
+		local line = 1
+		for rightMod = 1,5 do
+			local lastSpell
+			for ind,c in ipairs(combos) do
+				local j = c:sub(1, 1) == "1" and 2 or 1
+				local k = c:sub(2, 2) == "1" and 3 or 1
+				local l = c:sub(3, 3) == "1" and 4 or 1
+				local leftMod = format("%s%s%s", leftMods[j], leftMods[k], leftMods[l])
+	
+				local Type = self:GetAttribute(leftMod, "type", rightMod)
+				if (not Type and self == z.icon) then
+					Type = self:GetAttribute("*", "type", "*")
+					if (Type) then
+						leftMod = "*"
+						rightMod = "*"
 					end
+				end
+				if (Type) then
+					local spell = self:GetAttribute(leftMod, "spell", rightMod)
+					if (spell or Type == "target") then
+						local unit = self:GetAttribute(leftMod, "unit", rightMod)
+						if (spell ~= lastSpell or Type == "target") then
+							local leftModDesc = format("%s%s%s", leftModsDesc[j], leftModsDesc[k], leftModsDesc[l])
+							lastSpell = spell
+	
+							local match1 = tostring(strfind(leftMod, "ctrl-") and 1 or 0) .. tostring(strfind(leftMod, "shift-") and 1 or 0) .. tostring(strfind(leftMod, "alt-") and 1 or 0)
+							local match2 = tostring(IsControlKeyDown() and 1 or 0) .. tostring(IsShiftKeyDown() and 1 or 0) .. tostring(IsAltKeyDown() and 1 or 0)
+	
+							local buttonColour = ((match1 == match2) and "|cFFFFFFFF") or "|cFF808080"
+	
+							local unitShow
+							if (unit and unit ~= unit1) then
+								unitShow = format(L[" on %s"], z:ColourUnit(unit))
+							else
+								unitShow = ""
+							end
+	
+							if (spec and line == 1 and Type ~= "target") then
+								GameTooltip:AddDoubleLine(" ", spec, nil, nil, nil, 0.5, 0.5, 0.5)
+								spec = nil
+							end
+							
+							local spellColour = z:GetSpellColour(spell) or "|cFFFFFF80"
+							if (Type == "target") then
+								if (spec and line == 1) then
+									GameTooltip:AddDoubleLine(format(L["%s%s%s|r to target"], buttonColour, leftModDesc, rightModDesc[rightMod]), spec, nil, nil, nil, 0.5, 0.5, 0.5)
+									spec = nil
+								else
+									GameTooltip:AddLine(format(L["%s%s%s|r to target"], buttonColour, leftModDesc, rightModDesc[rightMod]))
+								end
+							else
+								--GameTooltip:AddLine(format(L["%s%s%s|r to cast %s%s|r%s"], buttonColour, leftModDesc, rightModDesc[rightMod], spellColour, spell, unitShow))
+								GameTooltip:AddDoubleLine(format("%s%s%s|r", buttonColour, leftModDesc, rightModDesc[rightMod]),
+														format("%s%s|r%s", spellColour, spell, unitShow))
+							end
+							line = line + 1
+						end
+					end
+				end
+				if (self == z.icon) then
+					break
 				end
 			end
 			if (self == z.icon) then
 				break
 			end
 		end
-		if (self == z.icon) then
-			break
-		end
 	end
 
-	if (self ~= z.icon) then
-		if (self.invalidAttributes) then
-			GameTooltip:AddLine(format(L["Out-of-date spell (should be %s). Will be updated when combat ends"], self.invalidAttributes), 1, 0, 0, 1)
-		end
-	else
-		if (self == z.icon and not z.db.profile.enabled) then
+	-- IconOnEnter
+	function IconOnEnter(self)
+		cellOrIconTooltip(self)
+
+		if (not z.db.profile.enabled) then
 			GameTooltip:SetText(z.titleColour)
 			GameTooltip:AddLine(L["Auto-casting is disabled"])
 			GameTooltip:AddLine(L["You can re-enable it by single clicking the ZOMGBuffs minimap/fubar icon"])
@@ -4126,18 +4113,149 @@ function CellOnEnter(self)
 	    		GameTooltip:AddLine(format(L["Waiting for these groups or classes to arrive: %s"], z.waitingForClass), nil, nil, nil, 1)
 			end
 		end
+
+		if (not GameTooltip:IsShown()) then
+			GameTooltip:SetText(z.titleColour)
+		end
+
+		GameTooltip:Show()
 	end
 
-	if (not GameTooltip:IsShown()) then
-		GameTooltip:SetText(z.titleColour)
+	-- IconOnLeave
+	function IconOnLeave()
+		GameTooltip:Hide()
 	end
 
-	GameTooltip:Show()
-end
+	-- ShowBuffBar
+	function z:ShowBuffBar(cell, spellName, tex)
+		if (z.overrideBuffBar) then
+			if (z.overrideBuffBar == "buff") then
+				local buff = z.buffs[z.overrideBuffBarIndex]
+				if (buff) then
+					if (buff.type == "FLASK") then
+						if (IsFlaskOrPot(spellName, tex)) then
+							return true
+						end
+					else
+						if (z.buffsLookup[spellName] == buff) then
+							return true
+						end
+					end
+				end
+			elseif (z.overrideBuffBar == "blessing") then
+				local palaIcon = cell.palaIcon and cell.palaIcon[z.overrideBuffBarIndex]
+				if (palaIcon) then
+					local showSpell = palaIcon.spellName
+					local blessing1 = showSpell and z.blessings[showSpell]
+					local blessing2 = spellName and z.blessings[spellName]
+					if (blessing1 and blessing2 and blessing1.type == blessing2.type) then
+						return true
+					end
+				end
+			end
+		else
+			for name, module in z:IterateModulesWithMethod("ShowBuffBar") do
+				if (module:ShowBuffBar(cell, spellName, tex)) then
+					return true
+				end
+			end
+		end
+	end
 
--- CellOnLeave
-function CellOnLeave()
-	GameTooltip:Hide()
+	-- onUpdateIconMouseover
+	local function onUpdateIconMouseover(self)
+		if (not self.buff) then
+			return
+		end
+
+		-- Get's mouse position within the cell and works out which icon we're pointing at
+		local l, b, w, h = self:GetRect()
+		local x, y = GetCursorPosition()
+		x = x / UIParent:GetScale()
+		y = y / UIParent:GetScale()
+
+		if (x > l and x < l + w) then
+			if (y > b and y < b + h) then
+				local offset = x - l
+				if (self.ticks) then
+					for i = 1,#self.ticks do
+						if (self.ticks[i]:IsShown()) then
+							offset = offset - self.ticks[i]:GetWidth()
+						end
+					end
+				end
+
+				local index = 1 + floor(offset / self.buff[1]:GetWidth())
+				if (index > 0) then
+					if (index ~= z.mouseIndex) then
+						z.mouseIndex = index
+						local oldBar, oldIndex = z.overrideBuffBar, z.overrideBuffBarIndex
+
+						if (index <= #z.buffs) then
+							-- One of the normal icons (raid buffs, food, pots)
+							--z:Print("- Icon = %d: %s", index, (z.buffs[index] and z.buffs[index].type) or "nil")
+							z.overrideBuffBar = "buff"
+							z.overrideBuffBarIndex = index
+
+						elseif (self.palaIcon) then
+							-- One of the Paladin blessing icons
+							local pindex = index - #z.buffs
+							if (pindex <= #self.palaIcon) then
+								--z:Print("- Paladin Icon = %d", pindex)
+								z.overrideBuffBar = "blessing"
+								z.overrideBuffBarIndex = pindex
+							else
+								z.overrideBuffBar = nil
+								z.overrideBuffBarIndex = nil
+							end
+						else
+							z.overrideBuffBar = nil
+							z.overrideBuffBarIndex = nil
+						end
+
+						if (z.overrideBuffBar ~= oldBar or z.overrideBuffBarIndex ~= oldIndex) then
+							z:DrawAllCells()
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- CellOnEnter
+	function CellOnEnter(self)
+		z.mouseIndex = nil
+		z.overrideBuffBar = nil
+		z.overrideBuffBarIndex = nil
+
+		self:SetScript("OnUpdate", onUpdateIconMouseover)
+		cellOrIconTooltip(self)
+
+		local spec
+		if (name and self ~= z.icon and z.talentSpecs) then
+			if (UnitExists(unit1) and UnitIsConnected(unit1)) then
+				spec = z.talentSpecs[name]
+				if (spec) then
+					spec = spec.string
+				end
+			end
+		end
+
+		if (self.invalidAttributes) then
+			GameTooltip:AddLine(format(L["Out-of-date spell (should be %s). Will be updated when combat ends"], self.invalidAttributes), 1, 0, 0, 1)
+		end
+
+		GameTooltip:Show()
+	end
+
+	-- CellOnLeave
+	function CellOnLeave(self)
+		z.mouseIndex = nil
+		z.overrideBuffBar = nil
+		z.overrideBuffBarIndex = nil
+		self:SetScript("OnUpdate", nil)
+		GameTooltip:Hide()
+	end
 end
 
 function CellOnMouseDown(self, button)
@@ -4197,7 +4315,7 @@ function z:InitCell(cell)
 	cell:SetScript("OnMouseDown", CellOnMouseDown)
 	cell:SetScript("OnMouseUp", CellOnMouseUp)
 	cell:RegisterForClicks("AnyUp")
-	cell.UpdateTooltip = CellOnEnter
+	--cell.UpdateTooltip = CellOnEnter
 
 	local h = cell:GetHeight()
 	local w = cell:GetWidth()
@@ -5751,7 +5869,7 @@ function z:OnEnableOnce()
 	local ldb = LibStub:GetLibrary("LibDataBroker-1.1", true)
 	if (ldb) then
 		self.ldbSource = ldb:NewDataObject("ZOMGBuffs", {
-			type = "data source",
+			type = "launcher",
 			label = L["TITLECOLOUR"],
 			icon = "Interface\\Addons\\ZOMGBuffs\\Textures\\Icon",
 		})
