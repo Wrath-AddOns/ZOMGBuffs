@@ -1930,7 +1930,9 @@ do
 
 	local function iconUpdateCooldown(self)
 		local start, duration, enable = GetSpellCooldown(self.spell)
-		CooldownFrame_SetTimer(self.cooldown, start, duration, enable)
+		if (start) then
+			CooldownFrame_SetTimer(self.cooldown, start, duration, enable)
+		end
 	end
 
 	local function iconGetSpellFromUnit(self)
@@ -2494,6 +2496,11 @@ function zg:ValidateTemplate(template)
 				if (z.icon and z.icon:GetAttribute("spell") == info.list[1]) then
 					z:SetupForSpell()			-- Clear loaded icon
 				end
+			end
+
+			-- Also stop the spell tracker for newly forgotten spells
+			if (info.exlusive) then
+				self:StopSpellTracker(key)
 			end
 		end
 	end
