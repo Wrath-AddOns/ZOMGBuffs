@@ -613,35 +613,27 @@ function module:CreateItemButtons()
 			self:CreateItemButton(28585, true)		-- Ruby Slippers
 		end
 
-		if (GetItemCount(32757) > 0) then
-			self:CreateItemButton(32757, true)		-- Blessed Medallion of Karobor
-		end
+		local clickItems = {
+			-- ItemID and whether it needs equiping
+			[35230] = false,			-- Darnarian's Scroll of Teleportation (SSO daily reward)
+			[32757] = true,				-- Blessed Medallion of Karobor
+			[18984] = true,				-- Dimensional Ripper - Everlook
+			[30542] = true,				-- Dimensional Ripper - Area 52
+			[18986] = true,				-- Ultrasafe Transporter: Gadgetzan
+			[30544] = true,				-- Ultrasafe Transporter: Toshley's Station
+			[40585] = true,				-- Signet of the Kirin'Tor
+			[40586] = true,				-- Band of the Kirin'Tor
+			[44925] = true,				-- Ring of the Kirin'Tor
+			[44934] = true,				-- Loop of the Kirin'Tor
+			[45688] = true,				-- Inscribed Band of the Kirin Tor
+			[45690] = true,				-- Inscribed Ring of the Kirin Tor
+			[45689] = true,				-- Inscribed Loop of the Kirin Tor
+			[45691] = true,				-- Inscribed Signet of the Kirin Tor
+		}
 
-		if (GetItemCount(35230) > 0) then
-			self:CreateItemButton(35230)			-- Darnarian's Scroll of Teleportation (SSO daily reward)
-		end
-
-		if (GetItemCount(18984) > 0) then
-			self:CreateItemButton(18984, true)		-- Dimensional Ripper - Everlook
-		end
-		if (GetItemCount(30542) > 0) then
-			self:CreateItemButton(30542, true)		-- Dimensional Ripper - Area 52
-		end
-		if (GetItemCount(18986) > 0) then
-			self:CreateItemButton(18986, true)		-- Ultrasafe Transporter: Gadgetzan
-		end
-		if (GetItemCount(30544) > 0) then
-			self:CreateItemButton(30544, true)		-- Ultrasafe Transporter: Toshley's Station
-		end
-		if (UnitLevel("player") >= 80) then
-			if (GetItemCount(40586) > 0) then
-				self:CreateItemButton(40586, true)		-- Band of the Kirin'Tor
-			elseif (GetItemCount(40585) > 0) then
-				self:CreateItemButton(40585, true)		-- Signet of the Kirin'Tor
-			elseif (GetItemCount(44925) > 0) then
-				self:CreateItemButton(44925, true)		-- Ring of the Kirin'Tor
-			elseif (GetItemCount(44934) > 0) then
-				self:CreateItemButton(44934, true)		-- Loop of the Kirin'Tor
+		for id,equip in pairs(clickItems) do
+			if (GetItemCount(id) > 0) then
+				self:CreateItemButton(id, equip)
 			end
 		end
 
