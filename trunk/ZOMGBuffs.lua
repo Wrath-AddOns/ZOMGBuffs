@@ -875,15 +875,15 @@ z.options = {
 							passValue = "classIcon",
 							order = 5,
 						},
-						border = {
-							type = 'toggle',
-							name = L["Border"],
-							desc = L["Enable border on the icon"],
-							get = getPCOption,
-							set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
-							passValue = "iconborder",
-							order = 6,
-						},
+						--border = {
+						--	type = 'toggle',
+						--	name = L["Border"],
+						--	desc = L["Enable border on the icon"],
+						--	get = getPCOption,
+						--	set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
+						--	passValue = "iconborder",
+						--	order = 6,
+						--},
 						name = {
 							type = 'toggle',
 							name = L["Name"],
@@ -2567,19 +2567,19 @@ function z:SetIconSize()
 	end
 
 	-- Border
-	local border
-	border = self.icon.border
-	if (self.db.char.iconborder) then
-		if (not border) then
-			border = self:CreateBorder(self.icon)
-			self.icon.border = border
-		end
-		border:Show()
-	else
-		if (border) then
-			border:Hide()
-		end
-	end
+	--local border
+	--border = self.icon.border
+	--if (self.db.char.iconborder) then
+	--	if (not border) then
+	--		border = self:CreateBorder(self.icon)
+	--		self.icon.border = border
+	--	end
+	--	border:Show()
+	--else
+	--	if (border) then
+	--		border:Hide()
+	--	end
+	--end
 
 	if (self.db.profile.iconname) then
 		self.icon.name:Show()
@@ -2633,7 +2633,8 @@ end
 
 -- z:SetAnchors()
 function z:SetAnchors()
-	local d = self.db.char.iconborder and 5 or 0
+	--local d = self.db.char.iconborder and 5 or 0
+	local d = 0
 	self.members:ClearAllPoints()
 	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, d)
 	self.icon:SetHitRectInsets(-d, -d, -d, -d)
@@ -3074,7 +3075,12 @@ end
 
 -- z:OnStartup
 function z:OnStartup()
-	local icon = CreateFrame("Button", "ZOMGBuffsButton", UIParent, "SecureUnitButtonTemplate,SecureHandlerEnterLeaveTemplate")
+	local icon = CreateFrame("Button", "ZOMGBuffsButton", UIParent, "SecureUnitButtonTemplate,SecureHandlerEnterLeaveTemplate,ActionButtonTemplate")
+
+	local LibButtonFacade = LibStub("LibButtonFacade",true)
+	if (LibButtonFacade) then
+		LibButtonFacade:Group("ZOMGBuffs", "Buffs"):AddButton(icon)
+	end
 
 	self:UpdateListWidth()
 
@@ -5420,7 +5426,7 @@ function z:OnInitialize()
 		anchor = "BOTTOMRIGHT",
 		relpoint = "TOPRIGHT",
 		sort = "GROUP",
-		iconborder = true,
+		--iconborder = true,
 		border = false,
 		autobuyreagents = false,
 		minmana = 0,
