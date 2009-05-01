@@ -3079,6 +3079,24 @@ function z:OnStartup()
 
 	local LibButtonFacade = LibStub("LibButtonFacade",true)
 	if (LibButtonFacade) then
+		if (self.db.char.ButtonFacade) then
+			LibButtonFacade:Group("ZOMGBuffs", "Buffs"):Skin(unpack(self.db.char.ButtonFacade))
+		end
+		LibButtonFacade:RegisterSkinCallback("ZOMGBuffs",
+			function(_, skin, glossAlpha, gloss, _, _, colors)
+				local db = self.db.char
+				local bf = db.ButtonFacade
+				if (bf) then		-- Don't create lots of tables. ever!
+					bf[1] = skin
+					bf[2] = glossAlpha
+					bf[3] = gloss
+					bf[4] = colors
+				else
+					db.ButtonFacade = {skin, glossAlpha, gloss, colors}
+				end
+			end
+		)
+
 		LibButtonFacade:Group("ZOMGBuffs", "Buffs"):AddButton(icon)
 	end
 

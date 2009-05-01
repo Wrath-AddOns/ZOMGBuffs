@@ -1168,6 +1168,11 @@ do
 						icon = CreateFrame("Button", iname, self.iconbar, "SecureActionButtonTemplate,ActionButtonTemplate")
 						icons[i] = icon
 
+						local LibButtonFacade = LibStub("LibButtonFacade",true)
+						if (LibButtonFacade) then
+							LibButtonFacade:Group("ZOMGBuffs", "Buffs"):AddButton(icon)
+						end
+
 						icon:RegisterForDrag(nil)
 
 						icon.icon = getglobal(iname.."Icon")

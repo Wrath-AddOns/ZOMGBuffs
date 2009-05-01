@@ -2157,6 +2157,11 @@ do
 		local icon = CreateFrame("Button", iname, UIParent, inh)
 		icon.dummy = InCombatLockdown() or nil
 
+		local LibButtonFacade = LibStub("LibButtonFacade",true)
+		if (LibButtonFacade) then
+			LibButtonFacade:Group("ZOMGBuffs", "Buffs"):AddButton(icon)
+		end
+
 		if (not self.trackIcons) then
 			self.trackIcons = {}
 		end
