@@ -2042,7 +2042,7 @@ do
 	end
 
 	local function iconOnDragStart(self)
-			self:StartMoving()
+		self:StartMoving()
 	end
 
 	local function iconOnDragStop(self)
@@ -2052,6 +2052,11 @@ do
 				zg.db.char.postracker = {}
 			end
 			zg.db.char.postracker[self.posindex] = z:GetPosition(self)
+		end
+
+		if (self.swirl:IsShown()) then
+			self.swirl:Hide()
+			self.swirl:Show()				-- Trigger animation resume
 		end
 	end
 
@@ -2091,6 +2096,7 @@ do
 	end
 
 	local function iconOnHide(self)
+		self.swirl:Hide()
 		self:UnregisterEvent("UNIT_AURA")
 		self:UnregisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
 		self.key = nil
@@ -2191,10 +2197,7 @@ do
 		icon:SetWidth(36)
 		icon:SetHeight(36)
 		
-		icon.swirl = CreateFrame("Frame", iname.."Swirl", icon, "AutoCastShineTemplate")
-		icon.swirl:Hide()
-		icon.swirl:SetAllPoints()
-		AutoCastShine_AutoCastStart(icon.swirl, 1, 0.5, 0.5)
+		icon.swirl = z:CreateAutoCast(icon)
 
 		icon:RegisterForClicks("AnyUp")
 		icon:RegisterForDrag("LeftButton")

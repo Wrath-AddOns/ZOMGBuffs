@@ -3073,6 +3073,40 @@ function z:SetSort(show)
 	end
 end
 
+-- CreateAutoCast
+function z:CreateAutoCast(icon)
+	local a = CreateFrame("Frame", nil, icon)
+	a:Hide()
+	a:SetAllPoints()
+	a.tex = {}
+	for i = 1,2 do
+		a.tex[i] = a:CreateTexture(nil, "OVERLAY")
+		a.tex[i]:SetTexture("Interface\\BUTTONS\\UI-AutoCastableOverlay")
+		a.tex[i]:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+		a.tex[i]:SetAllPoints()
+
+		local g = a.tex[i]:CreateAnimationGroup()
+		a.tex[i].anim = g
+		local r = g:CreateAnimation("Rotation")
+		g.rotate = r
+
+		r:SetDuration(4 + i * 0.5)
+		r:SetDegrees(i == 1 and 360 or -360)
+		r:SetOrigin("CENTER", 0, 0)
+		g:SetLooping("REPEAT")
+	end
+	a:SetScript("OnShow",
+		function(self)
+			for i,tex in ipairs(self.tex) do
+				tex.anim:Play()		-- Bugfix for animations getting hidden (still in WoW 3.1.1a)
+				tex.anim:Stop()
+				tex.anim:Play()
+			end
+		end
+	)
+	return a
+end
+
 -- z:OnStartup
 function z:OnStartup()
 	local icon = CreateFrame("Button", "ZOMGBuffsButton", UIParent, "SecureUnitButtonTemplate,SecureHandlerEnterLeaveTemplate,ActionButtonTemplate")
@@ -3122,10 +3156,7 @@ function z:OnStartup()
 	icon.status:SetHeight(18)
 	icon.status:Hide()
 
-	icon.auto = CreateFrame("Frame", "ZOMGBuffsIconSwirl", icon, "AutoCastShineTemplate")
-	icon.auto:Hide()
-	icon.auto:SetAllPoints()
-	AutoCastShine_AutoCastStart(icon.auto, 1, 1, 0.8)
+	icon.auto = self:CreateAutoCast(icon)
 
 	icon.count = icon:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 	icon.count:Hide()
@@ -5411,7 +5442,8 @@ function z:OnInitialize()
 		singlesInBG = true,				-- Don't use greater blessings/class buffs in battlegrounds
 		singlesInArena = true,			-- Don't use greater blessings/class buffs in arenas
 		groupno = true,
-		alwaysLoadManager = false,
+		alwaysLoadManager = true,
+		alwaysLoadPortalz = true,
 		notWithSpiritTap = true,
 		showSolo = true,
 		showParty = true,
@@ -5423,8 +5455,8 @@ function z:OnInitialize()
 			spirit = true,
 			shadow = false,
 			blessings = true,
-			food = false,
-			flask = false,
+			food = true,
+			flask = true,
 		},
 		click = z:DefaultClickBindings(),
 		buffreminder = "None",
