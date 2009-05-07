@@ -2975,9 +2975,13 @@ function man:DrawIcons(row)
 		end
 	else
 		local pala = self.pala[row.pala]
+		if (not pala) then
+			-- Probably leaving raid and invalid atm
+			return
+		end
 
 		if (rowNumber ~= pala.row) then
-			error("Row number mismatch for "..who)
+			error("Row number mismatch for "..tostring(who))
 		end
 
 		local template = self.pala[row.pala].template

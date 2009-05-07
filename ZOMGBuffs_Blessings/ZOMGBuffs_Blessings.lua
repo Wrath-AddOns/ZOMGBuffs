@@ -3,7 +3,7 @@ if (ZOMGBlessings) then
 	return
 end
 
-local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
+local wowVersion = tonumber((select(2,GetBuildInfo())))
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
@@ -315,21 +315,21 @@ end
 local function GetUnitPalaBuffs(unitid, other)
 	local myBuff, otherBuffs, myBuffTimeLeft, myBuffTimeMax
 	for i = 1,40 do
-		local name, rank, buff, count, _, maxDuration, endTime, isMine = UnitBuff(unitid, i)
+		local name, rank, buff, count, _, maxDuration, endTime, caster = UnitBuff(unitid, i)
 		if (not name) then
 			break
 		end
 
-		if (name == manaspring) then
-			name = GetSpellInfo(27142)					-- Blessing of Wisdom
+		if (wowVersion < 9868) then
+			-- Fixed with PTR build 9868, Blessing of Wisdom bumped to 92mp5 from 91mp5 to stop mana spring overwriting
+			if (name == manaspring) then
+				name = GetSpellInfo(27142)					-- Blessing of Wisdom
+			end
 		end
 
 		local b = z.blessings[name]
 		if (b) then
-			if (isWoW3dot1) then
-				isMine = isMine == "player"
-			end
-			if (isMine) then
+			if (caster == "player") then
 				myBuff = b
 				myBuffTimeLeft = endTime - GetTime()
 				myBuffTimeMax = maxDuration

@@ -299,9 +299,10 @@ function mod:ScanSpells()
 			i = i + 1
 		end
 
+		local group = GetActiveTalentGroup()
 		for t = 1,GetNumTalentTabs() do
 			for i = 1,GetNumTalents(t) do
-				local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(t, i)
+				local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(t, i, nil, nil, group)
 				local bless = strmatch(nameTalent, L["PP_TSEARCH"])
 				if (bless) then
 					self.initialized = true

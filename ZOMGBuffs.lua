@@ -1742,11 +1742,12 @@ do
 				if (class == "PALADIN" or class == "PRIEST" or class == "DRUID") then
 					local data = new()
 					data.class = class
+					local group = GetActiveTalentGroup()
 					for i = 1,3 do
 						data[i] = new()
 						local total = GetNumTalents(i, remote)
 						for j = 1,total do
-							local Name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(i, j, remote)
+							local Name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(i, j, remote, nil, group)
 							data[i][j] = rank
 						end
 					end
@@ -1758,10 +1759,10 @@ do
 	end
 
 	-- INSPECT_TALENT_READY
-	function z:INSPECT_TALENT_READY(guid)
+	function z:INSPECT_TALENT_READY(guid, other)
 		if (guid) then
 			-- Blue said they'd include GUID here at some point, let's see...
-			self:Print("INSPECT_TALENT_READY with GUID: %s", guid)
+			self:Print("|cFFFF0000INSPECT_TALENT_READY|r with args: guid:%s, other:%s", tostring(guid), tostring(other))
 
 			for unit in self:IterateRoster() do
 				local g = UnitGUID(unit)
@@ -4672,15 +4673,17 @@ end
 function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
 	if (specChangers[spell]) then
 		-- Detect spec changing spellcasts. This will only work if the player is in sight (combat log range)
-		local name = UnitName(player)
-		z.talentSpecs[name] = del(z.talentSpecs[name])
-		if (not z.inspectQueue) then
-			z.inspectQueue = {}
-		else
-			z:RemoveFromInspectQueue(name)
+		if (z.talentSpecs) then
+			local name = UnitName(player)
+			z.talentSpecs[name] = del(z.talentSpecs[name])
+			if (not z.inspectQueue) then
+				z.inspectQueue = {}
+			else
+				z:RemoveFromInspectQueue(name)
+			end
+			tinsert(z.inspectQueue, name)
+			self:CheckTalentQueue()
 		end
-		tinsert(z.inspectQueue, name)
-		self:CheckTalentQueue()
 	end
 
 	if (player == "player") then
@@ -5146,10 +5149,11 @@ function z:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 				ignoreMeToo[sender] = time()
 
 				local t = new()
+				local group = GetActiveTalentGroup()
 				for tab = 1,GetNumTalentTabs() do
 					local str
 					for talent = 1,GetNumTalents(tab) do
-						local name, icon, tier, column, currentRank = GetTalentInfo(tab, talent)
+						local name, icon, tier, column, currentRank = GetTalentInfo(tab, talent, nil, nil, group)
 						str = (str or "") .. tostring(currentRank)
 					end
 					tinsert(t, str)
@@ -5276,7 +5280,8 @@ z.OnCommReceive = {
 	REQUESTSPEC = function(self, prefix, sender, channel)
 		if (not reqHistorySpec[sender] or reqHistorySpec[sender] < GetTime() - 15) then
 			reqHistorySpec[sender] = GetTime()
-			local a, b, c = select(3, GetTalentTabInfo(1)), select(3, GetTalentTabInfo(2)), select(3, GetTalentTabInfo(3))
+			local group = GetActiveTalentGroup()
+			local a, b, c = select(3, GetTalentTabInfo(1,nil,group)), select(3, GetTalentTabInfo(2,nil,group)), select(3, GetTalentTabInfo(3,nil,group))
 			z:SendComm(sender, "SPEC", {a, b, c})
 		end
 	end,
@@ -5317,15 +5322,16 @@ z.OnCommReceive = {
 			reqHistoryCap[sender] = GetTime()
 
 			local cap
+			local group = GetActiveTalentGroup()
 			if (playerClass == "PALADIN") then
 				-- Correct as of build 9061
-				local c1 = select(5, GetTalentInfo(2, 2)) == 4		-- Kings (Improved x4)
-				local c3 = select(5, GetTalentInfo(2, 12)) == 1		-- Sanctuary
-				local might = select(5, GetTalentInfo(3, 5))		-- Might
-				local wisdom = select(5, GetTalentInfo(1, 10))		-- Wisdom
+				local c1 = select(5, GetTalentInfo(2, 2, nil, nil, group)) == 4		-- Kings (Improved x4)
+				local c3 = select(5, GetTalentInfo(2, 12, nil, nil, group)) == 1		-- Sanctuary
+				local might = select(5, GetTalentInfo(3, 5, nil, nil, group))		-- Might
+				local wisdom = select(5, GetTalentInfo(1, 10, nil, nil, group))		-- Wisdom
 				cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
 			elseif (playerClass == "PRIEST") then
-				local c1 = select(5, GetTalentInfo(1, 13)) == 1		-- Spirit
+				local c1 = select(5, GetTalentInfo(1, 13, nil, nil, group)) == 1		-- Spirit
 				cap = {canSpirit = c1}
 			end
 			z:SendComm(sender, "CAPABILITY", cap)
