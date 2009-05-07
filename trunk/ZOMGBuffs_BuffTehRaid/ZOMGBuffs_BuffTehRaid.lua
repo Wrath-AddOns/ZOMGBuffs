@@ -933,9 +933,10 @@ end
 -- GetEarthShieldStacks
 local function GetEarthShieldStacks()
 	local impES = GetSpellInfo(51560)
+	local group = GetActiveTalentGroup()
 	for tab = 1,GetNumTalentTabs() do
 		for talent = 1,GetNumTalents(tab) do
-			local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(tab, talent)
+			local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(tab, talent, nil, nil, group)
 			if (nameTalent == impES) then
 				return 6 + (currRank or 0)
 			end
