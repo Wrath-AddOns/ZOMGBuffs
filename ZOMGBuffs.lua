@@ -5224,25 +5224,6 @@ do
 	function z:HookChat()
 		ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", chatFilter)
 		ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", chatFilterInform)
-
-		if (IsAddOnLoaded("Cellular") and Cellular) then
-			self:Hook(Cellular, "CHAT_MSG_WHISPER", function()
-				if (self:MatchChat(event, arg1)) then return end
-				return self.hooks[Cellular]["CHAT_MSG_WHISPER"](Cellular,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12)
-			end,
-			true)
-			self:Hook(Cellular, "CHAT_MSG_WHISPER_INFORM", function()
-				if (self:MatchChat(event, arg1)) then return end
-				return self.hooks[Cellular]["CHAT_MSG_WHISPER_INFORM"](Cellular,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12)
-			end, true)
-		end
-
-		if (WIM_ChatFrame_MessageEventHandler) then
-			self:Hook("WIM_ChatFrame_MessageEventHandler",function(event, internalEvent)
-				if (self:MatchChat(event, arg1)) then return end
-				return self.hooks["WIM_ChatFrame_MessageEventHandler"](event, internalEvent)
-			end, true)
-		end
 	end
 
 	-- z:UnhookChat
