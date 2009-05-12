@@ -2555,16 +2555,16 @@ end
 function z:SetIconSize()
 	if (self.db.char.showicon) then
 		self.icon:Show()
-		self.icon.tex:Show()
-		self.icon:SetWidth(self.db.char.iconsize)
-		self.icon:SetHeight(self.db.char.iconsize)
+		self.icon:SetScale(self.db.char.iconsize / 36)
 		self.icon:SetAttribute("*childstate-OnEnter", "enter")
+		self.icon:SetClampedToScreen(true)
+		self:RestorePosition(self.icon, self.db.char.pos)
 	else
 		self.icon:Hide()
-		self.icon.tex:Hide()
-		self.icon:SetHeight(1)		-- Can't hide it, needs to be visible
-		self.icon:SetWidth(1)
 		self.icon:SetAttribute("*childstate-OnEnter", nil)
+		self.icon:SetClampedToScreen(false)
+		self.icon:ClearAllPoints()
+		self.icon:SetPoint("TOPLEFT", UIParent, "BOTTOMRIGHT", 50, -50)		-- Push it off the screen
 	end
 
 	-- Border
