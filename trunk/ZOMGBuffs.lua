@@ -2685,7 +2685,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (UnitOnTaxi("player")) then
 		lastCheckFail = L["TAXI"]
 		icon = "flying"
-	elseif (UnitHasVehicleUI and UnitHasVehicleUI("player")) then
+	elseif (UnitInVehicle("player")) then
 		lastCheckFail = L["VEHICLE"]
 		icon = "flying"
 	elseif (InCombatLockdown() and not allowCombat) then
