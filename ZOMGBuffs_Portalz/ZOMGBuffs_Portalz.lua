@@ -678,10 +678,11 @@ function module:CreateItemButtons()
 			-- ItemID and whether it needs equiping
 			[35230] = false,			-- Darnarian's Scroll of Teleportation (SSO daily reward)
 			[32757] = true,				-- Blessed Medallion of Karobor
-			[18984] = true,				-- Dimensional Ripper - Everlook
-			[30542] = true,				-- Dimensional Ripper - Area 52
-			[18986] = true,				-- Ultrasafe Transporter: Gadgetzan
-			[30544] = true,				-- Ultrasafe Transporter: Toshley's Station
+			[18984] = false,			-- Dimensional Ripper - Everlook
+			[30542] = false,			-- Dimensional Ripper - Area 52
+			[18986] = false,			-- Ultrasafe Transporter: Gadgetzan
+			[30544] = false,			-- Ultrasafe Transporter: Toshley's Station
+			[48933] = false,			-- Wormhole Generator: Northrend
 			[40585] = true,				-- Signet of the Kirin'Tor
 			[40586] = true,				-- Band of the Kirin'Tor
 			[44925] = true,				-- Ring of the Kirin'Tor
