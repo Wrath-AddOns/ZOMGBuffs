@@ -193,7 +193,7 @@ do
 		{opt = "int",	ids = {27126, 27127},	class = "MAGE",		type = "INT", manaOnly = true},	-- Arcane Intellect, Arcane Brilliance
 		{opt = "spirit",ids = {25312, 32999},	class = "PRIEST",	type = "SPIRIT", manaOnly = true},	-- Divine Spirit, Prayer of Spirit
 		{opt = "shadow",ids = {25433, 39374},	class = "PRIEST",	type = "SPIRIT"},	-- Shadow Protection, Prayer of Shadow Protection
-		{opt = "food",	ids = {46899},								type = "FOOD"},		-- Well Fed
+		{opt = "food",	ids = {46899, 433},							type = "FOOD"},		-- Well Fed (Food = 433)
 		{opt = "flask",												type = "FLASK",		icon = "Interface\\Icons\\INV_Potion_1"},
 	}
 
@@ -3592,6 +3592,7 @@ local function DrawCell(self)
 						if (buff.list and buff.list[name]) then
 							icon:Show()
 							icon:SetAlpha(onAlpha)
+							icon:SetTexture(tex)			-- TEST
 							icon.spellName = name
 							got = got + 1
 						elseif (buff.type == "FLASK") then
@@ -5191,21 +5192,21 @@ end
 
 do
 	local function chatFilter(self, event, ...)
-		local msg = ...
+		local msg, sender = ...
 		for match in pairs(z.chatMatch) do
 			if (strsub(msg, 1, strlen(match)) == match) then
-				return true, ...
+				return true
 			end
 		end
-		return false, ...
+		return false
 	end
 
 	local function chatFilterInform(self, event, ...)
-		local msg = ...
+		local msg, sender = ...
 		if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
-			return true, ...
+			return true
 		end
-		return false, ...
+		return false
 	end
 
 	-- MatchChat
@@ -5408,7 +5409,7 @@ function z:OnInitialize()
 		showMinimapButton = true,
 		bufftimer = true,
 		bufftimersize = 0.6,
-		bufftimerthreshold = 60 * 60,
+		bufftimerthreshold = 10 * 60,
 		invert = true,
 		notice = true,
 		usesink = false,

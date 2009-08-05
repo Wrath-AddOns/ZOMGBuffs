@@ -284,6 +284,15 @@ end
 function zs:CheckEnchant(slot, spellOrItem)
 	if (spellOrItem) then
 		if (not self.activeEnchant or self.activeEnchant < GetTime() - 4) then
+			local itemLink = GetInventoryItemLink("player", 16)
+			if (itemLink) then
+				local itemName, _, _, itemLevel = GetItemInfo(itemLink)
+				if (itemLevel == 1) then
+					-- Ignore itemLevel == 1 (Argent Lances etc)
+					return
+				end
+			end
+
 			local hasEnchant, Expiration, Charges = select(1 + (3 * (slot - 16)), GetWeaponEnchantInfo())
 			if (hasEnchant) then
 				if (playerClass ~= "SHAMAN") then		-- Shaman weapon enchants do not match spell names, so we won't check them
@@ -544,7 +553,7 @@ function zs:GetClassBuffs()
 		}
 
 	elseif (playerClass == "SHAMAN") then
-		local onEnableShield = function() 
+		local onEnableShield = function(key) 
 			local btr = ZOMGBuffTehRaid
 			if (btr) then
 				local who = btr:ExclusiveTarget("EARTHSHIELD")
@@ -555,12 +564,15 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
-			{id = 49281, o = 1, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
-			{id = 33736, o = 4, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
-			{id = 25505, o = 1, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
-			{id = 25489, o = 2, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
-			{id = 25500, o = 3, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
-			{id = 51993, o = 4, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
+			{id = 49281, o = 1, dup = 2, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
+			{id = 33736, o = 2, dup = 2, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
+			{id = 8017,  o = 4, duration = 30, who = "weapon", c = "80FF80", dup = 1,				-- Rockbiter Weapon
+				exclude = function() return IsUsableSpell(GetSpellInfo(25505)) end, -- Only use Rockbiter until we can use Windfury
+			},
+			{id = 25505, o = 4, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
+			{id = 25489, o = 5, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
+			{id = 25500, o = 6, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
+			{id = 51993, o = 7, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
 		}
 		self.reagents = {
 			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50},
@@ -579,13 +591,12 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
-			{id = 51662, o = 1, duration = 0.5, needStacks = 3, who = "self", c = "FFFF80"},	-- Hunger for Blood
-			{id = 41189, o = 3, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Instant Poison
-			{id = 43581, o = 4, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Deadly Poison
-			{id = 3408, o = 5, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
-			{id = 5761, o = 6, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 43461, o = 7, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},					-- Wound Poison
-			{id = 57982, o = 8, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
+			{id = 41189, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Instant Poison
+			{id = 43581, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Deadly Poison
+			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
+			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
+			{id = 43461, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},					-- Wound Poison
+			{id = 57982, o = 6, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
 		}
 		self.reagents = {
 			[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
@@ -635,10 +646,8 @@ function zs:GetClassBuffs()
 			{id = 20166, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]},	-- Seal of Wisdom
 			{id = 20165, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Light
 			{id = 53736, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
-			{id = 31892, o = 6,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of Blood
-			{id = 31801, o = 8,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Vengeance
-			{id = 53720, o = 9,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]},	-- Seal of the Martyr
-			{id = 20164, o = 10,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
+			{id = 31801, o = 6,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Vengeance
+			{id = 20164, o = 7,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
 			{id = 25780, o = 11, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
 			{id = 27179, o = 12, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
 			{id = 27149, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
@@ -655,6 +664,11 @@ function zs:GetClassBuffs()
 				end
 			},
 		}
+
+		if (tonumber((select(2, GetBuildInfo()))) < 10000) then
+			tinsert(classBuffs, 8, {id = 31892, o = 8,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
+			tinsert(classBuffs, 9, {id = 53720, o = 9,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of the Martyr
+		end
 
 		self.notifySpells = {
 			[GetSpellInfo(19752)] = GetItemInfo(17033) or R["Symbol of Divinity"],		-- Divine Intervention
@@ -1009,7 +1023,7 @@ function zs:OnSelectTemplate(templateName)
 	for key,buff in pairs(self.classBuffs) do
 		if (template[key]) then
 			if (buff.onEnable) then
-				buff.onEnable()
+				buff.onEnable(key)
 			end
 		end
 	end
@@ -1020,7 +1034,7 @@ function zs:OnModifyTemplate(key, value)
 	if (value) then
 		local buff = self.classBuffs[key]
 		if (buff and buff.onEnable) then
-			buff.onEnable()
+			buff.onEnable(key)
 		end
 	end
 end
