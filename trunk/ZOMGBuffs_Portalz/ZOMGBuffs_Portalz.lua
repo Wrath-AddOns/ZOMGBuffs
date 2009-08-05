@@ -3,6 +3,7 @@ if (ZOMGPortalz) then
 	return
 end
 
+--local ANIM = true	-- Swirly testing changes
 local L = LibStub("AceLocale-2.2"):new("ZOMGPortalz")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
@@ -318,6 +319,14 @@ do
 		d.highlight3:Hide()
 		d.highlight3.angleMod = 3.33
 
+		if (ANIM) then
+			d.highlight1:SetTexture("SPELLS\\SHOCKWAVE10D")
+			d.highlight2:SetTexture("SPELLS\\SHOCKWAVE10")
+			d.highlight1.anim = self:CreatePortalAnimation(d.highlight1, 40)
+			d.highlight2.anim = self:CreatePortalAnimation(d.highlight2, 35)
+			d.highlight3.anim = self:CreatePortalAnimation(d.highlight3, 20)
+		end
+
 		d:SetScript("OnEnter", buttonOnEnter)
 		d:SetScript("OnLeave", buttonOnLeave)
 		d:SetScript("OnDragStart", buttonOnDragStart)
@@ -328,12 +337,44 @@ do
 	end
 end
 
+if (ANIM) then
+-- CreatePortalAnimation
+function module:CreatePortalAnimation(frame, duration)
+	local a = frame:CreateAnimationGroup()
+	a:SetLooping("REPEAT")
+
+	local r = a:CreateAnimation("Rotation")
+	a.rotate = r
+	r:SetDuration(duration)
+	r:SetDegrees(-360)
+	r:SetOrder(1)
+
+	local alpha1 = a:CreateAnimation("Alpha")
+	a.alpha1 = alpha1
+	alpha1:SetChange(-0.8)
+	alpha1:SetDuration(duration / 10)
+	alpha1:SetOrder(1)
+
+	local alpha2 = a:CreateAnimation("Alpha")
+	a.alpha2 = alpha
+	alpha2:SetChange(0.8)
+	alpha2:SetDuration(duration / 10)
+	alpha2:SetOrder(2)
+
+	return a
+end
+
+end
+
 local cycle = {
 	"SPELLS\\SHOCKWAVE10",
 	"SPELLS\\Shockwave10a",
 	"SPELLS\\SHOCKWAVE10B",
 	"SPELLS\\SHOCKWAVE10D",
 }
+
+local buttonOnUpdate
+if (not ANIM) then
 
 local function rotate(angle)
 	local zpftA = 0.5 * cos(angle)
@@ -388,10 +429,11 @@ local function buttonOnUpdateHighlight(self, elapsed)
 end
 
 -- buttonOnUpdate
-local function buttonOnUpdate(self, elapsed)
+function buttonOnUpdate(self, elapsed)
 	buttonOnUpdateHighlight(self.highlight1, elapsed)
 	buttonOnUpdateHighlight(self.highlight2, elapsed)
 	buttonOnUpdateHighlight(self.highlight3, elapsed)
+end
 end
 
 -- IsItemEquiped
@@ -420,17 +462,28 @@ end
 -- OnEnterButton
 local hearthStoneItems = {[6948] = true, [28585] = true, [44315] = true, [44314] = true, [37118] = true}
 function module:OnEnterButton(button)
-	button.highlight1.phase = 1
-	button.highlight1.alpha = 0
-	button.highlight1.dir = 0
-	button.highlight2.phase = 2
-	button.highlight2.alpha = 0.5
-	button.highlight2.dir = 0
-	button.highlight3.dir = 1
-	button.highlight3.phase = -1
-	button.highlight3.alpha = 0.3
-	button.highlight3:Show()
-	button:SetScript("OnUpdate", buttonOnUpdate)
+	if (ANIM) then
+		if (not button.highlight1:IsShown()) then
+			button.highlight1:Show()
+			button.highlight2:Show()
+			button.highlight3:Show()
+			button.highlight1.anim:Play()
+			button.highlight2.anim:Play()
+			button.highlight3.anim:Play()
+		end
+	else
+		button.highlight1.phase = 1
+		button.highlight1.alpha = 0
+		button.highlight1.dir = 0
+		button.highlight2.phase = 2
+		button.highlight2.alpha = 0.5
+		button.highlight2.dir = 0
+		button.highlight3.dir = 1
+		button.highlight3.phase = -1
+		button.highlight3.alpha = 0.3
+		button.highlight3:Show()
+		button:SetScript("OnUpdate", buttonOnUpdate)
+	end
 
 	local spell = button:GetAttribute("spell")
 	local item = button:GetAttribute("item")
@@ -470,10 +523,18 @@ end
 
 -- OnEnterButton
 function module:OnLeaveButton(button)
-	button:SetScript("OnUpdate", nil)
-	button.highlight1:SetTexture(nil)
-	button.highlight2:SetTexture(nil)
-	button.highlight3:Hide()
+	if (ANIM) then
+		if (button.highlight1:IsShown()) then
+			button.highlight1:Hide()
+			button.highlight2:Hide()
+			button.highlight3:Hide()
+		end
+	else
+		button:SetScript("OnUpdate", nil)
+		button.highlight1:SetTexture(nil)
+		button.highlight2:SetTexture(nil)
+		button.highlight3:Hide()
+	end
 
 	self.frame.text:SetText("")
 	self.frame.reagents:SetText("")
