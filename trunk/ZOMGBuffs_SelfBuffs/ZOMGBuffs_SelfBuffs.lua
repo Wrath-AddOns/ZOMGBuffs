@@ -342,9 +342,7 @@ function zs:CheckBuffs()
 		for k,v in pairs(self.classBuffs) do
 			if (v.auto) then
 				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
-				if (isWoW3dot1) then
-					isMine = isMine == "player"
-				end
+				isMine = isMine == "player"
 				if (not name or not isMine) then
 				--if (not myBuffs or not myBuffs[k]) then
 					if (v.auto()) then

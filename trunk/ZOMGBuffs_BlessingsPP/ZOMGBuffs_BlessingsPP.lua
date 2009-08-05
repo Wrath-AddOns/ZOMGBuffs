@@ -3,8 +3,6 @@
 	return
 end
 
-local isWoW3dot1 = select(2,GetBuildInfo()) >= "9614"
-
 -- ZOMGBUffs, Pally Power comunication module, for those Paladins who've not yet seen the light
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsPP")
