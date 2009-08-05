@@ -688,9 +688,13 @@ function module:CreateItemButtons()
 			[44925] = true,				-- Ring of the Kirin'Tor
 			[44934] = true,				-- Loop of the Kirin'Tor
 			[45688] = true,				-- Inscribed Band of the Kirin Tor
-			[45690] = true,				-- Inscribed Ring of the Kirin Tor
 			[45689] = true,				-- Inscribed Loop of the Kirin Tor
+			[45690] = true,				-- Inscribed Ring of the Kirin Tor
 			[45691] = true,				-- Inscribed Signet of the Kirin Tor
+			[48954] = true,				-- Etched Band of the Kirin Tor
+			[48955] = true,				-- Etched Loop of the Kirin Tor
+			[48956] = true,				-- Etched Ring of the Kirin Tor
+			[48957] = true,				-- Etched Signet of the Kirin Tor
 		}
 
 		for id,equip in pairs(clickItems) do
