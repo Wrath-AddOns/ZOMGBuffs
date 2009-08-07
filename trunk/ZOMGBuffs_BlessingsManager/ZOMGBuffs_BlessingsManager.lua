@@ -1608,8 +1608,10 @@ function man:AssignPaladins()
 			end
 			local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
 			if (not pala.gotCapabilities) then
-				z:SendComm(name, "REQUESTCAPABILITY", nil)
-				z:SendComm(name, "REQUESTSPEC", nil)
+				if (not z.talentSpecs[name]) then
+					z:SendComm(name, "REQUESTCAPABILITY", nil)
+					z:SendComm(name, "REQUESTSPEC", nil)
+				end
 				z:SendComm(name, "REQUESTTEMPLATE", nil)
 				if (pala.canEdit == nil) then
 					pala.canEdit = false
@@ -4177,6 +4179,16 @@ function man:Send(type, name)
 	end
 end
 
+-- IsGuildMember
+function man:IsGuildMember(find)
+	for i = 1,GetNumGuildMembers(true) do
+		local name, rank, rankIndex, level, class, zone, note, officernote, online = GetGuildRosterInfo(i)
+		if (name == find) then
+			return i, online, rank
+		end
+	end
+end
+
 -- Clean
 function man:Clean(mode)		-- guild or raid
 	local cleaned = 0
@@ -4185,7 +4197,7 @@ function man:Clean(mode)		-- guild or raid
 		for class,list in pairs(codes) do
 			for name,code in pairs(list) do
 				if (mode == "guild") then
-					if (not rollcall:GetLevel(name)) then
+					if (not self:IsGuildMember(name)) then
 						list[name] = nil
 						cleaned = cleaned + 1
 					end

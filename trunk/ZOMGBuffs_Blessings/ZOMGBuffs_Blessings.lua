@@ -527,8 +527,10 @@ function zb:CheckBuffs()
 							ltcUnits[unitid] = false
 						else
 							-- Found another of same class needing this buff
-							ltcUnits[unitid] = true
-							classNeedCount = classNeedCount + 1
+							if (UnitLevel(unitid) >= 50) then
+								ltcUnits[unitid] = true
+								classNeedCount = classNeedCount + 1
+							end
 						end
 					else
 						if (gotSymbols and getClassBuff and classSpell and not template[unitname] and not skipGreater) then
@@ -537,8 +539,10 @@ function zb:CheckBuffs()
 							ltcSpell = classSpell
 							ltcType = needType
 							ltcUnits = new()
-							ltcUnits[unitid] = true
-							classNeedCount = 1
+							if (UnitLevel(unitid) >= 50) then
+								ltcUnits[unitid] = true
+								classNeedCount = 1
+							end
 						end
 
 						if (singleSpell and not singleNeedUnit) then
@@ -579,19 +583,8 @@ function zb:CheckBuffs()
 
 		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
 			if (unitclass == "PET") then
-				local masterUnit = unitid:gsub("pet", "")
 				if (UnitIsVisible(unitid) and UnitCanAssist("player", unitid)) then
-					local masterClass = select(2, UnitClass(masterUnit))
-					if (masterClass == "HUNTER") then
-						masterClass = "WARRIOR"
-					elseif (masterClass == "DEATHKNIGHT") then
-						masterClass = "ROGUE"
-					elseif (masterClass == "WARLOCK") then
-						local family = UnitCreatureFamily(unitid)
-						if (family == L["Felguard"] or family == L["Voidwalker"]) then
-							masterClass = "WARRIOR"
-						end
-					end
+					local masterClass = select(2, UnitClass(unitid))
 					if (masterClass) then
 						if ((classesCheckPresent[masterClass] or 0) == (z.classcount[masterClass] or 0)) then
 							-- Only buff pets if all of master class present,
@@ -651,18 +644,20 @@ function zb:CheckBuffs()
 				--	self:Print("Class mismatch (2) with "..z:ColourUnit(unitid).." in list for class "..z:ColourClass(limitToclass))
 				break
 			end
-			local unitname = UnitName(unitid)
-			local failedRecently = unitname and z:IsBlacklisted(unitname)
-			if (not failedRecently and IsSpellInRange(ltcSpell, unitid) == 1) then
-				z:Notice(format(L["Class %s needs %s"], z:ColourClass(limitToClass), z:ColourBlessing(ltcType, true, nil, true)), "buffreminder")
-				z:SetupForSpell(unitid, ltcSpell, self, GetItemCount(21177))		-- symbolOfKings
-				z:TriggerClickUpdate(unitid)		-- And also trigger a list click update
-				spellDone = true
-				break
+			if (UnitLevel(unitid) >= 50) then			-- Don't try to cast greater's on lowbies
+				local unitname = UnitName(unitid)
+				local failedRecently = unitname and z:IsBlacklisted(unitname)
+				if (not failedRecently and IsSpellInRange(ltcSpell, unitid) == 1) then
+					z:Notice(format(L["Class %s needs %s"], z:ColourClass(limitToClass), z:ColourBlessing(ltcType, true, nil, true)), "buffreminder")
+					z:SetupForSpell(unitid, ltcSpell, self, GetItemCount(21177))		-- symbolOfKings
+					z:TriggerClickUpdate(unitid)		-- And also trigger a list click update
+					spellDone = true
+					break
+				end
 			end
 		end
 
-	elseif (singleNeedSpell) then
+	elseif (not spellDone and singleNeedSpell) then
 		z:Notice(format(L["%s needs %s"], z:ColourUnit(singleNeedUnit), z:ColourBlessing(singleNeedType, nil, nil, true)), "buffreminder")
 		z:SetupForSpell(singleNeedUnit, singleNeedSpell, self)
 		z:TriggerClickUpdate(singleNeedUnit)		-- And also trigger a list click update
