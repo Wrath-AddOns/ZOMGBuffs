@@ -1671,8 +1671,6 @@ local function AnalyzeTalents(dest, data)
 		dest.canSanctuary = data[2][14] ~= 0 or nil
 		dest.impMight = data[3][1]
 		dest.impWisdom = data[1][10]
-	elseif (data.class == "PRIEST") then
-		dest.canSpirit = data[1][14] ~= 0 or nil
 	elseif (data.class == "DRUID") then
 		dest.impMark = data[3][1] == 5 or nil
 	end
@@ -1723,7 +1721,7 @@ do
 		end)
 
 	function z:ReadTalents(name, unit, remote)
---z:Print("- Valid unit")
+--z:Print("ReadTalents(%s, %s, %s)", tostring(name), tostring(unit), tostring(remote))
 		local name1, name2, name3, num1, num2, num3, iconTexture, background
 		name1, iconTexture, num1, background  = GetTalentTabInfo(1, remote)
 		name2, iconTexture, num2, background  = GetTalentTabInfo(2, remote)
@@ -1742,7 +1740,7 @@ do
 				if (class == "PALADIN" or class == "PRIEST" or class == "DRUID") then
 					local data = new()
 					data.class = class
-					local group = GetActiveTalentGroup()
+					local group = GetActiveTalentGroup(remote)
 					for i = 1,3 do
 						data[i] = new()
 						local total = GetNumTalents(i, remote)
@@ -1815,6 +1813,7 @@ do
 
 	-- ImportUtopiaTalents
 	local function ImportUtopiaTalents(name, t)
+--z:Print("ImportUtopiaTalents(%s, %s)", name, tostring(t))
 		local _, class = UnitClass(name)
 		if (not class) then
 			return
@@ -1831,13 +1830,12 @@ do
 		end
 
 		ret.string = format("%d/%d/%d", ret[1], ret[2], ret[3])
+--z:Print("ret.string = %s", ret.string)
 
 		if (class == "PALADIN") then
 			ret.canKings = true
 			ret.impMight = Utopia:HasTalent(name, GetSpellInfo(20045))				-- Improved Blessing of Might
 			ret.impWisdom = Utopia:HasTalent(name, GetSpellInfo(20245))				-- Improved Blessing of Wisdom
-		elseif (class == "PRIEST") then
-			ret.canSpirit = true
 		elseif (class == "DRUID") then
 			ret.impMark = Utopia:HasTalent(name, GetSpellInfo(17051))				-- Improved Mark of the Wild
 		end
@@ -1853,13 +1851,14 @@ do
 				local t = Utopia.talents[name]
 				local ret
 				if (t) then
+					z:RemoveFromInspectQueue(name)
 					ret = ImportUtopiaTalents(name, t)
 					self[name] = ret
 				end
 				return ret
 			end
 
-			if (lastInspectPending == 0 or GetTime() > lastInspectTime + 15) then
+			if (lastInspectPending == 0 or (lastInspectPending and GetTime() > lastInspectTime + 15)) then
 --z:Print("- Clear pending queue")
 				lastInspectPending = 0
 			elseif (lastInspectPending > 0) then
@@ -1870,6 +1869,7 @@ do
 
 			if (UnitIsConnected(name)) then
 				if (UnitIsUnit("player", name)) then
+--z:Print("- Unit is self, reading directly")
 					z:ReadTalents(playerName, name)
 
 				elseif (UnitExists(name) and UnitIsVisible(name) and (not InspectFrame or not InspectFrame.unit) and lastInspectPending == 0 and not UnitIsUnit("player", name) and CheckInteractDistance(name, 4)) then
@@ -2414,20 +2414,6 @@ function z:Report(option)
 		local groupList = new(new(), new(), new(), new(), new(), new(), new(), new())
 		local blessingsMissing = new()
 		local blessingsGot = new()
-		local spiritedPriests
-		if (self.classcount.PRIEST > 0) then
-			for unit, name, class, subgroup, index in self:IterateRoster() do
-				if (class == "PRIEST") then
-					local spec = rawget(z.talentSpecs, name)
-					if (spec) then
-						if (spec.canSpirit) then
-							spiritedPriests = true
-							break
-						end
-					end
-				end
-			end
-		end
 
 		for partyid, name, class, subgroup, index in self:IterateRoster() do
 			flags.STA, flags.MARK, flags.INT, flags.SPIRIT, flags.BLESSINGS = nil, nil, nil, nil, nil
@@ -2478,7 +2464,7 @@ function z:Report(option)
 						tinsert(list.INT, name)
 						groupList[subgroup].INT = (groupList[subgroup].INT or 0) + 1
 					end
-					if (not flags.SPIRIT and spiritedPriests) then
+					if (not flags.SPIRIT) then
 						if (not list.SPIRIT) then
 							list.SPIRIT = new()
 						end
@@ -4701,17 +4687,6 @@ function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
 		end
 
 		if (spell == self.lastCastS and rank == self.lastCastR) then
-			-- if (self.icon.mod) then
-				-- for name, module in self:IterateModulesWithMethod("OneOfYours") do
-					-- if (module == self.icon.mod) then
-						-- if (module:OneOfYours(spell)) then
-							-- -- Clear current queued spell in case user has cast one from same module
-							-- self:CheckForChange(module)
-						-- end
-					-- end
-				-- end
-			-- end
-
 			for name, module in self:IterateModulesWithMethod("SpellCastSucceeded") do
 				module:SpellCastSucceeded(self.lastCastS, self.lastCastR, self.lastCastN, not self.clickCast, self.clickList)
 			end
@@ -5307,14 +5282,13 @@ z.OnCommReceive = {
 			local group = GetActiveTalentGroup()
 			if (playerClass == "PALADIN") then
 				-- Correct as of build 9061
-				local c1 = select(5, GetTalentInfo(2, 2, nil, nil, group)) == 4		-- Kings (Improved x4)
 				local c3 = select(5, GetTalentInfo(2, 12, nil, nil, group)) == 1		-- Sanctuary
 				local might = select(5, GetTalentInfo(3, 5, nil, nil, group))		-- Might
 				local wisdom = select(5, GetTalentInfo(1, 10, nil, nil, group))		-- Wisdom
-				cap = {canKings = c1, canSanctuary = c3, impMight = might, impWisdom = wisdom}
-			elseif (playerClass == "PRIEST") then
-				local c1 = select(5, GetTalentInfo(1, 13, nil, nil, group)) == 1		-- Spirit
-				cap = {canSpirit = c1}
+				cap = {canKings = true, canSanctuary = c3, impMight = might, impWisdom = wisdom}
+				for i = 1,3 do
+					cap[i] = select(3, GetTalentTabInfo(i))
+				end
 			end
 			z:SendComm(sender, "CAPABILITY", cap)
 		end
