@@ -1,5 +1,4 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
-local BC = LibStub("LibBabble-Class-3.0"):GetLookupTable()
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
@@ -286,7 +285,7 @@ end
 
 z.classReverse = new()
 for i,class in pairs(z.classOrder) do
-	z.classReverse[BC[propercase(class)]] = class
+	z.classReverse[LOCALIZED_CLASS_NAMES_MALE[class]] = class
 end
 
 -- CheckVersion
@@ -2207,7 +2206,7 @@ function z:ColourClass(upperClass, prefix, suffix)
 		if (upperClass == "PET") then
 			return "Pet"
 		else
-			local properClass = BC[propercase(upperClass)]
+			local properClass = LOCALIZED_CLASS_NAMES_MALE[upperClass] or upperClass
 			local c = self:GetClassColour(upperClass)
 			return format("|cFF%02X%02X%02X%s%s%s|r", c.r * 255, c.g * 255, c.b * 255, (prefix and prefix.." ") or "", properClass, (suffix and " "..suffix) or "")
 		end
@@ -2508,7 +2507,8 @@ function z:Report(option)
 		for i,class in ipairs(classOrder) do
 			if ((blessingsMissing[class] or 0) > 0) then
 				if ((blessingsGot[class] or 0) == 0) then
-					tinsert(list.BLESSINGS, BC[propercase(class)])
+					tinsert(list.BLESSINGS, LOCALIZED_CLASS_NAMES_MALE[class] or class)
+
 					for unit, unitname, unitclass, subgroup, index in self:IterateRoster() do
 						if (class == unitclass) then
 							for j,name in ipairs(list.BLESSINGS) do
