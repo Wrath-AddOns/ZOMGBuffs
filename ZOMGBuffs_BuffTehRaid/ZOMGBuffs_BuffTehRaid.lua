@@ -1987,8 +1987,10 @@ do
 					return
 				end
 
-				z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
-				PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+				if (buff) then
+					z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
+					PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+				end
 			end
 		end
 
@@ -2104,12 +2106,14 @@ do
 	end
 
 	local function iconSetPosition(self)
-		self:SetPoint("CENTER")
-		self:SetScale(zg.db.char.trackerscale)
-		if (type(zg.db.char.postracker) == "table") then
-			pos = zg.db.char.postracker[self.posindex]
-			if (pos) then
-				z:RestorePosition(self, pos)
+		if (not InCombatLockdown()) then
+			self:SetPoint("CENTER")
+			self:SetScale(zg.db.char.trackerscale)
+			if (type(zg.db.char.postracker) == "table") then
+				pos = zg.db.char.postracker[self.posindex]
+				if (pos) then
+					z:RestorePosition(self, pos)
+				end
 			end
 		end
 	end
