@@ -573,7 +573,7 @@ function zs:GetClassBuffs()
 			{id = 51993, o = 7, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
 		}
 		self.reagents = {
-			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50},
+			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50, minLevel = 30},
 		}
 		self.notifySpells = {
 			[GetSpellInfo(27740)] = GetItemInfo(17030) or R["Ankh"],										-- Reincarnation
