@@ -13,7 +13,7 @@
 ## X-Website: http://www.wowace.com/wiki/ZOMGBuffs
 
 ## OptionalDeps: Ace2, AceLocale-2.2, AceAddon-2.0, AceDB-2.0, AceEvent-2.0, AceModuleCore-2.0, AceHook-2.1, AceComm-2.0, DewdropLib, FuBarPlugin-2.0, TabletLib, LibSharedMedia-3.0, ChatThrottleLib, LibSink-2.0
-## X-Embeds: Ace2, LibBabble-Class-3.0, DewdropLib, FuBarPlugin-2.0, TabletLib, LibSharedMedia-3.0, LibSink-2.0
+## X-Embeds: Ace2, DewdropLib, FuBarPlugin-2.0, TabletLib, LibSharedMedia-3.0, LibSink-2.0
 
 UTF8\utf8data.lua
 UTF8\utf8.lua
@@ -34,7 +34,6 @@ libs\AceHook-2.1\AceHook-2.1.lua
 libs\AceLocale-2.2\AceLocale-2.2.lua
 
 libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
-libs\LibBabble-Class-3.0\lib.xml
 libs\Tablet-2.0\Tablet-2.0.lua
 libs\Dewdrop-2.0\Dewdrop-2.0.lua
 libs\FuBarPlugin-2.0\FuBarPlugin-2.0.lua
