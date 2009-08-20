@@ -32,6 +32,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Seals"]												= true,				-- Generic Paladin 'Seal of ' description
 	["Expiry Prelude"]										= true,
 	["Rebuff prelude for %s (0=Module default)"]			= true,
+	["Minimum Charges"]										= true,
+	["Rebuff if number of charges left is less than defined amount"] = true,
 	["Default"]												= true,
 	["Default rebuff prelude for all self buffs"]			= true,
 	["Warning: |cFF%s%s|r already applied by another %s"]	= true,

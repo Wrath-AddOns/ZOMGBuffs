@@ -3846,7 +3846,7 @@ end
 
 -- DrawGroupNumbers
 function z:DrawGroupNumbers()
-	if (self.members) then
+	if (self.members and self.groupColours) then
 		if (self.groupNumbers) then
 			for i = 1,8 do
 				local no = self.groupNumbers[i]
@@ -6029,6 +6029,8 @@ function z:OnEnable()
 		self:OnStartup()
 		self:RestorePosition(self.icon, self.db.char.pos)
 		self:SetIconSize()
+	elseif (self.members) then
+		self.members:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	end
 
 	self:MakeOptionsReagentList()
@@ -6094,6 +6096,7 @@ function z:OnDisable()
 	self:SetupForSpell()
 	self.enabled = nil
 	self.icon:Hide()
+	self.members:UnregisterAllEvents()
 	self.buffRoster = nil
 	self.blackList = nil
 	self.chatMatch = nil
