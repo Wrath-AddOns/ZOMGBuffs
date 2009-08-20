@@ -338,20 +338,17 @@ function zs:CheckBuffs()
 		end
 
 		-- Special case for Crusader Aura when mounted, and Aspect of Cheetah when resting
-		--myBuffs = self:GetMyBuffs()
 		for k,v in pairs(self.classBuffs) do
 			if (v.auto) then
 				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
 				isMine = isMine == "player"
 				if (not name or not isMine) then
-				--if (not myBuffs or not myBuffs[k]) then
 					if (v.auto()) then
 						if (not UnitOnTaxi("player") and not UnitIsDeadOrGhost("player")) then
 							z:SetupForSpell()
 							z:SetupForSpell("player", k, self)
 							z:Notice(format(L["You need %s"], z:LinkSpell(k, nil, true)), "buffreminder")
 							z.icon.autospell = true
-							--del(myBuffs)
 							return
 						end
 					end
@@ -361,11 +358,9 @@ function zs:CheckBuffs()
 	end
 
 	if (not z:CanCheckBuffs(self.db.char.combatnotice, true)) then
-		--if (self.mounted and not z.db.profile.notmounted) then
 		if (IsMounted() and not z.db.profile.notmounted) then
 			z:SetupForSpell()
 		end
-		--del(myBuffs)
 		return
 	end
 
@@ -376,23 +371,20 @@ function zs:CheckBuffs()
 	end
 
 	local any
-	--if (not myBuffs) then
-	--	myBuffs = self:GetMyBuffs()
-	--end
 
+	local charges = self.db.char.charges
 	local minTimeLeft
 	for k,v in pairs(template) do
 		if (v) then
 			local cb = self.classBuffs[k]
-			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then		-- self.trackingBuffs[k] or
+			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then
 				if (not cb.skip or not cb.skip()) then
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
 
 					local timeLeft = endTime and (endTime - GetTime())
 
-					--local timeLeft = myBuffs and myBuffs[k]
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
-					if ((cb.needStacks and (count or 0) < cb.needStacks) or (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft))) then
+					if ((charges and ((count or 0) < (charges[k] or 0))) or (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft))) then
 						-- Need recast
 						local start, duration, enable = GetSpellCooldown(k)
 						if ((start and (start == 0 or start + duration <= GetTime())) and enable == 1 and IsUsableSpell(k)) then
@@ -431,8 +423,6 @@ function zs:CheckBuffs()
 	if (not any and minTimeLeft) then
 		self:ScheduleEvent("ZOMGBuffs_SelfCheckBuffs", self.CheckBuffs, minTimeLeft, self)
 	end
-
-	--del(myBuffs)
 end
 
 -- GetClassBuffs
@@ -497,7 +487,7 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "PRIEST") then
 		classBuffs = {
 			{id = 25218, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
-			{id = 25431, o = 2, duration = 10, who = "self", c = "FFA080"},									-- Inner Fire
+			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},									-- Inner Fire
 			{id = 45455, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
 
@@ -562,8 +552,8 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
-			{id = 49281, o = 1, dup = 2, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
-			{id = 33736, o = 2, dup = 2, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
+			{id = 49281, o = 1, dup = 2, charges = 3, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
+			{id = 33736, o = 2, dup = 2, charges = 3, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
 			{id = 8017,  o = 4, duration = 30, who = "weapon", c = "80FF80", dup = 1,				-- Rockbiter Weapon
 				exclude = function() return IsUsableSpell(GetSpellInfo(25505)) end, -- Only use Rockbiter until we can use Windfury
 			},
@@ -810,6 +800,24 @@ do
 		end
 	end
 
+	local function getCharges(k)
+		return zs.db.char.charges and zs.db.char.charges[k] or 0
+	end
+
+	local function setCharges(k, v)
+		if (v > 0) then
+			if (not zs.db.char.charges) then
+				zs.db.char.charges = {}
+			end
+			zs.db.char.charges[k] = v
+		else
+			zs.db.char.charges[k] = nil
+			if (not next(zs.db.char.charges)) then
+				zs.db.char.charges = nil
+			end
+		end
+	end
+
 	function zs:MakeSpellOptions()
 		local any
 		local args = {}
@@ -859,7 +867,7 @@ do
 									type = "toggle",
 									name = L["Learnable"],
 									desc = L["Remember this spell when it's cast manually?"],
-									order = 3,
+									order = 100,
 									get = getLearnable,
 									set = setLearnable,
 									passValue = k,
@@ -873,7 +881,7 @@ do
 								name = L["Expiry Prelude"],
 								desc = format(L["Rebuff prelude for %s (0=Module default)"], v.rebuff or cName),
 								func = timeFunc,
-								order = 2,
+								order = 10,
 								get = getPrelude,
 								set = setPrelude,
 								passValue = v.rebuff or k,
@@ -881,7 +889,22 @@ do
 								max = (v.duration / 2) * 60,
 								step = (v.duration <= 60 and 1) or 5,
 								bigStep = (v.duration <= 60 and 5) or 60,
-								order = 2,
+							}
+						end
+
+						if (v.charges) then
+							args[k].args.charges = {
+								type = "range",
+								name = L["Minimum Charges"],
+								desc = L["Rebuff if number of charges left is less than defined amount"],
+								func = timeFunc,
+								order = 20,
+								get = getCharges,
+								set = setCharges,
+								passValue = v.rebuff or k,
+								min = 0,
+								max = v.charges,
+								step = 1,
 							}
 						end
 
