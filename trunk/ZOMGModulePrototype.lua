@@ -179,10 +179,14 @@ function z.modulePrototype:MakeTemplateOptions()
 
 		for i = 1,#list do
 			if (list[i] ~= "current" and list[i] ~= "last") then
-				args[list[i]] = {
+				local templateName = list[i]
+				if (type(templateName) ~= "string" or templateName == "") then
+					templateName = "Unnamed"
+				end
+				args[templateName] = {
 					type = "group",
-					name = list[i],
-					desc = self:MakeTemplateDescription(list[i]),
+					name = templateName,
+					desc = self:MakeTemplateDescription(templateName),
 					order = i,
        				isChecked = function(x) return x == self.db.char.selectedTemplate and not templates.current.modified end,
 					onClick = function(n) self:SelectTemplate(n) end,
@@ -275,21 +279,23 @@ end
 
 -- RenameTemplate
 function z.modulePrototype:RenameTemplate(old, new)
-	self:OnRenameTemplate(n)
+	if (new and new ~= "" and new ~= "-") then
+		self:OnRenameTemplate(n)
 
-	local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self.db.char.templates or self.db.profile.templates
 	
-	local t = templates[old]
-	templates[old] = nil
-	templates[new] = t
+		local t = templates[old]
+		templates[old] = nil
+		templates[new] = t
 
-	if (self.db.char.selectedTemplate == old) then
-		self.db.char.selectedTemplate = new
+		if (self.db.char.selectedTemplate == old) then
+			self.db.char.selectedTemplate = new
+		end
+
+		self:MakeTemplateOptions()
+
+		self:Print(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], old, new)
 	end
-
-	self:MakeTemplateOptions()
-
-	self:Print(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], old, new)
 end
 
 -- SaveTemplate
