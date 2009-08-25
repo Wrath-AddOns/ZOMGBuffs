@@ -1039,7 +1039,7 @@ end
 
 -- SelectTemplate
 function zs:OnSelectTemplate(templateName)
-	template = self.db.char.templates.current
+	template = self:GetTemplates().current
 
 	for key,buff in pairs(self.classBuffs) do
 		if (template[key]) then
@@ -1318,7 +1318,7 @@ function zs:TooltipUpdate(cat)
 	if (template and self.classBuffs) then
 		cat:AddLine('text', " ")
 		cat:AddLine(
-			"text", L["Self Buffs Template: "].."|cFFFFFFFF"..(zs.db.char.selectedTemplate or L["none"]),
+			"text", L["Self Buffs Template: "].."|cFFFFFFFF"..(zs:GetSelectedTemplate() or L["none"]),
 			"text2", (template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or ""
 		)
 
@@ -1370,10 +1370,10 @@ function zs:OnModuleInitialize()
 	self.OnMenuRequest = self.options
 	z.options.args.ZOMGSelfBuffs = self.options
 
-	template = zs.db.char.templates.current
+	template = self:GetTemplates().current
 	if (not template) then
 		template = {}
-		zs.db.char.templates.current = template
+		self:GetTemplates().current = template
 	end
 
 	z:RegisterBuffer(self, 1)
@@ -1383,7 +1383,7 @@ end
 
 -- OnResetDB
 function zs:OnResetDB()
-	template = self.db.char.templates.current
+	template = self:GetTemplates().current
 end
 
 -- OnModuleEnable

@@ -2975,6 +2975,9 @@ function z:SetupForSpell(unit, spell, mod, reagentCount)
 		self:SetStatusIcon()
 		self.icon.auto:Hide()
 		self.icon.count:Hide()
+		if (ZOMGSelfBuffs) then
+			ZOMGSelfBuffs.activeEnchant = nil
+		end
 	end
 end
 
@@ -3025,6 +3028,9 @@ function z:SetupForItem(slot, item, mod, spell, castTime)
 		self:SetStatusIcon()
 		icon.auto:Hide()
 		icon.count:Hide()
+		if (ZOMGSelfBuffs) then
+			ZOMGSelfBuffs.activeEnchant = nil
+		end
 	end
 end
 
@@ -3186,6 +3192,9 @@ function z:OnStartup()
 				end
 
 				z.globalCooldownEnd = GetTime() + (self.castTimeToGCD or 1.5)
+				if (ZOMGSelfBuffs) then
+					ZOMGSelfBuffs.activeEnchant = nil
+				end
 				z:GlobalCDSchedule()
 
 				z:SetupForSpell()
