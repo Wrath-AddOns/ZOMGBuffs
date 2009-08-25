@@ -113,7 +113,7 @@ end
 
 -- getOptAuto
 function z.modulePrototype:getOptAuto(which)
-	local templates = self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 	if (templates and templates[which]) then
 		return templates[which].state or "never"
 	end
@@ -121,7 +121,7 @@ end
 
 -- setOptAuto
 function z.modulePrototype:setOptAuto(which, state)
-	local templates = self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 	if (templates and templates[which]) then
 		templates[which].state = (state ~= "never" and state) or nil
 	end
@@ -135,7 +135,7 @@ function z.modulePrototype:MakeTemplateOptions()
 
 	local args = {}
 
-	local templates = self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 
 	if (templates) then
 		local list = new()
@@ -163,7 +163,7 @@ function z.modulePrototype:MakeTemplateOptions()
 				}
 			end
 
-			if (templates.current.modified or self.db.char.selectedTemplate == "-") then
+			if (templates.current.modified or self:GetSelectedTemplate() == "-") then
 				args.save = {
 					type = "text",
 					name = L["Save"],
@@ -188,7 +188,7 @@ function z.modulePrototype:MakeTemplateOptions()
 					name = templateName,
 					desc = self:MakeTemplateDescription(templateName),
 					order = i,
-       				isChecked = function(x) return x == self.db.char.selectedTemplate and not templates.current.modified end,
+       				isChecked = function(x) return x == self:GetSelectedTemplate() and not templates.current.modified end,
 					onClick = function(n) self:SelectTemplate(n) end,
 					passValue = list[i],
 					args = {
@@ -246,13 +246,13 @@ function z.modulePrototype:ModifyTemplate(key, value)
 	self:argCheck(value, 2, "string", "boolean", "nil")
 --@no-debug@
 	if (self.db) then
-		local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 
 		if (templates and templates.current) then
 			value = value or nil
 			if (templates.current[key] ~= value) then
 				templates.current[key] = value
-				if (self.db.char.selectedTemplate ~= "-") then
+				if (self:GetSelectedTemplate() ~= "-") then
 					templates.current.modified = true
 				end
 
@@ -272,7 +272,7 @@ end
 function z.modulePrototype:DeleteTemplate(n)
 	self:OnDeleteTemplate(n)
 
-	local templates = self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 	templates[n] = nil
 	self:MakeTemplateOptions()
 end
@@ -282,14 +282,14 @@ function z.modulePrototype:RenameTemplate(old, new)
 	if (new and new ~= "" and new ~= "-") then
 		self:OnRenameTemplate(n)
 
-		local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 	
 		local t = templates[old]
 		templates[old] = nil
 		templates[new] = t
 
-		if (self.db.char.selectedTemplate == old) then
-			self.db.char.selectedTemplate = new
+		if (self:GetSelectedTemplate() == old) then
+			self:SetSelectedTemplate(new)
 		end
 
 		self:MakeTemplateOptions()
@@ -298,14 +298,54 @@ function z.modulePrototype:RenameTemplate(old, new)
 	end
 end
 
+-- GetTemplates
+function z.modulePrototype:GetTemplates()
+	local page
+	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
+		page = "templates"..GetActiveTalentGroup()
+
+		if (not self.db.char[page]) then
+			-- First time selecting a new talent group will copy the templates from group 1
+			self.db.char[page] = copy(self.db.char.templates)
+
+			self.db.char["selectedTemplate"..GetActiveTalentGroup()] = self.db.char.selectedTemplate
+		end
+	else
+		page = "templates"
+	end
+	return self.db.char[page] or self.db.profile[page]
+end
+
+-- GetSelectedTemplate
+function z.modulePrototype:GetSelectedTemplate()
+	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
+		local name = "selectedTemplate"..GetActiveTalentGroup()
+		return self.db.char[name]
+	end
+
+	return self.db.char.selectedTemplate
+end
+
+-- GetSelectedTemplate
+function z.modulePrototype:SetSelectedTemplate(set)
+	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
+		local name = "selectedTemplate"..GetActiveTalentGroup()
+		self.db.char[name] = set
+		return
+	end
+
+	self.db.char.selectedTemplate = set
+end
+
 -- SaveTemplate
 function z.modulePrototype:SaveTemplate(templateName)
 	if (self.db and templateName and templateName ~= "" and templateName ~= "-") then
-		local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 
 		local template = templates.current
 		template.modified = nil
-		self.db.char.selectedTemplate = templateName
+		self:SetSelectedTemplate(templateName)
+		--self.db.char.selectedTemplate = templateName
 		templates[templateName] = copy(template)
 
 		self:OnSaveTemplate(templateName, templates[templateName])
@@ -319,7 +359,7 @@ end
 -- SelectTemplate
 function z.modulePrototype:SelectTemplate(templateName, reason)
 	if (self.db) then
-		local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 		if (templates[templateName]) then
 			if (templates.current and templates.current.modified) then
 				del(templates.last)
@@ -332,7 +372,8 @@ function z.modulePrototype:SelectTemplate(templateName, reason)
 				self:Print(L["Switched to template %q"], templateName)
 			end
 
-			self.db.char.selectedTemplate = templateName
+			self:SetSelectedTemplate(templateName)
+			--self.db.char.selectedTemplate = templateName
 			templates.current = copy(templates[templateName])
 
 			self:OnSelectTemplate()
@@ -354,7 +395,7 @@ function z.modulePrototype:OnStateChanged(newState, reason)
 		if (t) then
 			for k,v in pairs(t) do
 				if (k ~= "current" and v.state == newState) then
-					if (k ~= self.db.char.selectedTemplate) then
+					if (k ~= self:GetSelectedTemplate()) then
 						if (not self.lastAutoTemplate or self.lastAutoTemplate ~= k) then
 							self.lastAutoTemplate = k
 
@@ -382,7 +423,7 @@ end
 -- OnResetDB
 function z.modulePrototype:SetupDB()
 	if (self.db) then
-		local templates = self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 		if (templates) then
 			local template = templates.current
 			if (not template) then
@@ -393,6 +434,16 @@ function z.modulePrototype:SetupDB()
 				end
 			end
 		end
+	end
+end
+
+-- PLAYER_TALENT_UPDATE
+function z.modulePrototype:PLAYER_TALENT_UPDATE()
+	if (self.db.char.templates) then
+		self:MakeTemplateOptions()
+		self:OnResetDB()
+		z:SetupForSpell()
+		z:RequestSpells()
 	end
 end
 
@@ -407,6 +458,10 @@ function z.modulePrototype:OnEnable()
 	self:RegisterEvent("AceDB20_ResetDB")
 	self:SetupDB()
 	self:OnResetDB()
+
+	self:RegisterEvent("PLAYER_TALENT_UPDATE")
+
+	self.currentTalentGroup = GetActiveTalentGroup()
 
 	self:OnModuleEnable()
 	self:MakeTemplateOptions(self)

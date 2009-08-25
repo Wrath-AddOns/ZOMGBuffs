@@ -92,7 +92,7 @@ end
 -- MakeTemplateDescription
 function zb:MakeTemplateDescription(templateName, lastText)
 	local str = (lastText and lastText.."\r") or nil
-	local t = zb.db.char.templates[templateName]
+	local t = self:GetTemplates()[templateName]
 	if (t) then
 		for i = 1,#classOrder do
 			local c = classOrder[i]
@@ -296,12 +296,12 @@ end
 
 -- CanChangeState
 function zb:CanChangeState()
-	return not self.db or self.db.char.selectedTemplate ~= "-"
+	return not self.db or self:GetSelectedTemplate() ~= "-"
 end
 
 -- OnSelectTemplate
 function zb:OnSelectTemplate(templateName)
-	template = self.db.char.templates.current
+	template = self:GetTemplates().current
 	self:ValidateTemplate(template)
 	z:Log("bless", nil, "select", templateName)
 end
@@ -1363,7 +1363,7 @@ function zb:ValidateTemplate(template, tell)
 					defTemp = DefaultTemplates()
 				end
 
-				local sel = self.db.char.selectedTemplate
+				local sel = self:GetSelectedTemplate()
 				if (not defTemp[sel]) then
 					sel = "5-Man"
 					if (not defTemp[sel]) then
@@ -1492,7 +1492,7 @@ function zb:TooltipUpdate(cat)
 	if (template) then
 		cat:AddLine('text', " ")
 		cat:AddLine(
-			"text", L["Blessings Template: "].."|cFFFFFFFF"..(((zb.db.char.selectedTemplate == "-" and L["Blessings Manager"]) or zb.db.char.selectedTemplate) or L["none"]),
+			"text", L["Blessings Template: "].."|cFFFFFFFF"..(((self:GetSelectedTemplate() == "-" and L["Blessings Manager"]) or self:GetSelectedTemplate()) or L["none"]),
 			"text2", (template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or ""
 		)
 
@@ -1563,7 +1563,7 @@ function zb:OnModuleInitialize()
 
 	z:RegisterSetClickSpells(self,
 		function(self, cell)
-			local t = zb.db.char.templates.current
+			local t = zb:GetTemplates().current
 			local partyid = cell:GetAttribute("unit")
 			if (partyid) then
 				local name = UnitName(partyid)
@@ -1614,9 +1614,9 @@ function zb:OnModuleInitialize()
 			template = copy(newTemplate)
 			template.modified = nil
 			if (not playerRequested) then
-				zb.db.char.selectedTemplate = "-"
+				zb:SetSelectedTemplate("-")
 			end
-			zb.db.char.templates.current = template
+			zb:GetTemplates().current = template
 			zb:MakeTemplateOptions()
 			z:CheckForChange(zb)
 			z:UpdateCellSpells()
@@ -1646,13 +1646,13 @@ function zb:OnModuleInitialize()
 		end
 	end
 
-	if (not self.db.char.templates.current or not self.db.char.selectedTemplate) then
+	if (not self:GetTemplates().current or not self:GetSelectedTemplate()) then
 		if (not self:SelectTemplate(L["5-Man"]) and not self:SelectTemplate(L["DPS"]) and not self:SelectTemplate(L["Kings"])) then
-			self.db.char.selectedTemplate = nil
-			self.db.char.templates.current = {}
+			self:SetSelectedTemplate()
+			self:GetTemplates().current = {}
 		end
 	end
-	template = zb.db.char.templates.current
+	template = zb:GetTemplates().current
 
 	z:RegisterBuffer(self)
 
@@ -1684,7 +1684,7 @@ end
 -- OnResetDB
 function zb:OnResetDB()
 	if (self.db) then
-		template = self.db.char.templates.current
+		template = self:GetTemplates().current
 	end
 end
 

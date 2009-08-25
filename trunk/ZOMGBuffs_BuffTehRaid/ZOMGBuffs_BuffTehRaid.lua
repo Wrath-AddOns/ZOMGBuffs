@@ -518,7 +518,7 @@ end
 
 -- SelectTemplate
 function zg:OnSelectTemplate(templateName)
-	template = self.db.char.templates.current
+	template = self:GetTemplates().current
 	self:TickInitForTemplate()
 end
 
@@ -2541,7 +2541,7 @@ function zg:TooltipUpdate(cat)
 	if (template) then
 		cat:AddLine('text', " ")
 		cat:AddLine(
-			"text", L["Group Template: "].."|cFFFFFFFF"..(self.db.char.selectedTemplate or L["none"]),
+			"text", L["Group Template: "].."|cFFFFFFFF"..(self:GetSelectedTemplate() or L["none"]),
 			"text2", (template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or ""
 		)
 
@@ -2577,7 +2577,7 @@ end
 -- OnResetDB
 function zg:OnResetDB()
 	if (self.db) then
-		template = self.db.char.templates.current
+		template = self:GetTemplates().current
 
 		for k,v in pairs(template) do
 			if (k ~= "modified" and k ~= "state" and k ~= "limited") then
