@@ -407,7 +407,9 @@ end
 -- SendMessage
 function mod:SendMessage(msg)
 	local dist
-	if (GetNumRaidMembers() > 0) then
+	if (select(2, IsInInstance()) == "pvp") then
+		dist = "BATTLEGROUND"
+	elseif (GetNumRaidMembers() > 0) then
 		dist = "RAID"
 	elseif (GetNumPartyMembers() > 0) then
 		dist = "PARTY"

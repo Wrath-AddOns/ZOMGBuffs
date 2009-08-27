@@ -4433,12 +4433,16 @@ function man:OnRaidRosterUpdate()
 
 			if (any) then
 				-- If there's any PallyPower users, they should respond immediately to the 'REQ'
-				local Type = (GetNumRaidMembers() > 0 and "RAID") or "PARTY"
-				if (Type == "RAID" and select(2, IsInInstance()) == "pvp") then
-					Type = "BATTLEGROUND"
+				local dist
+				if (select(2, IsInInstance()) == "pvp") then
+					dist = "BATTLEGROUND"
+				elseif (GetNumRaidMembers() > 0) then
+					dist = "RAID"
+				elseif (GetNumPartyMembers() > 0) then
+					dist = "PARTY"
 				end
-				SendAddonMessage("PLPWR", "ZOMG", Type)
-				SendAddonMessage("PLPWR", "REQ", Type)
+				SendAddonMessage("PLPWR", "ZOMG", dist)
+				SendAddonMessage("PLPWR", "REQ", dist)
 			end
 		end
 
