@@ -439,7 +439,7 @@ end
 
 -- PLAYER_TALENT_UPDATE
 function z.modulePrototype:PLAYER_TALENT_UPDATE()
-	if (self.db.char.templates) then
+	if (self.db and self.db.char.templates) then
 		self:MakeTemplateOptions()
 		self:OnResetDB()
 		z:SetupForSpell()

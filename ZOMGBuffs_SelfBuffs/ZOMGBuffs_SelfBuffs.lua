@@ -22,7 +22,9 @@ ZOMGSelfBuffs = zs
 z:CheckVersion("$Revision$")
 
 local mismatchList		-- Rogue poisons that don't match their spell names
-if (GetLocale() == "deDE") then
+if (GetLocale() == "enUS") then
+	mismatchList = {[GetSpellInfo(5761)] = "Mind Numbing Poison"}		-- Mind-numbing Poison
+elseif (GetLocale() == "deDE") then
 	mismatchList = {["Verkrüppelungsgift"] = "Verkrüppelndes Gift"}		-- Crippling Poison
 end
 
