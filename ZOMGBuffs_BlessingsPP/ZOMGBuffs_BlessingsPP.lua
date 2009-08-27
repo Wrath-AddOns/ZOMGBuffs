@@ -406,10 +406,16 @@ end
 
 -- SendMessage
 function mod:SendMessage(msg)
-	local Type = (GetNumRaidMembers() > 0 and "RAID") or "PARTY"
-	SendAddonMessage(ppPrefix, "ZOMG", Type)
-	SendAddonMessage(ppPrefix, msg, Type)
---self:Print("SendAddonMesage(%q, %q, %q)", ppPrefix, msg, Type)
+	local dist
+	if (GetNumRaidMembers() > 0) then
+		dist = "RAID"
+	elseif (GetNumPartyMembers() > 0) then
+		dist = "PARTY"
+	end
+	if (dist) then
+		SendAddonMessage(ppPrefix, "ZOMG", dist)
+		SendAddonMessage(ppPrefix, msg, dist)
+	end
 end
 
 -- CHAT_MSG_ADDON
