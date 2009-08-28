@@ -7,13 +7,12 @@ BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
 local tablet = LibStub("Tablet-2.0")
 local dewdrop = LibStub("Dewdrop-2.0")
-local RockComm
+local LGT = LibStub("LibGroupTalents-1.0")
 local FrameArray = {}
 local AllFrameArray = {}
 local secureCalls = {}
 local playerClass, playerName
 local buffClass, lastCheckFail
-local talentMeta
 
 local InCombatLockdown	= InCombatLockdown
 local IsUsableSpell		= IsUsableSpell
@@ -220,6 +219,26 @@ do
 	z.buffs = {}
 	for i,info in pairs(z.allBuffs) do
 		z.buffs[i] = info
+	end
+
+	z.auras = {
+		DEVOTION		= {id = 465},		-- Devotion Aura
+		RETRIBUTION		= {id = 7294},		-- Retribution Aura
+		CONCENTRATION	= {id = 19746},		-- Concentration Aura
+		SHADOW			= {id = 19876},		-- Shadow Resistance Aura
+		FROST			= {id = 19888},		-- Frost Resistance Aura
+		FIRE			= {id = 19891},		-- Fire Resistance Aura
+		CRUSADER		= {id = 32223},		-- Crusader Aura
+	}
+	for key,info in pairs(z.auras) do
+		local _
+		info.name, _, info.icon = GetSpellInfo(info.id)
+		info.key = key
+	end
+	z.auraCycle = {"DEVOTION", "RETRIBUTION", "CONCENTRATION", "SHADOW", "FROST", "FIRE", "CRUSADER"}
+	z.auraIndex = {}
+	for i,name in ipairs(z.auraCycle) do
+		z.auraIndex[name] = i
 	end
 
 	local blessings	= {
@@ -1245,22 +1264,6 @@ z.options = {
 				},
 			},
 		},
-		action = {
-			order = 380,
-			type = 'group',
-			name = L["Actions"],
-			desc = L["Miscelaneous actions"],
-			disabled = "IsDisabled",
-			args = {
-				wipetalents = {
-					type = 'execute',
-					name = L["Wipe Talent Cache"],
-					desc = L["Clear talent cache to force refresh"],
-					func = "TalentClear",
-					order = 1,
-				},
-			},
-		},
 		report = {
 			order = 400,
 			type = 'group',
@@ -1660,344 +1663,6 @@ function z:GetActionClick(code)
 				return mod, tonumber(button)
 			end
 		end
-	end
-end
-
--- AnalyzeTalents
-local function AnalyzeTalents(dest, data)
-	if (data.class == "PALADIN") then
-		dest.canKings = true
-		dest.canSanctuary = data[2][14] ~= 0 or nil
-		dest.impMight = data[3][1]
-		dest.impWisdom = data[1][10]
-	elseif (data.class == "DRUID") then
-		dest.impMark = data[3][1] == 5 or nil
-	end
-end
-
--- GetComm
-local function GetComm()
-	if (not comm) then
-		comm = Rock and Rock("LibRockComm-1.0", false, true)
-		if (not comm) then
-			comm = LibStub("AceComm-3.0", true)
-			if (not comm) then
-				comm = LibStub("AceComm-2.0", true)
-			end
-		end
-	end
-	return comm
-end
-
-do
-	local lastInspectUnit, lastInspectName, lastInspectClass, lastInspectTime, lastInspectInvalid
-	local lastInspectPending = 0
-	hooksecurefunc("NotifyInspect",
-		function(unit)
-			if (UnitIsUnit("player", unit) or not (UnitExists(unit) and UnitIsVisible(unit) and UnitIsConnected(unit) and CheckInteractDistance(unit, 4))) then
-				return
-			end
---z:Print("NotifyInspect(%q) [%d %s]", UnitName(unit), UnitLevel(unit), UnitClass(unit))
-			lastInspectUnit = unit
-			lastInspectTime = GetTime()
-			lastInspectName = UnitName(unit)
-			lastInspectClass = select(2, UnitClass(unit))
-			lastInspectPending = lastInspectPending + 1
-			if (lastInspectPending > 1) then
-				lastInspectInvalid = true							-- More than one Notify before an INSPECT_TALENT_READY event
-				if (UnitInRaid(unit) or UnitInParty(unit)) then
-					z:RemoveFromInspectQueue(lastInspectName)		-- Remove from (probably) front
-					if (not z.inspectQueue) then
-						z.inspectQueue = new()
-					end
-					tinsert(z.inspectQueue, lastInspectName)		-- Put back at end
-				end
-			else
-				if (bm) then		-- doesn't need the talents as such, just the names and icons, which are immediately available
-					bm:SetTalentNamesAndIcons(lastInspectClass, not UnitIsUnit("player", unit) or nil)
-				end
-			end
-		end)
-
-	function z:ReadTalents(name, unit, remote)
---z:Print("ReadTalents(%s, %s, %s)", tostring(name), tostring(unit), tostring(remote))
-		local name1, name2, name3, num1, num2, num3, iconTexture, background
-		name1, iconTexture, num1, background  = GetTalentTabInfo(1, remote)
-		name2, iconTexture, num2, background  = GetTalentTabInfo(2, remote)
-		name3, iconTexture, num3, background  = GetTalentTabInfo(3, remote)
-
-		if (name1 and name2 and name3) then
---z:Print("- Valid names")
-			if (num1 ~= 0 or num2 ~= 0 or num3 ~= 0) then
-				local class = select(2, UnitClass(unit))
---z:Print("- GOT %d/%d/%d", num1, num2, num3)
-				if (not z.talentSpecs) then
-					z.talentSpecs = setmetatable({}, talentMeta)
-				end
-				local newTalents = {[1] = num1, [2] = num2, [3] = num3, string = format("%d/%d/%d", num1, num2, num3)}
-				z.talentSpecs[name] = newTalents
-				if (class == "PALADIN" or class == "PRIEST" or class == "DRUID") then
-					local data = new()
-					data.class = class
-					local group = GetActiveTalentGroup(remote)
-					for i = 1,3 do
-						data[i] = new()
-						local total = GetNumTalents(i, remote)
-						for j = 1,total do
-							local Name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(i, j, remote, nil, group)
-							data[i][j] = rank
-						end
-					end
-					AnalyzeTalents(newTalents, data)
-					deepDel(data)
-				end
-			end
-		end
-	end
-
-	-- INSPECT_TALENT_READY
-	function z:INSPECT_TALENT_READY(guid, other)
-		if (guid) then
-			-- Blue said they'd include GUID here at some point, let's see...
-			self:Print("|cFFFF0000INSPECT_TALENT_READY|r with args: guid:%s, other:%s", tostring(guid), tostring(other))
-
-			for unit in self:IterateRoster() do
-				local g = UnitGUID(unit)
-				if (g == guid) then
-					self:ReadTalents(UnitName(unit), unit, true)
-					self:CheckTalentQueue()
-					return
-				end
-			end
-		end
-
-		lastInspectPending = lastInspectPending - 1
---z:Print("INSPECT_TALENT_READY - lastName = %q", tostring(lastInspectName))
-		if (not lastInspectInvalid) then
---z:Print("- Valid inspect")
-			if (lastInspectUnit and UnitInRaid(lastInspectUnit) or UnitInParty(lastInspectUnit)) then
-				self:ReadTalents(lastInspectName, lastInspectUnit, true)
-			end
-		end
-		if (lastInspectPending == 0) then
-			lastInspectInvalid = nil
-		end
-		self:CheckTalentQueue()
-	end
-
-	function z:CheckTalentQueue()
---z:Print("CheckTalentQueue()")
-		if (z.inspectQueue and (lastInspectPending == 0 or GetTime() > lastInspectTime + 15)) then
-			local any
-			lastInspectInvalid = nil
-			lastInspectTime = 0
-			for i,name in ipairs(z.inspectQueue) do
---z:Print("- Removing %s from queue", name)
-				tremove(z.inspectQueue, i)
-				if (UnitExists(name) and UnitIsVisible(name) and UnitIsConnected(name) and not UnitIsUnit("player", name) and CheckInteractDistance(name, 4)) then
-					-- Trigger next queued inspect
---z:Print("- Calling notify")
-					NotifyInspect(name)
-					return
-				end
-
-				any = true
-			end
-			if (any) then
---z:Print("- Scheduling for 2 secs")
-				z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
-			end
-		end
-	end
-
-	-- ImportUtopiaTalents
-	local function ImportUtopiaTalents(name, t)
---z:Print("ImportUtopiaTalents(%s, %s)", name, tostring(t))
-		local _, class = UnitClass(name)
-		if (not class) then
-			return
-		end
-
-		assert(type(name) == "string")
-		assert(type(t) == "table")
-
-		local ret = new(0,0,0)
-		for i = 1,3 do
-			for j = 1,#t[i] do
-				ret[i] = ret[i] + tonumber(t[i]:sub(j,j))
-			end
-		end
-
-		ret.string = format("%d/%d/%d", ret[1], ret[2], ret[3])
---z:Print("ret.string = %s", ret.string)
-
-		if (class == "PALADIN") then
-			ret.canKings = true
-			ret.impMight = Utopia:HasTalent(name, GetSpellInfo(20045))				-- Improved Blessing of Might
-			ret.impWisdom = Utopia:HasTalent(name, GetSpellInfo(20245))				-- Improved Blessing of Wisdom
-		elseif (class == "DRUID") then
-			ret.impMark = Utopia:HasTalent(name, GetSpellInfo(17051))				-- Improved Mark of the Wild
-		end
-
-		return ret
-	end
-
-	talentMeta = {
-		__index = function(self, name)
---z:Print("Need "..name)
-			if (Utopia and Utopia.talents) then
---z:Print("- Utopia loaded, will ask it for their talents")
-				local t = Utopia.talents[name]
-				local ret
-				if (t) then
-					z:RemoveFromInspectQueue(name)
-					ret = ImportUtopiaTalents(name, t)
-					self[name] = ret
-				end
-				return ret
-			end
-
-			if (lastInspectPending == 0 or (lastInspectPending and GetTime() > lastInspectTime + 15)) then
---z:Print("- Clear pending queue")
-				lastInspectPending = 0
-			elseif (lastInspectPending > 0) then
---z:Print("- Pending inspect, scheduling new one")
-				z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
-				return
-			end
-
-			if (UnitIsConnected(name)) then
-				if (UnitIsUnit("player", name)) then
---z:Print("- Unit is self, reading directly")
-					z:ReadTalents(playerName, name)
-
-				elseif (UnitExists(name) and UnitIsVisible(name) and (not InspectFrame or not InspectFrame.unit) and lastInspectPending == 0 and not UnitIsUnit("player", name) and CheckInteractDistance(name, 4)) then
---z:Print("- IN range, do real inspect")
-					lastInspectInvalid = nil
-					lastInspectTime = 0
-					-- Setup for inspect in case we can't ask them via RockComm
-					NotifyInspect(name)
-
-				elseif (InspectFrame and InspectFrame.unit and UnitIsUnit(InspectFrame.unit, name)) then
---z:Print("- IN inspect frame")
-					z:ReadTalents(name, name, true)
-
-				else
---z:Print("- Add to queue")
-					if (not z.inspectQueue) then
-						z.inspectQueue = {}
-					else
-						z:RemoveFromInspectQueue(name)
-					end
-					tinsert(z.inspectQueue, name)
---z:Print("- Schedule check in 2 secs")
-					z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
-				end
-
-				if (not rawget(self, name) and not z.inspectAsked[name]) then
-					z.inspectAsked[name] = true
-
-					if (RockComm) then
---z:Print("- Ask rock")
-						local name, server = UnitName(name)
-						if (server and server ~= "") then
-							if (z:IsInBattlegrounds()) then
-								name = format("%s-%s", name, server)
-							else
-								return false
-							end
-						end
-						RockComm:QueryTalents("WHISPER", name)
-					end
-				end
-
-				return rawget(self, name)
-			elseif (unit and z.inspectQueue) then
-				z:RemoveFromInspectQueue(name)
-				if (next(z.inspectQueue)) then
---z:Print("- Schedule check in 2 secs")
-					z:ScheduleEvent("ZOMGBuffs_CheckTalentQueue", z.CheckTalentQueue, 2, self)
-				end
-			end
-		end
-	}
-
-	-- RemoveFromInspectQueue
-	function z:RemoveFromInspectQueue(name)
-		if (z.inspectQueue) then
-			for i,find in ipairs(z.inspectQueue) do
-				if (find == name) then
-					tremove(z.inspectQueue, i)
-					break
-				end
-			end
-		end
-	end
-
-	-- InitTalentQuery
-	function z:InitTalentQuery()
-		self.inspectAsked = {}
-
-		-- Talents if Rock present
-		if not RockComm then
-			RockComm = Rock and Rock("LibRockComm-1.0", false, true)
-			if not RockComm then
-				return false
-			end
-		end
-		if (RockComm) then
-			local function talentReceptor(sender, data)
-				local nums = new()
-				for i,v in ipairs(data) do
-					local num = 0
-					for j,u in ipairs(v) do
-						num = num + u
-					end
-					nums[i] = num
-				end
-
-				local n = {[1] = nums[1], [2] = nums[2], [3] = nums[3], string = format("%d/%d/%d", nums[1], nums[2], nums[3])}
-				z.talentSpecs[sender] = n
-				if (z.inspectQueue) then
-					z:RemoveFromInspectQueue(sender)
-				end
-				AnalyzeTalents(z.talentSpecs[sender], data)
-
-				z:CallMethodOnAllModules("OnReceiveSpec", sender, n)
-
-				del(nums)
-			end
-			RockComm:AddTalentReceptor(talentReceptor)
-		end
-	
-		self.talentSpecs = setmetatable({}, talentMeta)
-		self.InitTalentQuery = nil
-	end
-
-	-- TalentClear
-	function z:TalentClear()
-		self.talentSpecs = setmetatable({}, talentMeta)
-		z.inspectAsked = {}
-
-		if (bm) then
-			bm:SplitColumnDrawAll()
-		end
-	end
-
-	-- GetSpec
-	function z:GetTalentSpec(unitname)
-		if (not self.talentSpecs) then
-			self.talentSpecs = setmetatable({}, talentMeta)
-		end
-
-		if (Utopia) then
-			self.InitTalentQuery = nil
-		else
-			if (self.InitTalentQuery) then
-				self:InitTalentQuery()
-			end
-		end
-		return z.talentSpecs[unitname]
 	end
 end
 
@@ -3658,7 +3323,7 @@ local function DrawCell(self)
 
 							local flagIndex = palaKeys[Type[2]]
 							if (palaFlags[flagIndex]) then
-								palaFlags[flagIndex] = nil
+								--palaFlags[flagIndex] = nil - Removed so that palas with duplicate blessings when players are buffed won't show as unbuffed
 								b:SetAlpha(onAlpha)
 							else
 								b:SetAlpha(offAlpha)
@@ -4282,18 +3947,17 @@ do
 		self:SetScript("OnUpdate", onUpdateIconMouseover)
 		cellOrIconTooltip(self)
 
-		local spec
-		if (name and self ~= z.icon and z.talentSpecs) then
-			if (UnitExists(unit1) and UnitIsConnected(unit1)) then
-				spec = z.talentSpecs[name]
-				if (spec) then
-					spec = spec.string
-				end
-			end
-		end
-
 		if (self.invalidAttributes) then
 			GameTooltip:AddLine(format(L["Out-of-date spell (should be %s). Will be updated when combat ends"], self.invalidAttributes), 1, 0, 0, 1)
+		end
+
+		if (self ~= z.icon) then
+			local spec = LGT:GetUnitTalentSpec(self:GetAttribute("unit"))
+			if (spec) then
+				GameTooltipTextRight1:SetText(spec)
+				GameTooltipTextRight1:SetTextColor(0.5, 0.5, 0.5)
+				GameTooltipTextRight1:Show()
+			end
 		end
 
 		GameTooltip:Show()
@@ -4667,21 +4331,6 @@ end
 
 -- UNIT_SPELLCAST_SUCCEEDED
 function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
-	if (specChangers[spell]) then
-		-- Detect spec changing spellcasts. This will only work if the player is in sight (combat log range)
-		if (z.talentSpecs) then
-			local name = UnitName(player)
-			z.talentSpecs[name] = del(z.talentSpecs[name])
-			if (not z.inspectQueue) then
-				z.inspectQueue = {}
-			else
-				z:RemoveFromInspectQueue(name)
-			end
-			tinsert(z.inspectQueue, name)
-			self:CheckTalentQueue()
-		end
-	end
-
 	if (player == "player") then
 		if (self.clickCast) then
 			z:SayWhatWeDid(spell, self.lastCastN, rank)
@@ -5110,43 +4759,6 @@ function z:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 				end
 			end
 		end
-	elseif (prefix == "Utopia") then
-		-- Answer talent requests from Utopia if it's not loaded
-		if (not Utopia) then
-			if (sender == playerName) then
-				return
-			end
-
-			local cmd, str = message:match("^(%a+) *(.*)$")
-			if (not cmd) then
-				return
-			end
-
-			if (cmd == "HELLO") then
-				SendAddonMessage("Utopia", "HELLO ZOMG", "WHISPER", sender)
-
-			elseif (cmd == "REQUESTTALENTS") then
-				if (not ignoreMeToo) then
-					ignoreMeToo = {}
-				elseif (ignoreMeToo[sender] and ignoreMeToo[sender] > time() - 20) then
-					return
-				end
-				ignoreMeToo[sender] = time()
-
-				local t = new()
-				local group = GetActiveTalentGroup()
-				for tab = 1,GetNumTalentTabs() do
-					local str
-					for talent = 1,GetNumTalents(tab) do
-						local name, icon, tier, column, currentRank = GetTalentInfo(tab, talent, nil, nil, group)
-						str = (str or "") .. tostring(currentRank)
-					end
-					tinsert(t, str)
-				end
-				SendAddonMessage("Utopia", format("TALENTS %s", table.concat(t, ",")), "WHISPER", sender)
-				del(t)
-			end
-		end
 	end
 end
 
@@ -5243,17 +4855,6 @@ local reqHistoryBT = {}
 local reqHistoryHello = {}
 -- OnCommReceive
 z.OnCommReceive = {
-	REQUESTSPEC = function(self, prefix, sender, channel)
-		if (not reqHistorySpec[sender] or reqHistorySpec[sender] < GetTime() - 15) then
-			reqHistorySpec[sender] = GetTime()
-			local group = GetActiveTalentGroup()
-			local a, b, c = select(3, GetTalentTabInfo(1,nil,group)), select(3, GetTalentTabInfo(2,nil,group)), select(3, GetTalentTabInfo(3,nil,group))
-			z:SendComm(sender, "SPEC", {a, b, c})
-		end
-	end,
-	SPEC = function(self, prefix, sender, channel, spec)
-		z:OnReceiveSpec(sender, spec)
-	end,
 	HELLO = function(self, prefix, sender, channel, version)
 		if (version) then
 			if (not reqHistoryHello[sender] or reqHistoryHello[sender] < GetTime() - 15) then
@@ -5287,19 +4888,22 @@ z.OnCommReceive = {
 		if (not reqHistoryCap[sender] or reqHistoryCap[sender] < GetTime() - 15) then
 			reqHistoryCap[sender] = GetTime()
 
-			local cap
-			local group = GetActiveTalentGroup()
 			if (playerClass == "PALADIN") then
-				-- Correct as of build 9061
-				local c3 = select(5, GetTalentInfo(2, 12, nil, nil, group)) == 1		-- Sanctuary
-				local might = select(5, GetTalentInfo(3, 5, nil, nil, group))		-- Might
-				local wisdom = select(5, GetTalentInfo(1, 10, nil, nil, group))		-- Wisdom
-				cap = {canKings = true, canSanctuary = c3, impMight = might, impWisdom = wisdom}
-				for i = 1,3 do
-					cap[i] = select(3, GetTalentTabInfo(i))
-				end
+				local cap = {
+					canKings			= UnitLevel("player") >= 20,
+					canSanctuary		= LGT:UnitHasTalent("player", (GetSpellInfo(20911))),
+					impMight			= LGT:UnitHasTalent("player", (GetSpellInfo(20445))) or 0,
+					impWisdom			= LGT:UnitHasTalent("player", (GetSpellInfo(20245))) or 0,
+					improvedDevotion	= LGT:UnitHasTalent("player", (GetSpellInfo(20140))),
+					improvedConcentration = LGT:UnitHasTalent("player", (GetSpellInfo(20254))),
+					improvedRetribution = LGT:UnitHasTalent("player", (GetSpellInfo(31869)))
+				}
+
+				local _
+				_, cap[1], cap[2], cap[3] = LGT:GetUnitTalentSpec("player")
+				z:SendComm(sender, "CAPABILITY", cap)
+				del(cap)
 			end
-			z:SendComm(sender, "CAPABILITY", cap)
 		end
 	end,
 	CAPABILITY = function(self, prefix, sender, channel, cap)
@@ -5311,34 +4915,8 @@ z.OnCommReceive = {
 }
 
 -- OnReceiveSpec
-function z:OnReceiveSpec(sender, spec)
-	if (not rawget(z.talentSpecs, sender)) then
-		z.talentSpecs[sender] = {spec[1], spec[2], spec[3]}
-	else
-		local a = z.talentSpecs[sender]
-		a[1] = spec[1]
-		a[2] = spec[2]
-		a[3] = spec[3]
-	end
-	z.talentSpecs[sender].string = format("%d/%d/%d", spec[1], spec[2], spec[3])
-
-	self:CallMethodOnAllModules("OnReceiveSpec", sender, spec)
-end
-
--- OnReceiveSpec
 function z:OnReceiveCapability(sender, cap)
 	if (cap) then
-		if (not self.talentSpecs) then
-			self.talentSpecs = setmetatable({}, talentMeta)
-		end
-		if (not rawget(self.talentSpecs, sender)) then
-			self.talentSpecs[sender] = {}
-		end
-	
-		for k,v in pairs(cap) do
-			self.talentSpecs[sender][k] = v
-		end
-	
 		self:CallMethodOnAllModules("OnReceiveCapability", sender, cap)
 	end
 end
@@ -5467,13 +5045,6 @@ function z:OnInitialize()
 
 	self.commPrefix = "ZOMG"
 	self:SetCommPrefix(self.commPrefix)
-
-	if (AddonSpamFu and AddonSpamFu.translatePrefixes) then
-		local comm = GetComm()
-		if (comm and comm.prefixTextToHash) then
-			AddonSpamFu.translatePrefixes[comm.prefixTextToHash[self.commPrefix]] = "ZOMGBuffs"
-		end
-	end
 
 	local memo = {}
 	for k,v in pairs(classOrder) do tinsert(memo, v) end
@@ -5736,23 +5307,11 @@ function z:GetHelpFrame()
 	return helpFrame
 end
 
--- SPELLS_CHANGED
-function z:SPELLS_CHANGED()
-	if (not self.zoneFlag) then
-		self:ScheduleEvent("ZOMGBuffs-OnSpellsChanged", self.OnSpellsChanged, 2, self)
+-- LibGroupTalents_Update
+function z:LibGroupTalents_Update(e, guid, unit, newSpec, n1, n2, n3, oldSpec, o1, o2, o3)
+	if (UnitIsUnit("player", unit)) then
+		self:CallMethodOnAllModules("OnSpellsChanged")
 	end
-end
-
--- CHARACTER_POINTS_CHANGED
-function z:CHARACTER_POINTS_CHANGED(mode)
-	if (mode == -1) then
-		self:ScheduleEvent("ZOMGBuffs-OnSpellsChanged", self.OnSpellsChanged, 2, self)
-	end
-end
-
--- OnSpellsChanged
-function z:OnSpellsChanged()
-	self:CallMethodOnAllModules("OnSpellsChanged")
 end
 
 -- ADDON_LOADED
@@ -5818,7 +5377,6 @@ function z:OnEnableOnce()
 	end
 
 	self:SendCommMessage("GROUP", "HELLO", self.version)
-	self:InitTalentQuery()
 
 	-- Table to make sure we don't re-load the same module again if someone screws up
 	-- their installation and has a double set of folders in addons and in ZOMGBuffs proper
@@ -6042,6 +5600,8 @@ function z:OnEnable()
 		self.members:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	end
 
+	LGT.RegisterCallback(self, "LibGroupTalents_Update")
+
 	self:MakeOptionsReagentList()
 	self:SetSort()
 
@@ -6066,10 +5626,7 @@ function z:OnEnable()
 	self:RegisterEvent("PLAYER_CONTROL_LOST")
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
 	self:RegisterEvent("CHAT_MSG_ADDON")				-- For PallyPower Load on Demand support
-	self:RegisterEvent("INSPECT_TALENT_READY")
 	self:RegisterEvent("CHAT_MSG_WHISPER")
-	self:RegisterEvent("SPELLS_CHANGED")
-	self:RegisterEvent("CHARACTER_POINTS_CHANGED")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
 	self.chatMatch = {}

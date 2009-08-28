@@ -4,8 +4,9 @@ if (ZOMGBlessingsManager) then
 end
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsManager")
-local ZFrame
+local LGT = LibStub("LibGroupTalents-1.0")
 local dewdrop = LibStub("Dewdrop-2.0")
+local ZFrame
 local template
 local playerName, playerClass
 local split = true					-- Disable to turn off new thing
@@ -296,7 +297,6 @@ function man:SetSelf()
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
 	self.canEdit = playerClass == "PALADIN" or (GetNumRaidMembers() > 0 and (IsRaidLeader() or IsRaidOfficer())) or (GetNumPartyMembers() > 0 and IsPartyLeader())
-	self:SetTalentNamesAndIcons(playerClass)
 end
 
 -- OnModuleInitialize
@@ -338,6 +338,10 @@ function man:OnModuleInitialize()
 	z.OnCommReceive.TEMPLATE = function(self, prefix, sender, channel, template)
 		man:OnReceiveTemplate(sender, template)
 	end
+	-- AURA - Comes from Blessings module in response to a REQUESTTEMPLATE query from Manager
+	z.OnCommReceive.AURA = function(self, prefix, sender, channel, aura)
+		man:OnReceiveAura(sender, aura)
+	end
 	-- GIVEMASTERTEMPLATE - Triggered from menu to send Manager template to another player
 	z.OnCommReceive.GIVEMASTERTEMPLATE = function(self, prefix, sender, channel, template)
 		man:OnReceiveMasterTemplate(sender, template)
@@ -350,13 +354,13 @@ function man:OnModuleInitialize()
 	z.OnCommReceive.SYMBOLCOUNT = function(self, prefix, sender, channel, count)
 		man:OnReceiveSymbolCount(sender, count)
 	end
-	-- SPELLS_CHANGED - Broadcasted on RAID addon channel after a respec/talent purchase
-	z.OnCommReceive.SPELLS_CHANGED = function(self, prefix, sender, channel)
-		man:OnPlayerSpellsChanged(sender)
-	end
 	-- GIVETEMPLATEPART - Sent from Manager when a user changes a single assignment
 	z.OnCommReceive.GIVETEMPLATEPART = function(self, prefix, sender, channel, name, class, Type)
 		man:OnReceiveBroadcastTemplatePart(sender, name, class, Type)
+	end
+	-- GIVEAURA - Sent from Manager when a user changes an aura assignment
+	z.OnCommReceive.GIVEAURA = function(self, prefix, sender, channel, name, aura)
+		man:OnReceiveBroadcastAura(sender, name, aura)
 	end
 	-- SYNCGROUPS - Sets your effective groups setting to match the senders (after a template generation)
 	z.OnCommReceive.SYNCGROUPS = function(self, prefix, sender, channel, groups)
@@ -580,19 +584,24 @@ function man:SplitSetMinRank()
 			man:SplitPopulate()
 		end
 
+		local doneRanks = new()						-- For guilds that have duplicate named ranks (Mine)
 		for i = 1,GuildControlGetNumRanks() do
 			local rankName = GuildControlGetRankName(i)
-			
-			rankInfoOptions.args["rank"..i] = {
-				type	= 'toggle',
-				name	= rankName,
-				desc	= rankName,
-				get		= getRank,
-				set		= setRank,
-				passValue = i,
-				order	= i + 10,
-			}
+			if (not doneRanks[rankName]) then
+				doneRanks[rankName] = true
+
+				rankInfoOptions.args["rank"..i] = {
+					type	= 'toggle',
+					name	= rankName,
+					desc	= rankName,
+					get		= getRank,
+					set		= setRank,
+					passValue = i,
+					order	= i + 10,
+				}
+			end
 		end
+		del(doneRanks)
 	end
 
 	dewdrop:Close()
@@ -829,7 +838,6 @@ function man:SplitCreateColumns()
 			end
 
 			if (n == 1) then
-				-- TODO - Guild rank dropdown... i hate dropdowns
 				local tick = self:GenericCheckBox("ZOMGClassSplitGuildCheck", column, L["Use Guild Roster"],
 					function(self)
 						man.db.profile.useguild = self:GetChecked() and true or false
@@ -894,36 +902,6 @@ function man:SplitClass(class, dontClose)
 	self:SplitPopulate()
 end
 
--- SetTalentNamesAndIcons
-local talentIconCache = {}
-function man:SetTalentNamesAndIcons(class, remote)
-	if (not talentIconCache[class]) then
-		local name1, name2, name3, icon1, icon2, icon3
-		name1, icon1 = GetTalentTabInfo(1, remote)
-		name2, icon2 = GetTalentTabInfo(2, remote)
-		name3, icon3 = GetTalentTabInfo(3, remote)
-		if (name1 and name2 and name3) then
-			talentIconCache[class] = {name1, name2, name3, icon1, icon2, icon3}
-		end
-	end
-end
-
--- GetTalentNamesAndIcons
-function man:GetTalentNamesAndIcons(class)
-	local res = talentIconCache[class]
-	if (not res) then
-		-- Find any of this class we can see to get icon info from
-		for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
-			if (class == class and UnitIsVisible(unit) and CheckInteractDistance(unit, 4)) then
-				local nothing = z:GetTalentSpec(unitname)
-				break
-			end
-		end
-	else
-		return unpack(res)
-	end
-end
-
 -- SplitPopulateColumn
 function man:SplitPopulateColumn(i)
 	local f = self.splitframe
@@ -968,16 +946,16 @@ function man:SplitPopulateColumn(i)
 		else
 			line.text:SetTextColor(c.r, c.g, c.b)
 
-			local spec = z:GetTalentSpec(name)
-			if (spec and spec[1] and spec[2] and spec[3]) then
-				local name1, name2, name3, icon1, icon2, icon3 = self:GetTalentNamesAndIcons(f.class)
-				if (name1) then
+			local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(name)
+			if (spec and s1 and s2 and s3) then
+				local icon1, icon2, icon3 = LGT:GetTreeIcons(f.class)
+				if (icon1) then
 					local tex
-					if (spec[1] > spec[2] and spec[1] > spec[3]) then
+					if (s1 > s2 and s1 > s3) then
 						tex = icon1
-					elseif (spec[2] > spec[1] and spec[2] > spec[3]) then
+					elseif (s2 > s1 and s2 > s3) then
 						tex = icon2
-					elseif (spec[3] > spec[1] and spec[3] > spec[2]) then
+					elseif (s3 > s1 and s3 > s2) then
 						tex = icon3
 					end
 
@@ -1092,11 +1070,11 @@ function man:SplitAutoAssign()
 	if (splitDefs) then
 		for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
 			if (unitclass == f.class and subgroup <= self.db.profile.groups) then
-				local spec = z:GetTalentSpec(unitname)
-				if (spec and spec[1] and spec[2] and spec[3]) then
+				local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
+				if (spec and s1 and s2 and s3) then
 					local belongsTo
 					for i,def in ipairs(splitDefs) do
-						if (def.discover(spec[1], spec[2], spec[3])) then
+						if (def.discover(s1, s2, s3)) then
 							belongsTo = i
 							break
 						end
@@ -1117,9 +1095,10 @@ function man:SplitDrawTalentDescriptors()
 		return
 	end
 
-	local icon = {}
-	local name = {}
-	name[1], name[2], name[3], icon[1], icon[2], icon[3] = self:GetTalentNamesAndIcons(f.class)
+	local icon = new()
+	local name = new()
+	name[1], name[2], name[3] = LGT:GetTreeNames(f.class)
+	icon[1], icon[2], icon[3] = LGT:GetTreeIcons(f.class)
 	for i = 1,3 do
 		if (name[i] and icon[i]) then
 			f.talentIcon[i]:Show()
@@ -1132,6 +1111,9 @@ function man:SplitDrawTalentDescriptors()
 			f.talentIcon[i].text:Hide()
 		end
 	end
+
+	del(icon)
+	del(name)
 end
 
 -- SplitColumnDrawAll
@@ -1165,7 +1147,7 @@ function man:SplitPositionCells()
 		scaleTitleTex(titleCell.normalTex, exp and exp.titleScale)
 		scaleTitleTex(titleCell.highlightTex, exp and exp.titleScale)
 
-		if (nextTitleCell) then
+		if (nextTitleCell and i < #classOrder) then
 			local offset = (exp and exp.offset) or 0
 			extraWidth = extraWidth + offset
 			nextTitleCell:SetPoint("TOPLEFT", titleCell, "TOPRIGHT", 6 + offset, 0)
@@ -1174,8 +1156,7 @@ function man:SplitPositionCells()
 		for j,row in ipairs(self.frame.row) do
 			local cell = row.cell[i]
 			local nextCell = row.cell[i + 1]
-
-			if (nextCell) then
+			if (nextCell and not nextCell.aura) then
 				nextCell:SetPoint("TOPLEFT", cell, "TOPRIGHT", 6 + ((exp and exp.offset) or 0), 0)
 			end
 		end
@@ -1183,7 +1164,8 @@ function man:SplitPositionCells()
 
 	local h, w
 	h = 66 + #blessingCycle * 42
-	w = 124 + 42 * #classOrder + extraWidth
+	w = 136 + 42 * (#classOrder + 1) + extraWidth
+
 	self.frame:SetSize(w, h)
 end
 
@@ -1532,6 +1514,29 @@ function man:SplitExpand(class)
 	end
 end
 
+-- ReadPaladinSpec
+function man:ReadPaladinSpec(pala, name)
+	local t, s1, s2, s3 = LGT:GetUnitTalentSpec(name)
+	if (t and s1) then
+		pala.canKings = UnitLevel(name) >= 20
+		pala.canSanctuary = LGT:UnitHasTalent(name, (GetSpellInfo(20911)))
+		pala.improvedWisdom = LGT:UnitHasTalent(name, (GetSpellInfo(20245)))
+		pala.improvedMight = LGT:UnitHasTalent(name, (GetSpellInfo(20045)))
+		pala.improvedDevotion = LGT:UnitHasTalent(name, (GetSpellInfo(20140)))
+		pala.improvedConcentration = LGT:UnitHasTalent(name, (GetSpellInfo(20254)))
+		pala.improvedRetribution = LGT:UnitHasTalent(name, (GetSpellInfo(31869)))
+		pala.spec = {s1, s2, s3}
+	end
+	local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
+	if (not pala.spec) then
+		z:SendComm(name, "REQUESTCAPABILITY", nil)
+		if (pala.canEdit == nil) then
+			pala.canEdit = false
+		end
+	end
+	z:SendComm(name, "REQUESTTEMPLATE", nil)
+end
+
 -- AssignPaladins
 -- Create a self.pala list
 -- Each entry contains the row number for display, and their part of the template
@@ -1598,32 +1603,14 @@ function man:AssignPaladins()
 		if (not UnitIsConnected(name)) then
 			pala.offline = true
 		else
-			local t = z:GetTalentSpec(name)
-			if (t) then
-				pala.canKings = true
-				pala.canSanctuary = t.canSanctuary
-				pala.improvedWisdom = t.impWisdom
-				pala.improvedMight = t.impMight
-				pala.spec = {t[1], t[2], t[3]}
-			end
-			local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
-			if (not pala.gotCapabilities) then
-				if (not z.talentSpecs[name]) then
-					z:SendComm(name, "REQUESTCAPABILITY", nil)
-					z:SendComm(name, "REQUESTSPEC", nil)
-				end
-				z:SendComm(name, "REQUESTTEMPLATE", nil)
-				if (pala.canEdit == nil) then
-					pala.canEdit = false
-				end
+			self:ReadPaladinSpec(pala, name)
 
-				if (ver) then
-					if (type(ver) == "string" and strfind(ver, "PallyPower")) then
-						pala.gotCapabilities = true
-						pala.canEdit = true
-						if (ZOMGBlessingsPP) then
-							ZOMGBlessingsPP:Announce()
-						end
+			if (ver) then
+				if (type(ver) == "string" and strfind(ver, "PallyPower")) then
+					pala.gotCapabilities = true
+					pala.canEdit = true
+					if (ZOMGBlessingsPP) then
+						ZOMGBlessingsPP:Announce()
 					end
 				end
 			end
@@ -1679,10 +1666,20 @@ function man:OnReceiveTemplate(sender, template, modified)
 		if (self.frame and self.frame:IsOpen()) then
 			self:DrawAll()
 		end
-	--else
-	--	if (z.db.profile.info) then
-	--		self:Print("Got template change from unrecognised player (%s)", z:ColourUnitByName(sender))
-	--	end
+	end
+end
+
+-- OnReceiveTemplate
+-- A paladin has changed their template, so we receive that and update it into our display
+function man:OnReceiveAura(sender, aura)
+	-- Paladin changed their aura, so we'll reflect this in the manager
+	local pala = self.pala and self.pala[sender]
+	if (pala) then
+		assert(aura == nil or z.auraIndex[aura])
+		pala.aura = aura
+		if (self.frame and self.frame:IsOpen()) then
+			self:DrawAll()
+		end
 	end
 end
 
@@ -1726,14 +1723,6 @@ function man:OnReceiveSubClassDefinitions(sender, playerCodes)
 	self:Print(L["Player sub-class assignments received from %s"], z:ColourUnitByName(sender))
 end
 
--- OnPlayerSpellsChanged
-function man:OnPlayerSpellsChanged(sender)
-	if (select(2, UnitClass(sender)) == "PALADIN") then
-		z:SendComm(sender, "REQUESTCAPABILITY", nil)
-		z:SendComm(sender, "REQUESTSPEC", nil)
-	end
-end
-
 -- OnReceiveSymbolCount
 function man:OnReceiveSymbolCount(sender, count)
 	local pala = self.pala and self.pala[sender]
@@ -1755,6 +1744,7 @@ function man:Generate()
 	if (self.canEdit) then
 		self.whoGenerated, self.whenGenerated = UnitName("player"), time()
 		self:AssignTemplateToPaladins()
+		self:AssignAurasToPaladins()
 		self:BroadcastTemplates()
 		self:DrawAll()
 
@@ -2375,7 +2365,7 @@ function man:AssignTemplateToPaladins()
 																	end
 																end
 															end
-														if (pala.template) then
+															if (pala.template) then
 																for exName, exBuff in pairs(pala.template) do
 																	if (exName == playerName) then
 					--self:Print("2: Re-Added want of %s for %s", exBuff, playerName)
@@ -2472,6 +2462,99 @@ function man:AssignTemplateToPaladins()
 	del(canSanctuary)
 end
 
+-- AssignAurasToPaladins
+function man:AssignAurasToPaladins()
+	local p = self.paladins
+	if (p == 0 or not template.AURA) then
+		return
+	end
+
+	local palaList = new()
+	for k,pala in pairs(self.pala) do
+		pala.aura = nil
+		tinsert(palaList, k)
+	end
+	sort(palaList)
+
+	local wants = new()
+	for i = 1,self.paladins do
+		local key = template.AURA[i]
+		wants[key] = true
+	end
+
+	-- Score the paladins abilities
+	local scores = new()
+	for i,palaName in ipairs(palaList) do
+		local pala = self.pala[palaName]
+		local score = 0
+		if (pala.improvedDevotion and wants.DEVOTION) then
+			score = score + 1
+		end
+		if (pala.improvedConcentration and wants.CONCENTRATION) then
+			score = score + 1
+		end
+		if (pala.improvedRetribution and wants.RETRIBUTION) then
+			score = score + 1
+		end
+		tinsert(scores, format("%d,%s", score, palaName))
+	end
+	sort(scores)
+
+	-- Now iterate from worst to best assigning any non-talent dependant auras
+	local list = new("SHADOW", "FROST", "FIRE", "CRUSADER")
+	for i,combo in ipairs(scores) do
+		local score, palaName = strsplit(",", combo)
+		local pala = self.pala[palaName]
+		assert(pala)
+
+		for j,key in ipairs(list) do
+			if (wants[key]) then
+				wants[key] = nil
+				pala.aura = key
+			end
+		end
+	end
+	del(list)
+
+	-- Now iterate from worst to best assigning the talent dependant auras we have remaining
+	for i,combo in ipairs(scores) do
+		local score, palaName = strsplit(",", combo)
+		local pala = self.pala[palaName]
+		assert(pala)
+
+		if (wants.DEVOTION and pala.improvedDevotion) then
+			pala.aura = "DEVOTION"
+			wants.DEVOTION = nil
+
+		elseif (wants.CONCENTRATION and pala.improvedConcentration) then
+			pala.aura = "CONCENTRATION"
+			wants.CONCENTRATION = nil
+
+		elseif (wants.RETRIBUTION and pala.improvedRetribution) then
+			pala.aura = "RETRIBUTION"
+			wants.RETRIBUTION = nil
+		end
+	end
+
+	-- Finally, re-assign best auras again to any paladins left over without an assignment. Overlaps are fine
+	local cycle = 1
+	local list = new("DEVOTION", "CONCENTRATION", "RETRIBUTION")
+	for palaName,pala in pairs(self.pala) do
+		if (not pala.aura) then
+			pala.aura = list[cycle]
+			cycle = cycle + 1
+			if (cycle > #list) then
+				cycle = 1
+			end
+		end
+	end
+	del(list)
+
+	del(palaList)
+	del(wants)
+	del(scores)
+end
+
 -- GetClassFromCodesList
 function man:GetClassFromCodesList(find)
 	for class,list in pairs(self.db.profile.playerCodes) do
@@ -2498,6 +2581,20 @@ function man:BroadcastTemplatePart(name, class, Type)
 	end
 end
 
+-- BroadcastTemplateAura
+function man:BroadcastTemplateAura(name, Type)
+	if (playerClass == "PALADIN" or IsRaidLeader() or IsRaidOfficer()) then
+		assert(Type == nil or z.auras[Type])
+		if (ZOMGBlessingsPP) then
+			--ZOMGBlessingsPP:GiveTemplateAura(name, Type)
+		end
+		z:SendCommMessage("GROUP", "GIVEAURA", name, Type)
+		if (name == playerName and ZOMGSelfBuffs) then
+			ZOMGSelfBuffs:SetPaladinAuraKey(Type)
+		end
+	end
+end
+
 -- OnReceiveBroadcastTemplatePart
 function man:OnReceiveBroadcastTemplatePart(sender, name, class, buff)
 --@debug@
@@ -2513,6 +2610,28 @@ function man:OnReceiveBroadcastTemplatePart(sender, name, class, buff)
 			self:DrawIconsByName(name)
 			if (name == playerName) then
 				ZOMGBlessings:ModifyTemplate(class, buff)
+			end
+		end
+	end
+end
+
+-- OnReceiveBroadcastAura
+function man:OnReceiveBroadcastAura(sender, name, aura)
+--@debug@
+	self:argCheck(sender, 1, "string")
+	self:argCheck(name, 2, "string")
+	self:argCheck(buff, 3, "string", "nil")
+--@no-debug@
+
+	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
+		local pala = self.pala[name]
+		if (pala) then
+			pala.aura = aura
+			self:DrawIconsByName(name)
+			if (name == playerName) then
+				if (ZOMGSelfBuffs) then
+					ZOMGSelfBuffs:SetPaladinAuraKey(aura)
+				end
 			end
 		end
 	end
@@ -2558,6 +2677,7 @@ function man:GiveTemplate(name, quiet, playerRequested, retry)
 					if (type(v) ~= "string" and not strfind(v, "PallyPower")) then
 						if (select(2, UnitClass(name)) == "PALADIN") then
 							z:SendComm(name, "GIVETEMPLATE", pala.template, quiet, playerRequested, retry)
+							z:SendComm(name, "GIVEAURA", name, pala.aura)
 							pala.waitingForAck = GetTime()
 							self:DrawPaladinByName(name)
 						end
@@ -2711,20 +2831,31 @@ function man:CreateMainMainFrame()
 		end
 		man:HighlightClass()
 	end
-	for k,v in pairs(classOrder) do
+
+	local order = copy(classOrder)
+	tinsert(order, "AURA")
+
+	for k,v in pairs(order) do
 		local cell = CreateFrame("Button", "ZOMGBMClassTitle"..v, main)
 		main.classTitle.cell[k] = cell
 		cell:SetWidth(36)
 		cell:SetHeight(36)
-		cell:SetNormalTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes")
+
+		if (v == "AURA") then
+			cell:SetNormalTexture("Interface\\Icons\\Spell_Nature_WispSplode")
+		else
+			cell:SetNormalTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes")
+		end
 
 		cell:SetHitRectInsets(-4, -4, -4, -4)
 
-		local count = cell:CreateFontString(nil, "OVERLAY", "NumberFontNormalLarge")
-		cell.classcount = count
-		count:SetPoint("TOPRIGHT")
-		count:SetText("0")
-		count:SetTextColor(1, 1, 0, 1)
+		if (v ~= "AURA") then
+			local count = cell:CreateFontString(nil, "OVERLAY", "NumberFontNormalLarge")
+			cell.classcount = count
+			count:SetPoint("TOPRIGHT")
+			count:SetText("0")
+			count:SetTextColor(1, 1, 0, 1)
+		end
 
 		cell.class = v
 		cell:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
@@ -2736,14 +2867,24 @@ function man:CreateMainMainFrame()
 		if (k == 1) then
 			cell:SetPoint("TOPLEFT", 126, 0)
 		else
-			cell:SetPoint("TOPLEFT", prev, "TOPRIGHT", 6, 0)
+			if (v == "AURA") then
+				cell:SetPoint("TOPLEFT", prev, "TOPRIGHT", 18, 0)
+			else
+				cell:SetPoint("TOPLEFT", prev, "TOPRIGHT", 6, 0)
+			end
 		end
 
 		cell.normalTex = cell:GetNormalTexture()
 		cell.highlightTex = cell:GetHighlightTexture()
-		SetClassIcon(cell.normalTex, v)
+		if (v == "AURA") then
+			cell.normalTex:SetTexCoord(0.06, 0.94, 0.06, 0.94)
+		else
+			SetClassIcon(cell.normalTex, v)
+		end
 		prev = cell
 	end
+
+	del(order)
 
 	self.CreateMainMainFrame = nil
 	return main
@@ -2810,19 +2951,24 @@ function man:CreateMainFrame()
 		cell.version:Hide()
 
 		cell.icons = {}
+		cell.bottomicons = {}
 
-		for i = 1,#classOrder do
+		local order = copy(classOrder)
+		tinsert(order, "AURA")
+
+		for i = 1,#order do
 			prev = cell
 
 			abCount = abCount + 1
 			cell = CreateFrame("Button", "ZOMGActionButton"..abCount, row, "ActionButtonTemplate")
 			tinsert(row.cell, cell)
-			cell:SetPoint("TOPLEFT", prev, "TOPRIGHT", 6, 0)
+			cell:SetPoint("TOPLEFT", prev, "TOPRIGHT", order[i] == "AURA" and 18 or 6, 0)
 
 			cell.icon = getglobal(cell:GetName().."Icon")
 			cell.text = getglobal(cell:GetName().."Text")
 
 			cell:SetID(i)
+			cell.aura = order[i] == "AURA"
 			cell.col = i
 			cell.row = rowNumber
 
@@ -2838,6 +2984,9 @@ function man:CreateMainFrame()
 			cell:RegisterForDrag("LeftButton")
 			cell:RegisterForClicks("AnyUp")
 		end
+
+		del(order)
+
 		return row
 	end
 
@@ -2888,7 +3037,7 @@ function man:CreateMainFrame()
 	else
 		local h, w
 		h = 66 + #rowSort * 42
-		w = 124 + 42 * #classOrder
+		w = 136 + 42 * (#classOrder + 1)
 
 		f:SetSize(w, h)
 	end
@@ -2926,23 +3075,38 @@ end
 function man:DrawIcons(row)
 	local rowNumber = row:GetID()
 
+	local order = copy(classOrder)
+	tinsert(order, "AURA")
+
 	if (self.configuring) then
-		for k,v in pairs(classOrder) do
+		for k,v in pairs(order) do
 			local cell = row.cell[k]
-			self:HideExceptionsForCell(cell)
+			if (v ~= "AURA") then
+				self:HideExceptionsForCell(cell)
+			end
 			local temp = template[v]
 			if (temp and temp[rowNumber]) then
-				local singleSpell, classSpell = z:GetBlessingFromType(temp[rowNumber])
-				local icon = z.blessings[classSpell or singleSpell].icon
+				if (v == "AURA") then
+					local a = z.auras[temp[rowNumber]]
+					if (not a) then
+						error("Unkown aura "..tostring(temp[rowNumber]))
+					end
 
-				cell.icon:SetTexture(icon)
-				if (self:CellHasError(rowNumber, k)) then
-					self.anyErrors = true
-					cell.icon:SetVertexColor(1, 0.5, 0.5)
-				elseif (self:HasException(rowNumber, k)) then
-					cell.icon:SetVertexColor(0.5, 0.5, 1)
-				else
+					cell.icon:SetTexture(a.icon)
 					cell.icon:SetVertexColor(1, 1, 1)
+				else
+					local singleSpell, classSpell = z:GetBlessingFromType(temp[rowNumber])
+					local icon = z.blessings[classSpell or singleSpell].icon
+
+					cell.icon:SetTexture(icon)
+					if (self:CellHasError(rowNumber, k)) then
+						self.anyErrors = true
+						cell.icon:SetVertexColor(1, 0.5, 0.5)
+					elseif (self:HasException(rowNumber, k)) then
+						cell.icon:SetVertexColor(0.5, 0.5, 1)
+					else
+						cell.icon:SetVertexColor(1, 1, 1)
+					end
 				end
 			else
 				cell.icon:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")		-- Blank for errors/missing
@@ -2961,53 +3125,73 @@ function man:DrawIcons(row)
 			error("Row number mismatch for "..tostring(who))
 		end
 
-		local template = self.pala[row.pala].template
-		for k,v in pairs(classOrder) do
+		local template = pala.template
+
+		for k,v in pairs(order) do
 			local cell = row.cell[k]
 			if (not cell) then
 				error("Missing cell "..tostring(index).."x"..tostring(k))
 			end
-			self:HideExceptionsForCell(cell)
+			if (v ~= "AURA") then
+				self:HideExceptionsForCell(cell)
+			end
 
-			local Type = template and template[v]
+			local Type
+			if (v == "AURA") then
+				Type = pala.aura
+			else
+				Type = template and template[v]
+			end
 			if (Type) then
-				local singleSpell, classSpell = z:GetBlessingFromType(Type)
-				if (not singleSpell) then
-					error("Unknown type "..tostring(Type))
-				end
+				if (v == "AURA") then
+					local a = z.auras[Type]
+					if (not a) then
+						error("Unkown aura "..tostring(Type))
+					end
 
-				local icon = z.blessings[classSpell or singleSpell].icon
-				cell.icon:SetTexture(icon)
-
-				if (self:CellHasError(rowNumber, k)) then
-					self.anyErrors = true
-					cell.icon:SetVertexColor(1, 0.5, 0.5)
+					cell.icon:SetTexture(a.icon)
+					cell.icon:SetVertexColor(1, 1, 1)
 				else
-					local exception = self:HasException(rowNumber, k)
-					if (exception) then
-						cell.icon:SetVertexColor(0.5, 0.5, 1)
-						index = 2
-						repeat
-							self:ShowException(cell, exception)
-							exception = self:HasException(rowNumber, k, index)
-							index = index + 1
-						until (not exception or index >= 4)
+					local singleSpell, classSpell = z:GetBlessingFromType(Type)
+					if (not singleSpell) then
+						error("Unknown type "..tostring(Type))
+					end
+
+					local icon = z.blessings[classSpell or singleSpell].icon
+					cell.icon:SetTexture(icon)
+
+					if (self:CellHasError(rowNumber, k)) then
+						self.anyErrors = true
+						cell.icon:SetVertexColor(1, 0.5, 0.5)
 					else
-						cell.icon:SetVertexColor(1, 1, 1)
+						local exception = self:HasException(rowNumber, k)
+						if (exception) then
+							cell.icon:SetVertexColor(0.5, 0.5, 1)
+							index = 2
+							repeat
+								self:ShowException(cell, exception)
+								exception = self:HasException(rowNumber, k, index)
+								index = index + 1
+							until (not exception or index >= 4)
+						else
+							cell.icon:SetVertexColor(1, 1, 1)
+						end
 					end
 				end
 			else
 				cell.icon:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")		-- Blank for errors/missing
 				cell.icon:SetVertexColor(0, 0, 0)
 				
-				local exception = self:HasException(rowNumber, k, cell.exceptions and #cell.exceptions + 1)
-				if (exception) then
-					index = 2
-					repeat
-						self:ShowException(cell, exception, true)
-						exception = self:HasException(rowNumber, k, index)
-						index = index + 1
-					until (not exception or index >= 4)
+				if (v ~= "AURA") then
+					local exception = self:HasException(rowNumber, k, cell.exceptions and #cell.exceptions + 1)
+					if (exception) then
+						index = 2
+						repeat
+							self:ShowException(cell, exception, true)
+							exception = self:HasException(rowNumber, k, index)
+							index = index + 1
+						until (not exception or index >= 4)
+					end
 				end
 			end
 			if (pala.canEdit) then
@@ -3017,6 +3201,8 @@ function man:DrawIcons(row)
 			end
 		end
 	end
+
+	del(order)
 end
 
 -- ShowException
@@ -3096,23 +3282,25 @@ function man:DrawIconsByName(who)
 end
 
 -- PalaIcon
-local function PalaIcon(self, index, tex)
-
-	local icon = self.icons[index]
-
+local function PalaIcon(self, index, tex, bottom)
+	local key = bottom and "bottomicons" or "icons"
+	local icon = self[key][index]
 	if (not icon and tex) then
 		icon = self:CreateTexture(nil, "OVERLAY")
-		self.icons[index] = icon
+		self[key][index] = icon
 		icon:SetWidth(14)
 		icon:SetHeight(14)
 
 		if (index == 1) then
-			icon:SetPoint("TOPLEFT", 4, -1)
+			if (bottom) then
+				icon:SetPoint("BOTTOMLEFT", 4, 1)
+			else
+				icon:SetPoint("TOPLEFT", 4, -1)
+			end
 		else
-			icon:SetPoint("TOPLEFT", self.icons[index - 1], "TOPRIGHT", 0, 0)
+			icon:SetPoint("TOPLEFT", self[key][index - 1], "TOPRIGHT", 0, 0)
 		end
 	end
-
 	if (icon) then
 		if (tex) then
 			icon:SetTexture(tex)
@@ -3132,7 +3320,7 @@ end
 
 -- DrawPaladin
 function man:DrawPaladin(row)
-	local icon = 1
+	local bicon, icon = 1, 1
 
 	row.title.offline:Hide()
 	row.title.ackWait:Hide()
@@ -3233,6 +3421,19 @@ function man:DrawPaladin(row)
 			icon = icon + 1
 		end
 
+		if ((pala.improvedDevotion or 0) > 0) then
+			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_DevotionAura", true)
+			bicon = bicon + 1
+		end
+		if ((pala.improvedRetribution or 0) > 0) then
+			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_AuraOfLight", true)
+			bicon = bicon + 1
+		end
+		if ((pala.improvedConcentration or 0) > 0) then
+			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_MindSooth", true)
+			bicon = bicon + 1
+		end
+
 		if (pala.waitingForAck) then
 			row.title.ackWait:Show()
 		end
@@ -3240,11 +3441,33 @@ function man:DrawPaladin(row)
 	for i = icon,4 do
 		PalaIcon(row.title, i)
 	end
+	for i = bicon,3 do
+		PalaIcon(row.title, i, nil, true)
+	end
 end
 
 -- OnReceiveVersion
 function man:OnReceiveVersion(sender, version)
 	self:DrawPaladinByName(sender)
+end
+
+-- UnitFullName
+local function UnitFullName(unit)
+	local name, realm = UnitName(unit)
+	if (realm and realm ~= "") then
+		return format("%s-%s", name, realm)
+	end
+	return name
+end
+
+-- LibGroupTalents_Update
+function man:LibGroupTalents_Update(e, guid, unit, newSpec, n1, n2, n3, oldSpec, o1, o2, o3)
+	local name = UnitFullName(unit)
+	local pala = self.pala[name]
+	if (pala) then
+		self:ReadPaladinSpec(pala, name)
+		self:DrawPaladinByName(name)
+	end
 end
 
 -- DrawPaladinByName
@@ -3400,14 +3623,27 @@ function man:GetCell(row, col, panel)
 		return template[class] and template[class][row]
 	else
 		local class = classOrder[col]
-		if (man.configuring) then
-			if (template[class]) then
-				return template[class][row]
+		if (class) then
+			if (man.configuring) then
+				if (template[class]) then
+					return template[class][row]
+				end
+			else
+				local pala = self:GetPalaFromRow(row)
+				if (pala) then
+					return pala.template and pala.template[class]
+				end
 			end
 		else
-			local pala = self:GetPalaFromRow(row)
-			if (pala) then
-				return pala.template and pala.template[class]
+			if (man.configuring) then
+				if (template.AURA) then
+					return template.AURA[row]
+				end
+			else
+				local pala, palaName = self:GetPalaFromRow(row)
+				if (pala) then
+					return pala.aura
+				end
 			end
 		end
 	end
@@ -3465,36 +3701,42 @@ function man:SetCell(row, col, Type, panel)
 		end
 	else
 		local class = classOrder[col]
-		if (man.configuring) then
-			if (template[class]) then
-				template[class][row] = Type
-				template.modified = true
-				self:MakeTemplateOptions()
-			end
-		else
-			local pala, palaName = self:GetPalaFromRow(row)
-			if (pala and pala.template) then
-				z:Log("man", nil, "change", palaName, class, pala.template[class], Type)
+		if (class) then
+			if (man.configuring) then
+				if (template[class]) then
+					template[class][row] = Type
+					template.modified = true
+					self:MakeTemplateOptions()
+				end
+			else
+				local pala, palaName = self:GetPalaFromRow(row)
+				if (pala and pala.template) then
+					z:Log("man", nil, "change", palaName, class, pala.template[class], Type)
 
-				pala.template[class] = Type
-				
-				if (self:AnyBetaUsers()) then
-					self:GiveTemplate(palaName, true)
-				else
+					pala.template[class] = Type
+
 					self:BroadcastTemplatePart(palaName, class, Type)
 				end
 			end
-		end
-	end
-end
-
--- AnyBetaUsers
-function man:AnyBetaUsers()
-	--local ret
-	for name, version in pairs(ZOMGBuffs.versionRoster) do
-		if (version == 0) then
-			if (select(2, UnitClass(name)) == "PALADIN" and z:UnitRank(name) > 0) then
-				return true
+		else
+			if (man.configuring) then
+				if (not template.AURA and Type) then
+					template.AURA = new()
+				end
+				if (template.AURA) then
+					template.AURA[row] = Type
+					template.modified = true
+					self:MakeTemplateOptions()
+				end
+				if (template.AURA and not next(template.AURA)) then
+					template.AURA = del(template.AURA)
+				end
+			else
+				local pala, palaName = self:GetPalaFromRow(row)
+				if (pala) then
+					pala.aura = Type
+					self:BroadcastTemplateAura(palaName, Type)
+				end
 			end
 		end
 	end
@@ -3550,12 +3792,7 @@ function man:SetException(name, row, col, n)
 				z:Log("man", nil, "exception", palaName, name, oldType, pala.template[name])
 
 				self:DrawIcons(self.frame.row[row])
-
-				if (self:AnyBetaUsers()) then
-					self:GiveTemplate(palaName, true)
-				else
-					self:BroadcastTemplatePart(palaName, name, n)
-				end
+				self:BroadcastTemplatePart(palaName, name, n)
 			end
 		end
 	end
@@ -3707,33 +3944,44 @@ function man:OnCellClick(row, col, button, panel)
 			end
 
 			local Type = self:GetCell(row, col, panel)
-			local ind = blessingCycleIndex[Type] or 0
-			local class = classOrder[col]
+			local ind, class
+			if (col > #classOrder) then
+				ind = z.auraIndex[Type] or 0
+				class = "AURA"
+			else
+				ind = blessingCycleIndex[Type] or 0
+				class = classOrder[col]
+			end
 
 			for i = 1,20 do		-- Just in case we get stuck.
 				if (button == "LeftButton" or button == "MOUSEWHEELDOWN") then
 					if (ind == 0) then
 						ind = 1
-					elseif (ind == #blessingCycle) then
+					elseif (ind == (class == "AURA" and #z.auraCycle or #blessingCycle)) then
 						ind = 0
 					else
 						ind = ind + 1
 					end
 				else
 					if (ind == 0) then
-						ind = #blessingCycle
+						ind = class == "AURA" and #z.auraCycle or #blessingCycle
 					elseif (ind == 1) then
 						ind = 0
 					else
 						ind = ind - 1
 					end
 				end
-				Type = blessingCycle[ind]
+				if (class == "AURA") then
+					Type = z.auraCycle[ind]
+				else
+					Type = blessingCycle[ind]
+				end
 
 				if (self.configuring) then
 					break
 				elseif (pala.gotCapabilities) then
-					if ((Type == "BOK" and pala.canKings) or
+					if (class == "AURA" or
+						(Type == "BOK" and pala.canKings) or
 						(Type == "SAN" and pala.canSanctuary) or
 						(Type == "BOW" and (class ~= "ROGUE" and class ~= "WARRIOR" and class ~= "DEATHKNIGHT")) or
 						(Type ~= "BOK" and Type ~= "SAN" and Type ~= "BOW")) then
@@ -3917,7 +4165,6 @@ end
 -- OnCellEnter
 function man:OnCellEnter(cell, row, col)
 	local class = classOrder[col]
-	local e
 
 	if (self.dragIcon and self.dragIcon:IsShown()) then
 		return
@@ -3928,39 +4175,45 @@ function man:OnCellEnter(cell, row, col)
 		self:SplitClass(class, true)
 	end
 
-	if (man.configuring) then
-		e = template.exceptions and template.exceptions[class] and template.exceptions[class][row]
-	else
-		local pala = self:GetPalaFromRow(row)
-		if (not pala) then
-			return
-		end
+	if (col < #classOrder) then
+		local eclass = classOrder[col]	
+		if (eclass) then
+			local e
+			if (man.configuring) then
+				e = template.exceptions and template.exceptions[class] and template.exceptions[class][row]
+			else
+				local pala = self:GetPalaFromRow(row)
+				if (not pala) then
+					return
+				end
 
-		for nameClass,blessing in pairs(pala.template) do
-			if (nameClass ~= "modified" and nameClass ~= "state" and not classIndex[nameClass]) then
-				-- Must be a name
-				if (self:NameToClass(nameClass) == classOrder[col]) then
-					if (not e) then
-						e = new()
+				for nameClass,blessing in pairs(pala.template) do
+					if (nameClass ~= "modified" and nameClass ~= "state" and not classIndex[nameClass]) then
+						-- Must be a name
+						if (self:NameToClass(nameClass) == eclass) then
+							if (not e) then
+								e = new()
+							end
+							e[nameClass] = blessing
+						end
 					end
-					e[nameClass] = blessing
 				end
 			end
+
+			if (e) then
+				GameTooltip:SetOwner(cell, "ANCHOR_BOTTOMLEFT")
+				GameTooltip:SetText(L["Exceptions"], 1, 1, 1)
+
+				for k,v in pairs(e) do
+					GameTooltip:AddDoubleLine(z:ColourUnitByName(k), z:ColourBlessing(v))
+				end
+				GameTooltip:Show()
+			end
+
+			if (not man.configuring) then
+				del(e)
+			end
 		end
-	end
-
-	if (e) then
-		GameTooltip:SetOwner(cell, "ANCHOR_BOTTOMLEFT")
-		GameTooltip:SetText(L["Exceptions"], 1, 1, 1)
-
-		for k,v in pairs(e) do
-			GameTooltip:AddDoubleLine(z:ColourUnitByName(k), z:ColourBlessing(v))
-		end
-		GameTooltip:Show()
-	end
-
-	if (not man.configuring) then
-		del(e)
 	end
 
 	self:SplitExpand(class)
@@ -4259,12 +4512,15 @@ function man:OnReceiveCapability(sender, cap)
 
 	self:AssignPaladins()
 
-	if (self.pala and self.pala[sender]) then
-		self.pala[sender].canKings = true
-		self.pala[sender].canSanctuary = cap.canSanctuary		-- true/nil
-		self.pala[sender].improvedMight = cap.impMight			-- 0 - 5
-		self.pala[sender].improvedWisdom = cap.impWisdom		-- 0 - 2
-
+	local psender = self.pala and self.pala[sender]
+	if (psender) then
+		psender.canKings = true
+		psender.canSanctuary = cap.canSanctuary		-- true/nil
+		psender.improvedMight = cap.impMight			-- 0 - 5
+		psender.improvedWisdom = cap.impWisdom		-- 0 - 2
+		psender.improvedDevotion = cap.improvedDevotion
+		psender.improvedConcentration = cap.improvedConcentration
+		psender.improvedRetribution = cap.improvedRetribution
 		self.pala[sender].gotCapabilities = true
 	end
 
@@ -4663,6 +4919,8 @@ end
 function man:OnModuleEnable()
 	self:OnResetDB()
 	self:RegisterEvent("PARTY_MEMBERS_CHANGED", "ValidatePP")
+
+	LGT.RegisterCallback(self, "LibGroupTalents_Update")
 end
 
 -- OnDisable

@@ -1632,17 +1632,23 @@ function zb:OnModuleInitialize()
 
 	-- REQUESTTEMPLATE - Comes from Blessing Manager on startup to query the Paladin's current assignments
 	z.OnCommReceive.REQUESTTEMPLATE = function(self, prefix, sender, channel)
+		local aura
+		if (ZOMGSelfBuffs) then
+			aura = ZOMGSelfBuffs:GetPaladinAuraKey()
+		end
 		if (sender == UnitName("player")) then
 			local bm = ZOMGBlessingsManager
 			if (bm) then
 				bm:OnReceiveTemplate(sender, template)
 				bm:OnReceiveSymbolCount(sender, GetItemCount(21177))
+				bm:OnReceiveAura(sender, aura)
 				return
 			end
 		end
-		if (sender ~= UNKNOWN and UnitExists(sender)) then
+		if (sender ~= UNKNOWN and UnitExists(sender) and UnitIsConnected(sender)) then
 			z:SendCommMessage("WHISPER", sender, "TEMPLATE", template)
 			z:SendCommMessage("WHISPER", sender, "SYMBOLCOUNT", GetItemCount(21177))
+			z:SendCommMessage("WHISPER", sender, "AURA", aura)
 		end
 	end
 
@@ -1684,7 +1690,11 @@ end
 -- OnResetDB
 function zb:OnResetDB()
 	if (self.db) then
+		local old = template
 		template = self:GetTemplates().current
+		if (old ~= template) then
+			self:BroadcastTemplate()
+		end
 	end
 end
 

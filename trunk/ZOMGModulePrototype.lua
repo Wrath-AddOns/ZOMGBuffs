@@ -256,13 +256,13 @@ function z.modulePrototype:ModifyTemplate(key, value)
 					templates.current.modified = true
 				end
 
+				self:OnModifyTemplate(key, value)
+
 				z:CheckForChange(self)
 				z:UpdateCellSpells()
 				self:MakeTemplateOptions()
 
 				z:UpdateTooltip()
-
-				self:OnModifyTemplate(key, value)
 			end
 		end
 	end
