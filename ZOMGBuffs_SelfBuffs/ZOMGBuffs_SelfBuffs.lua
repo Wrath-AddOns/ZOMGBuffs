@@ -1056,8 +1056,32 @@ end
 function zs:OnModifyTemplate(key, value)
 	if (value) then
 		local buff = self.classBuffs[key]
+		if (buff and buff.dup) then
+			for k,v in pairs(self.classBuffs) do
+				if (v.dup == buff.dup and k ~= key) then
+					self:ModifyTemplate(k, nil)
+				end
+			end
+		end
+
+		local buff = self.classBuffs[key]
 		if (buff and buff.onEnable) then
 			buff.onEnable(key)
+		end
+	end
+
+	if (playerClass == "PALADIN") then
+		for key2,info in pairs(z.auras) do
+			if (info.name == key) then
+				-- New aura set, notify blessings manager
+				local aura = self:GetPaladinAuraKey()
+				local bm = ZOMGBlessingsManager
+				if (bm) then
+					bm:OnReceiveAura(playerName, aura)
+				end
+				z:SendCommMessage("GROUP", "AURA", aura)
+				break
+			end
 		end
 	end
 end
@@ -1173,27 +1197,27 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 
 	if (manual) then
 		if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
-			local ours
-			-- Manual cast buffs will override the current template and mark it as modified.
-			local buff = self.classBuffs[spell]
-			if (buff) then
-				if (buff.who == "self") then
-					-- Manual buff override
-					if (buff.dup) then
-						for k,v in pairs(self.classBuffs) do
-							if (v.dup == buff.dup) then
-								self:ModifyTemplate(k, nil)
-							end
-						end
-					end
-					ours = true
-				end
-			end
-
-			if (ours) then
-				z:CheckForChange(self)
+			-- local ours
+			-- -- Manual cast buffs will override the current template and mark it as modified.
+			-- local buff = self.classBuffs[spell]
+			-- if (buff) then
+			-- 	if (buff.who == "self") then
+			-- 		-- Manual buff override
+			-- 		if (buff.dup) then
+			-- 			for k,v in pairs(self.classBuffs) do
+			-- 				if (v.dup == buff.dup) then
+			-- 					self:ModifyTemplate(k, nil)
+			-- 				end
+			-- 			end
+			-- 		end
+			-- 		ours = true
+			-- 	end
+			-- end
+            -- 
+			-- if (ours) then
+			-- z:CheckForChange(self)
 				self:ModifyTemplate(spell, true)
-			end
+			-- end
 		end
 	end
 
@@ -1219,6 +1243,34 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 					count = GetItemCount(reagent)
 				}
 			end
+		end
+	end
+end
+
+-- GetPaladinAuraKey
+function zs:GetPaladinAuraKey()
+	if (playerClass == "PALADIN") then
+		if (template) then
+			for spell in pairs(template) do
+				for key,info in pairs(z.auras) do
+					if (info.name == spell) then
+						return info.key
+					end
+				end
+			end
+		end
+	end
+end
+
+-- SetPaladinAuraKey
+function zs:SetPaladinAuraKey(key)
+	local aura = key and z.auras[key]
+	if (aura) then
+		self:ModifyTemplate(aura.name, true)
+	else
+		local oldaura = self:GetPaladinAuraKey()
+		if (oldaura) then
+			self:ModifyTemplate(z.auras[oldaura].name, nil)
 		end
 	end
 end

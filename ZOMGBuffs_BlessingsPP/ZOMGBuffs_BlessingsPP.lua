@@ -6,6 +6,7 @@ end
 -- ZOMGBUffs, Pally Power comunication module, for those Paladins who've not yet seen the light
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsPP")
+local LGT = LibStub("LibGroupTalents-1.0")
 local bm
 
 -- Traffic
@@ -62,6 +63,18 @@ local ppPrefix = "PLPWR"
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
+local PALLYPOWER_MAXAURAS = 7;
+local PallyPowerAuras = {
+	[0] = "",
+	[1] = GetSpellInfo(465), --BS["Devotion Aura"],
+	[2] = GetSpellInfo(7294), --BS["Retribution Aura"],
+	[3] = GetSpellInfo(19746), --BS["Concentration Aura"],
+	[4] = GetSpellInfo(19876), --BS["Shadow Resistance Aura"],
+	[5] = GetSpellInfo(19888), --BS["Frost Resistance Aura"],
+	[6] = GetSpellInfo(19891), --BS["Fire Resistance Aura"],
+	[7] = GetSpellInfo(32223), --BS["Crusader Aura"],
+};
+
 local ppSpellOrder = {"BOW", "BOM", "BOK", "SAN"}
 local ppClassOrder = {"WARRIOR", "ROGUE", "PRIEST", "DRUID", "PALADIN", "HUNTER", "MAGE", "WARLOCK", "SHAMAN", "DEATHKNIGHT", "PET"}
 local ppSpellIndex
@@ -76,6 +89,15 @@ do
 	end
 	ppSpellIndex = IndexArray(ppSpellOrder)
 	ppClassIndex = IndexArray(ppClassOrder)
+end
+
+-- GetAuraAssignment
+function mod:GetAuraAssignment()
+	if (ZOMGSelfBuffs) then
+		local zomgKey = ZOMGSelfBuffs:GetPaladinAuraKey()
+        return zomgKey and z.auraIndex[zomgKey] or 0
+    end
+    return 0
 end
 
 -- PowerChat
@@ -106,20 +128,13 @@ function mod:ProcessChat(sender, msg)
 				end
 			end
 
-			local t = z and z.talentSpecs
-			if (t) then
-				t = t[sender]
-				if (not t) then
-					t = {}
-					z.talentSpecs[sender] = t
-				end
-				t.canKings = s[ppSpellIndex.BOK] and (s[ppSpellIndex.BOK].rank or 0) > 0
-				t.canSanctuary = s[ppSpellIndex.SAN] and (s[ppSpellIndex.SAN].rank or 0) > 0
-				t.impMight = (s[ppSpellIndex.BOM] and (s[ppSpellIndex.BOM].talent or 0) > 0 and s[ppSpellIndex.BOM].talent) or 0
-				t.impWisdom = (s[ppSpellIndex.BOW] and (s[ppSpellIndex.BOW].talent or 0) > 0 and s[ppSpellIndex.BOW].talent) or 0
-			end
-
+			local t = new()
+			t.canKings = s[ppSpellIndex.BOK] and (s[ppSpellIndex.BOK].rank or 0) > 0
+			t.canSanctuary = s[ppSpellIndex.SAN] and (s[ppSpellIndex.SAN].rank or 0) > 0
+			t.impMight = (s[ppSpellIndex.BOM] and (s[ppSpellIndex.BOM].talent or 0) > 0 and s[ppSpellIndex.BOM].talent) or 0
+			t.impWisdom = (s[ppSpellIndex.BOW] and (s[ppSpellIndex.BOW].talent or 0) > 0 and s[ppSpellIndex.BOW].talent) or 0
 			bm:OnReceiveCapability(sender, t)
+			del(t)
 
 			if (assign) then
 				local template = {}
@@ -139,6 +154,29 @@ function mod:ProcessChat(sender, msg)
 
 				bm:OnReceiveTemplate(sender, template)
 			end
+		end
+
+	elseif (strfind(msg, "^ASELF")) then
+		local newaura = 0
+		AllPallys[sender].AuraInfo = { }
+		_, _, numbers, assign = string.find(msg, "ASELF ([0-9a-fn]*)@([0-9n]*)")
+		for i = 1, PALLYPOWER_MAXAURAS do
+			rank = string.sub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
+			talent = string.sub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
+			if rank ~= "n" then
+				AllPallys[sender].AuraInfo[i] = { }
+				AllPallys[sender].AuraInfo[i].rank = tonumber(rank,16)
+				AllPallys[sender].AuraInfo[i].talent = tonumber(talent,16)
+			end
+		end
+		if assign then
+			if assign == "n" or assign == "" then 
+				assign = 0
+			end
+			newaura = assign + 0
+
+			local zomgAuraKey = z.auraCycle[newaura + 0]
+			bm:OnReceiveAura(sender, zomgAuraKey)
 		end
 
 	elseif (strfind(msg, "^ASSIGN")) then
@@ -171,6 +209,13 @@ function mod:ProcessChat(sender, msg)
 			for i,class in ipairs(ppClassOrder) do
 				bm:OnReceiveTemplatePart(sender, name, class, zomgSpellType)
 			end
+		end
+
+	elseif (strfind(msg, "^AASSIGN")) then
+		local name, auraIndex = strmatch(msg, "^AASSIGN (.*) (.*)")
+		if (name ~= sender) then
+			local zomgAuraKey = z.auraCycle[auraIndex + 0]
+			bm:OnReceiveBroadcastAura(sender, name, zomgAuraKey)
 		end
 
 	elseif (strfind(msg, "^SYMCOUNT")) then
@@ -317,6 +362,33 @@ function mod:ScanSpells()
 		end
 
 		self.AllPallys[self.player] = RankInfo
+
+		RankInfo.AuraInfo = {}
+		for i = 1, PALLYPOWER_MAXAURAS do -- find max ranks/talents for auaras
+			local spellName, spellRank = GetSpellInfo(PallyPowerAuras[i])
+			
+			if spellName then
+				RankInfo.AuraInfo[i] = {}
+				
+				if not spellRank or spellRank == "" then -- spells without ranks
+					spellRank = "1"		 -- Concentration, Crusader
+				end
+
+				local talent = 0
+				if i == 1 then
+					talent = LGT:UnitHasTalent("player", (GetSpellInfo(20138))) or 0	-- Improved Devotion Aura
+
+				elseif i == 2 then
+					talent = LGT:UnitHasTalent("player", (GetSpellInfo(31869))) or 0	-- Sanctified Retribution
+
+			    elseif i == 3 then
+					talent = LGT:UnitHasTalent("player", (GetSpellInfo(20254))) or 0	-- Improved Concentration Aura
+				end
+
+				RankInfo.AuraInfo[i].talent = talent
+				RankInfo.AuraInfo[i].rank = tonumber(select(3, string.find(spellRank, "(%d+)")))
+			end
+		end
 	end
 end
 
@@ -397,6 +469,18 @@ function mod:SendSelf()
 
 	-- Symbol of Kings count
 	self:SendMessage("SYMCOUNT "..(GetItemCount(21177) or 0))
+
+	-- Aura
+	s = ""
+	local AuraInfo = self.AllPallys[self.player].AuraInfo
+	for i = 1, PALLYPOWER_MAXAURAS do
+		if not AuraInfo[i] then
+			s = s.."nn"
+		else
+			s = s .. string.format("%x%x", AuraInfo[i].rank, AuraInfo[i].talent)
+		end
+	end
+	s = "ASELF " .. s .. "@" .. self:GetAuraAssignment()
 end
 
 -- SendSymCount
