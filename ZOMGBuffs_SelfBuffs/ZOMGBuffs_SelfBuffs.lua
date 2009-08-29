@@ -5,6 +5,7 @@ end
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
+local LGT = LibStub("LibGroupTalents-1.0")
 local playerClass, playerName
 local template
 
@@ -382,11 +383,22 @@ function zs:CheckBuffs()
 			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then
 				if (not cb.skip or not cb.skip()) then
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
-
 					local timeLeft = endTime and (endTime - GetTime())
-
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
-					if ((charges and ((count or 0) < (charges[k] or 0))) or (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft))) then
+
+					local c = charges and charges[k]
+					if (c) then
+						local cdef = cb.charges
+						if (type(cdef) == "function") then
+							cdef = cdef()
+						end
+						if (c > cdef) then
+							c = cdef
+							charges[k] = cdef
+						end
+					end
+
+					if ((c and ((count or 0) < (c or 0))) or (endTime ~= 0 and (not timeLeft or timeLeft < requiredTimeLeft))) then
 						-- Need recast
 						local start, duration, enable = GetSpellCooldown(k)
 						if ((start and (start == 0 or start + duration <= GetTime())) and enable == 1 and IsUsableSpell(k)) then
@@ -553,9 +565,13 @@ function zs:GetClassBuffs()
 			end
 		end
 
+		local function getWaterShieldCharges()
+			return LGT:UnitHasGlyph("player", (GetSpellInfo(58063))) and 4 or 3		-- Glyph of Water Shield
+		end
+
 		classBuffs = {
 			{id = 49281, o = 1, dup = 2, charges = 3, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
-			{id = 33736, o = 2, dup = 2, charges = 3, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
+			{id = 33736, o = 2, dup = 2, charges = getWaterShieldCharges, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
 			{id = 8017,  o = 4, duration = 30, who = "weapon", c = "80FF80", dup = 1,				-- Rockbiter Weapon
 				exclude = function() return IsUsableSpell(GetSpellInfo(25505)) end, -- Only use Rockbiter until we can use Windfury
 			},
@@ -894,7 +910,11 @@ do
 							}
 						end
 
-						if (v.charges) then
+						local c = v.charges
+						if (c) then
+							if (type(c) == "function") then
+								c = c()
+							end
 							args[k].args.charges = {
 								type = "range",
 								name = L["Minimum Charges"],
@@ -905,7 +925,7 @@ do
 								set = setCharges,
 								passValue = v.rebuff or k,
 								min = 0,
-								max = v.charges,
+								max = c,
 								step = 1,
 							}
 						end

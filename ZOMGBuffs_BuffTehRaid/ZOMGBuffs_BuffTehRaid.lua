@@ -5,6 +5,7 @@ end
 
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffTehRaid")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
+local LGT = LibStub("LibGroupTalents-1.0")
 local SM = LibStub("LibSharedMedia-3.0")
 local playerClass
 local template
@@ -932,17 +933,8 @@ end
 
 -- GetEarthShieldStacks
 local function GetEarthShieldStacks()
-	local impES = GetSpellInfo(51560)
-	local group = GetActiveTalentGroup()
-	for tab = 1,GetNumTalentTabs() do
-		for talent = 1,GetNumTalents(tab) do
-			local nameTalent, icon, iconx, icony, currRank, maxRank = GetTalentInfo(tab, talent, nil, nil, group)
-			if (nameTalent == impES) then
-				return 6 + (currRank or 0)
-			end
-		end			
-	end
-	return 6
+	local impES = LGT:UnitHasTalent("player", (GetSpellInfo(51560)))
+	return 6 + (impES or 0)
 end
 
 -- OnModuleInitialize

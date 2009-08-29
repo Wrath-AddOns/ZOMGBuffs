@@ -182,6 +182,9 @@ z.new, z.del, z.deepDel, z.copy = new, del, deepDel, copy
 z.classOrder = classOrder
 z.classIndex = classIndex
 z.manaClasses = {HUNTER = true, DRUID = true, SHAMAN = true, PALADIN = true, PRIEST = true, MAGE = true, WARLOCK = true}
+if (select(4, GetBuildInfo()) >= 40000) then
+	z.manaClasses.HUNTER = nil
+end
 
 z.blessingColour = {BOK = "|cFFFF80FF", BOM = "|cFFFF5050", BOL = "|cFF80FF80", BOS = "|cFFFFA0A0", BOW = "|cFF8080FF", SAC = "|cFFFF0000", SAN = "|cFF4040C0", BOF = "|cFFFFCC19", BOP = "|cFF00FF00"}
 do
