@@ -212,6 +212,7 @@ function mod:ProcessChat(sender, msg)
 		end
 
 	elseif (strfind(msg, "^AASSIGN")) then
+		-- AASSIGN PaladinName auraIndex		- Set the aura for the paladin to use
 		local name, auraIndex = strmatch(msg, "^AASSIGN (.*) (.*)")
 		if (name ~= sender) then
 			local zomgAuraKey = z.auraCycle[auraIndex + 0]
@@ -256,6 +257,14 @@ function mod:GiveTemplatePart(name, class, buff)
 				self:SendMessage(format("NASSIGN %s %d %s %d", name, ppClassID, class, ppSpellID or 0))
 			end
 		end
+	end
+end
+
+-- GiveTemplateAura
+function mod:GiveTemplateAura(name, Type)
+	local ppAuraID = z.auraIndex[Type] or 0
+	if (ppAuraID) then
+		self:SendMessage(format("AASSIGN %s %d", name, ppAuraID))
 	end
 end
 
@@ -492,7 +501,6 @@ end
 
 -- SendMessage
 function mod:SendMessage(msg)
---self:Print("ZomgPP: SendMessage(%q)", msg)
 	local dist
 	if (select(2, IsInInstance()) == "pvp") then
 		dist = "BATTLEGROUND"
@@ -510,7 +518,6 @@ end
 -- CHAT_MSG_ADDON
 function mod:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 	if (prefix == ppPrefix and sender ~= self.player) then
---self:Print("ZomgPP: CHAT_MSG_ADDON(%q, %q, %q, %q)", prefix, message, distribution, sender)
 		if (not self.initialized) then
 			self:ScanSpells()
 			self:ScanInventory()

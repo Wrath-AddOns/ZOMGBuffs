@@ -2588,7 +2588,7 @@ function man:BroadcastTemplateAura(name, Type)
 	if (playerClass == "PALADIN" or IsRaidLeader() or IsRaidOfficer()) then
 		assert(Type == nil or z.auras[Type])
 		if (ZOMGBlessingsPP) then
-			--ZOMGBlessingsPP:GiveTemplateAura(name, Type)
+			ZOMGBlessingsPP:GiveTemplateAura(name, Type)
 		end
 		z:SendCommMessage("GROUP", "GIVEAURA", name, Type)
 		if (name == playerName and ZOMGSelfBuffs) then
