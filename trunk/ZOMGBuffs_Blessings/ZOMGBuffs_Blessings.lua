@@ -1592,7 +1592,7 @@ function zb:OnModuleInitialize()
 	z.OnCommReceive.GIVETEMPLATE = function(self, prefix, sender, channel, newTemplate, quiet, playerRequested, retry)
 		if (zb:IsAllowedToChangeMe(sender)) then
 			if (not newTemplate or not next(newTemplate)) then
-				if (sender ~= UNKNOWN and UnitExists(sender)) then
+				if (sender ~= UNKNOWN and UnitExists(sender) and UnitIsConnected(sender)) then
 					z:SendCommMessage("WHISPER", sender, "NACK", not retry)
 				end
 				return
@@ -1624,7 +1624,7 @@ function zb:OnModuleInitialize()
 			z:UpdateTooltip()
 
 			zb:BroadcastTemplate(true)			-- Need to do this so that other non-paladins will see the update in manager
-			if (sender ~= UNKNOWN and UnitExists(sender)) then
+			if (sender ~= UNKNOWN and UnitExists(sender) and UnitIsConnected(sender)) then
 				z:SendCommMessage("WHISPER", sender, "ACK", nil)
 			end
 		end

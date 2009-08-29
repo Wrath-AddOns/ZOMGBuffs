@@ -158,15 +158,15 @@ function mod:ProcessChat(sender, msg)
 
 	elseif (strfind(msg, "^ASELF")) then
 		local newaura = 0
-		AllPallys[sender].AuraInfo = { }
-		_, _, numbers, assign = string.find(msg, "ASELF ([0-9a-fn]*)@([0-9n]*)")
+		self.AllPallys[sender].AuraInfo = { }
+		local _, _, numbers, assign = string.find(msg, "ASELF ([0-9a-fn]*)@([0-9n]*)")
 		for i = 1, PALLYPOWER_MAXAURAS do
-			rank = string.sub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
-			talent = string.sub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
+			local rank = string.sub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
+			local talent = string.sub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
 			if rank ~= "n" then
-				AllPallys[sender].AuraInfo[i] = { }
-				AllPallys[sender].AuraInfo[i].rank = tonumber(rank,16)
-				AllPallys[sender].AuraInfo[i].talent = tonumber(talent,16)
+				self.AllPallys[sender].AuraInfo[i] = { }
+				self.AllPallys[sender].AuraInfo[i].rank = tonumber(rank,16)
+				self.AllPallys[sender].AuraInfo[i].talent = tonumber(talent,16)
 			end
 		end
 		if assign then
@@ -480,7 +480,9 @@ function mod:SendSelf()
 			s = s .. string.format("%x%x", AuraInfo[i].rank, AuraInfo[i].talent)
 		end
 	end
-	s = "ASELF " .. s .. "@" .. self:GetAuraAssignment()
+	s = s .. "@" .. self:GetAuraAssignment()
+
+	self:SendMessage("ASELF "..s)
 end
 
 -- SendSymCount
@@ -490,6 +492,7 @@ end
 
 -- SendMessage
 function mod:SendMessage(msg)
+--self:Print("ZomgPP: SendMessage(%q)", msg)
 	local dist
 	if (select(2, IsInInstance()) == "pvp") then
 		dist = "BATTLEGROUND"
@@ -507,7 +510,7 @@ end
 -- CHAT_MSG_ADDON
 function mod:CHAT_MSG_ADDON(prefix, message, distribution, sender)
 	if (prefix == ppPrefix and sender ~= self.player) then
---self:Print("CHAT_MSG_ADDON(%q, %q, %q, %q)", prefix, message, distribution, sender)
+--self:Print("ZomgPP: CHAT_MSG_ADDON(%q, %q, %q, %q)", prefix, message, distribution, sender)
 		if (not self.initialized) then
 			self:ScanSpells()
 			self:ScanInventory()

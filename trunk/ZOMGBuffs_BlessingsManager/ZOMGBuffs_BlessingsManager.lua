@@ -1516,9 +1516,9 @@ end
 
 -- ReadPaladinSpec
 function man:ReadPaladinSpec(pala, name)
+	pala.canKings = UnitLevel(name) >= 20
 	local t, s1, s2, s3 = LGT:GetUnitTalentSpec(name)
 	if (t and s1) then
-		pala.canKings = UnitLevel(name) >= 20
 		pala.canSanctuary = LGT:UnitHasTalent(name, (GetSpellInfo(20911)))
 		pala.improvedWisdom = LGT:UnitHasTalent(name, (GetSpellInfo(20245)))
 		pala.improvedMight = LGT:UnitHasTalent(name, (GetSpellInfo(20045)))
@@ -1526,6 +1526,8 @@ function man:ReadPaladinSpec(pala, name)
 		pala.improvedConcentration = LGT:UnitHasTalent(name, (GetSpellInfo(20254)))
 		pala.improvedRetribution = LGT:UnitHasTalent(name, (GetSpellInfo(31869)))
 		pala.spec = {s1, s2, s3}
+		pala.gotCapabilities = true
+		pala.canEdit = true
 	end
 	local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
 	if (not pala.spec) then
@@ -3405,32 +3407,32 @@ function man:DrawPaladin(row)
 		end
 
 		if (pala.canKings) then
-			PalaIcon(row.title, icon, "Interface\\Icons\\Spell_Magic_GreaterBlessingofKings")
+			PalaIcon(row.title, icon, (select(3, GetSpellInfo(25898)))) 		-- Interface\\Icons\\Spell_Magic_GreaterBlessingofKings
 			icon = icon + 1
 		end
 		if (pala.canSanctuary) then
-			PalaIcon(row.title, icon, "Interface\\Icons\\Spell_Holy_GreaterBlessingofSanctuary")
+			PalaIcon(row.title, icon, (select(3, GetSpellInfo(25899)))) 		-- Interface\\Icons\\Spell_Holy_GreaterBlessingofSanctuary
 			icon = icon + 1
 		end
 		if ((pala.improvedMight or 0) > 0) then
-			PalaIcon(row.title, icon, "Interface\\Icons\\Spell_Holy_GreaterBlessingofKings")
+			PalaIcon(row.title, icon, (select(3, GetSpellInfo(27141)))) 		-- Interface\\Icons\\Spell_Holy_GreaterBlessingofMight
 			icon = icon + 1
 		end
 		if ((pala.improvedWisdom or 0) > 0) then
-			PalaIcon(row.title, icon, "Interface\\Icons\\Spell_Holy_GreaterBlessingofWisdom")
+			PalaIcon(row.title, icon, (select(3, GetSpellInfo(27143)))) 		-- Interface\\Icons\\Spell_Holy_GreaterBlessingofWisdom
 			icon = icon + 1
 		end
 
 		if ((pala.improvedDevotion or 0) > 0) then
-			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_DevotionAura", true)
+			PalaIcon(row.title, bicon, (select(3, GetSpellInfo(48942))), true)	-- Interface\\Icons\\Spell_Holy_DevotionAura
 			bicon = bicon + 1
 		end
 		if ((pala.improvedRetribution or 0) > 0) then
-			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_AuraOfLight", true)
+			PalaIcon(row.title, bicon, (select(3, GetSpellInfo(54043))), true)	-- Interface\\Icons\\Spell_Holy_AuraOfLight
 			bicon = bicon + 1
 		end
 		if ((pala.improvedConcentration or 0) > 0) then
-			PalaIcon(row.title, bicon, "Interface\\Icons\\Spell_Holy_MindSooth", true)
+			PalaIcon(row.title, bicon, (select(3, GetSpellInfo(19746))), true)	-- Interface\\Icons\\Spell_Holy_MindSooth
 			bicon = bicon + 1
 		end
 
@@ -3905,7 +3907,7 @@ function man:UnitContextMenu(row, col)
 				}
 
 				for j,buff in ipairs(blessingCycle) do
-					if (buff ~= mainBuff and ((class ~= "ROGUE" and class ~= "WARRIOR" and class ~= "DEATHKNIGHT") or buff ~= "BOW") and (not pala.gotCapabilities or (buff == "SAN" and pala.canSanctuary) or (buff == "BOK" and pala.canKings) or (buff ~= "SAN" and buff ~= "BOK"))) then
+					if (buff ~= mainBuff and (z.manaClasses[class] or buff ~= "BOW") and (not pala.gotCapabilities or (buff == "SAN" and pala.canSanctuary) or (buff == "BOK" and pala.canKings) or (buff ~= "SAN" and buff ~= "BOK"))) then
 						contextMenu.args[unitname].args[buff] = {
 							type = "toggle",
 							order = j + 2,
@@ -3955,9 +3957,7 @@ function man:OnCellClick(row, col, button, panel)
 
 			for i = 1,20 do		-- Just in case we get stuck.
 				if (button == "LeftButton" or button == "MOUSEWHEELDOWN") then
-					if (ind == 0) then
-						ind = 1
-					elseif (ind == (class == "AURA" and #z.auraCycle or #blessingCycle)) then
+					if (ind == (class == "AURA" and #z.auraCycle or #blessingCycle)) then
 						ind = 0
 					else
 						ind = ind + 1
@@ -3965,8 +3965,6 @@ function man:OnCellClick(row, col, button, panel)
 				else
 					if (ind == 0) then
 						ind = class == "AURA" and #z.auraCycle or #blessingCycle
-					elseif (ind == 1) then
-						ind = 0
 					else
 						ind = ind - 1
 					end
@@ -3977,16 +3975,13 @@ function man:OnCellClick(row, col, button, panel)
 					Type = blessingCycle[ind]
 				end
 
-				if (self.configuring) then
+				if (self.configuring or class == "AURA") then
 					break
-				elseif (pala.gotCapabilities) then
-					if (class == "AURA" or
-						(Type == "BOK" and pala.canKings) or
+				elseif ((Type == "BOK" and pala.canKings) or
 						(Type == "SAN" and pala.canSanctuary) or
-						(Type == "BOW" and (class ~= "ROGUE" and class ~= "WARRIOR" and class ~= "DEATHKNIGHT")) or
+						(Type == "BOW" and z.manaClasses[class]) or
 						(Type ~= "BOK" and Type ~= "SAN" and Type ~= "BOW")) then
-						break
-					end
+					break
 				end
 			end
 
