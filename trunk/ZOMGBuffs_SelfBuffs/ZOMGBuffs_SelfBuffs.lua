@@ -24,7 +24,7 @@ z:CheckVersion("$Revision$")
 
 local mismatchList		-- Rogue poisons that don't match their spell names
 if (GetLocale() == "enUS") then
-	mismatchList = {[GetSpellInfo(5761)] = "Mind Numbing Poison"}		-- Mind-numbing Poison
+	mismatchList = {["Mind Numbing Poison"] = GetSpellInfo(5761)}		-- Mind-numbing Poison
 elseif (GetLocale() == "deDE") then
 	mismatchList = {["Verkrüppelungsgift"] = "Verkrüppelndes Gift"}		-- Crippling Poison
 end
@@ -190,8 +190,8 @@ function zs:SetupForItem(slot, itemName)
 	end
 	if (spell or item) then
 		z:SetupForItem(slot, item, self, spell, item and 4 or nil)	-- 4 for when casting poisons onto weapons, we need more than 1.5 secs for next check
-		self.activeEnchant = GetTime()
-		lastEnchantSet = spell or item
+		self.activeEnchantLoaded = item and 3 or 0
+		self.lastEnchantSet = spell or item
 		return true
 	end
 end
@@ -224,6 +224,9 @@ do
 					pattern = pattern:gsub("%%%%s", "(..-)")
 					pattern = pattern:gsub("%%%%d", "(%%d+)")
 
+					-- Strip out "|4singular:plural;"
+					pattern = pattern:gsub("|4%a+:(%a+);", "%1-")
+
 					if pattern:sub(-5) == "(..-)" then
 						pattern = pattern:sub(1, -6) .. "(.+)"
 					end
@@ -240,42 +243,38 @@ do
 			tempTip:SetOwner(UIParent, "ANCHOR_NONE")
 			local ok, cd = tempTip:SetInventoryItem("player", slot)
 			if (ok and cd) then
-				local left, prev
+				local spellFind, timeLeft
 				for i = 1,200 do
-					left = getglobal(format("%sTextLeft%d", tipName, i))
+					local leftRegion = getglobal(format("%sTextLeft%d", tipName, i))
+					if (not leftRegion) then
+						break
+					end
+					local left = leftRegion:GetText()
 					if (not left) then
 						break
 					end
-					left = left:GetText()
-					if (not left) then
-						break
-					end
-					if (strfind(left, durMatch)) then
-						left = prev
-						break
-					end
-					prev = left
-					left = nil
-				end
-				tempTip:Hide()
-
-				if (left) then
-					local spellFind, timeLeft = strmatch(left, encMatchHour)
+					spellFind, timeLeft = strmatch(left, encMatchHour)
 					if (not spellFind) then
 						spellFind, timeLeft = strmatch(left, encMatchMin)
 						if (not spellFind) then
 							spellFind, timeLeft = strmatch(left, encMatchSec)
 						end
 					end
-					if (spellFind) then
-						if (mismatchList) then
-							for k,v in pairs(mismatchList) do
-								spellFind = gsub(spellFind, k, v)
-							end
-						end
-
-						return spellFind, Expiration / 1000 / 60
+					if (spellFind and timeLeft) then
+						break
 					end
+				end
+				tempTip:Hide()
+
+				if (spellFind and timeLeft) then
+					if (mismatchList) then
+						for k,v in pairs(mismatchList) do
+							spellFind = gsub(spellFind, k, v)
+							break
+						end
+					end
+
+					return spellFind, Expiration / 1000 / 60
 				end
 			end
 			tempTip:Hide()
@@ -286,8 +285,8 @@ end
 -- CheckEnchant
 function zs:CheckEnchant(slot, spellOrItem)
 	if (spellOrItem) then
-		if (not self.activeEnchant or self.activeEnchant < GetTime() - 4) then
-			local itemLink = GetInventoryItemLink("player", 16)
+		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 4.5 or 1.5)) then
+			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
 				local itemName, _, _, itemLevel = GetItemInfo(itemLink)
 				if (itemLevel == 1) then
@@ -301,7 +300,8 @@ function zs:CheckEnchant(slot, spellOrItem)
 				if (playerClass ~= "SHAMAN") then		-- Shaman weapon enchants do not match spell names, so we won't check them
 					local enc, timeLeft = self:GetCurrentItemEnchant(slot)
 					if (enc) then
-						if (not strfind(enc, spellOrItem)) then
+						local temp = spellOrItem:gsub("%-", "%%-")
+						if (not strfind(enc, temp)) then
 							hasEnchant = nil
 						end
 					end
@@ -318,6 +318,8 @@ function zs:CheckEnchant(slot, spellOrItem)
 					return true
 				end
 			end
+		else
+			z:GlobalCDSchedule()
 		end
 	end
 end
@@ -569,8 +571,12 @@ function zs:GetClassBuffs()
 			return LGT:UnitHasGlyph("player", (GetSpellInfo(58063))) and 4 or 3		-- Glyph of Water Shield
 		end
 
+		local function getLightningShieldCharges()
+			return 3 + (LGT:UnitHasTalent("player", (GetSpellInfo(51525))) or 0) * 2		-- Static Shock
+		end
+
 		classBuffs = {
-			{id = 49281, o = 1, dup = 2, charges = 3, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
+			{id = 49281, o = 1, dup = 2, charges = getLightningShieldCharges, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
 			{id = 33736, o = 2, dup = 2, charges = getWaterShieldCharges, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
 			{id = 8017,  o = 4, duration = 30, who = "weapon", c = "80FF80", dup = 1,				-- Rockbiter Weapon
 				exclude = function() return IsUsableSpell(GetSpellInfo(25505)) end, -- Only use Rockbiter until we can use Windfury
@@ -1109,9 +1115,7 @@ end
 -- SpellCastFailed
 function zs:SpellCastFailed(spell, rank, manual)
 	if (not manual) then
-		if (spell == lastEnchantSet) then
-			self.activeEnchant = nil
-		end
+		self.activeEnchant = nil
 		self:CheckBuffs()
 	end
 end
@@ -1205,7 +1209,7 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
-	if (spell == lastEnchantSet and target == UnitName("player")) then
+	if (spell == self.lastEnchantSet and target == UnitName("player")) then
 		if (z.icon.mod == self) then
 			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
 				z:SetupForSpell()
