@@ -205,10 +205,6 @@ do
 			local name, _, icon = GetSpellInfo(info.ids[1])
 			assert(name and icon)
 			info.icon = icon
-			--local name2, _, icon2 = GetSpellInfo(name)
-			--if (name2 and icon ~= icon2) then
-			--	z:Print("Icon mismatch for "..name)
-			--end
 			info.list = {}
 			for j,id in ipairs(info.ids) do
 				local name = GetSpellInfo(id)
@@ -2545,9 +2541,6 @@ local function Set1CellAttr(self, k, v)
 					cellAttributeChanges[name] = new()
 				end
 				cellAttributeChanges[name][k] = v
-			--else
-			--	z:Print("Set1CellAttr: No name for unit %q", tostring(unit))
-			--	XXX = cellAttributeChanges and copy(cellAttributeChanges)
 			end
 
 			return true			-- true = invalid for the moment until out of combat
@@ -2643,9 +2636,9 @@ function z:SetupForSpell(unit, spell, mod, reagentCount)
 		self:SetStatusIcon()
 		self.icon.auto:Hide()
 		self.icon.count:Hide()
-		if (ZOMGSelfBuffs) then
-			ZOMGSelfBuffs.activeEnchant = nil
-		end
+		--if (ZOMGSelfBuffs) then
+		--	ZOMGSelfBuffs.activeEnchant = nil
+		--end
 	end
 end
 
@@ -2696,9 +2689,9 @@ function z:SetupForItem(slot, item, mod, spell, castTime)
 		self:SetStatusIcon()
 		icon.auto:Hide()
 		icon.count:Hide()
-		if (ZOMGSelfBuffs) then
-			ZOMGSelfBuffs.activeEnchant = nil
-		end
+		--if (ZOMGSelfBuffs) then
+		--	ZOMGSelfBuffs.activeEnchant = nil
+		--end
 	end
 end
 
@@ -2860,9 +2853,9 @@ function z:OnStartup()
 				end
 
 				z.globalCooldownEnd = GetTime() + (self.castTimeToGCD or 1.5)
-				if (ZOMGSelfBuffs) then
-					ZOMGSelfBuffs.activeEnchant = nil
-				end
+				--if (ZOMGSelfBuffs) then
+				--	ZOMGSelfBuffs.activeEnchant = nil
+				--end
 				z:GlobalCDSchedule()
 
 				z:SetupForSpell()
@@ -3912,7 +3905,6 @@ do
 
 						if (index <= #z.buffs) then
 							-- One of the normal icons (raid buffs, food, pots)
-							--z:Print("- Icon = %d: %s", index, (z.buffs[index] and z.buffs[index].type) or "nil")
 							z.overrideBuffBar = "buff"
 							z.overrideBuffBarIndex = index
 
@@ -3920,7 +3912,6 @@ do
 							-- One of the Paladin blessing icons
 							local pindex = index - #z.buffs
 							if (pindex <= #self.palaIcon) then
-								--z:Print("- Paladin Icon = %d", pindex)
 								z.overrideBuffBar = "blessing"
 								z.overrideBuffBarIndex = pindex
 							else
@@ -4321,11 +4312,19 @@ end
 function z:UNIT_SPELLCAST_SENT(player, spell, rank, targetName)
 	if (player == "player") then
 		local start, dur = GetSpellCooldown(spell)
-		if (start) then
+		if (start and dur <= 1.5) then
 			self.globalCooldownEnd = start + dur
 		else
 			self.globalCooldownEnd = GetTime() + 1.5
 		end
+		if (ZOMGSelfBuffs and ZOMGSelfBuffs.activeEnchantLoaded) then
+			self.globalCooldownEnd = self.globalCooldownEnd + ZOMGSelfBuffs.activeEnchantLoaded
+			ZOMGSelfBuffs.activeEnchantLoaded = nil
+			if (spell == ZOMGSelfBuffs.lastEnchantSet) then
+				ZOMGSelfBuffs.activeEnchant = GetTime()
+			end
+		end
+
 		self.lastCastS = spell
 		self.lastCastR = rank
 		self.lastCastN = targetName
