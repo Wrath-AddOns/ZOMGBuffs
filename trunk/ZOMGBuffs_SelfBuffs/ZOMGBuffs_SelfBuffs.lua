@@ -285,7 +285,7 @@ end
 -- CheckEnchant
 function zs:CheckEnchant(slot, spellOrItem)
 	if (spellOrItem) then
-		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 4.5 or 1.5)) then
+		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 1.5)) then
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
 				local itemName, _, _, itemLevel = GetItemInfo(itemLink)
@@ -648,7 +648,6 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "PALADIN") then
 		local function skipFunc()
-			--return zs.db.char.useauto and zs.mounted and not z.db.profile.notmounted
 			return zs.db.char.useauto and IsMounted() and not z.db.profile.notmounted
 		end
 
@@ -1120,47 +1119,6 @@ function zs:SpellCastFailed(spell, rank, manual)
 	end
 end
 
--- CheckMounted
-function zs:CheckMounted()
-	if (self.checkMountedCounter and self.checkMountedCounter > 0) then
-		self.checkMountedCounter = self.checkMountedCounter - 1
-		self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
-	end
-
-	if (not InCombatLockdown()) then
-		local m = IsMounted()
-		if (self.mounted ~= m) then
-			self.mounted = m
-			if (m) then
-				self.checkMountedCounter = nil
-				z:SetupForSpell()
-				self:CheckBuffs()
-				return
-			end
-		end
-	end
-end
-
--- UNIT_AURA
-function zs:UNIT_AURA(unit)
-	if (unit == "player") then
-		if (not InCombatLockdown()) then
-			-- self:Print("UNIT_AURA - self.mounted = "..tostring(self.mounted)..", IsMounted() = "..tostring(IsMounted()))
-			self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
-			if (not self.mounted and not IsMounted()) then
-				-- Nasty hack, because IsMounted() does not work immediately after
-				-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
-				-- Currently, there are no events fired when IsMounted() is toggled on
-				-- Might have to do an OnUpdate check
-				self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
-				self.checkMountedCounter = 10
-			end
-			self:CheckMounted()
-			z:CheckForChange(self)
-		end
-	end
-end
-
 -- ChecksAfterItemChanges
 function zs:ChecksAfterItemChanges()
 	self.activeEnchant = nil
@@ -1484,9 +1442,6 @@ function zs:OnModuleEnable()
 	self:OnSpellsChanged()
 	z:MakeOptionsReagentList()
 
-	self.mounted = IsMounted()
-
-	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	z:CheckForChange(self)
 end

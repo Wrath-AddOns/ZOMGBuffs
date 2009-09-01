@@ -2314,6 +2314,47 @@ end
 
 local invisibility = GetSpellInfo(32612)
 
+-- CheckMounted
+function z:CheckMounted()
+	if (self.checkMountedCounter and self.checkMountedCounter > 0) then
+		self.checkMountedCounter = self.checkMountedCounter - 1
+		self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+	end
+
+	if (not InCombatLockdown()) then
+		local m = IsMounted()
+		if (self.mounted ~= m) then
+			self.mounted = m
+			if (m) then
+				self.checkMountedCounter = nil
+				self:SetupForSpell()
+				if (ZOMGSelfBuffs) then
+					ZOMGSelfBuffs:CheckBuffs()
+				end
+				return
+			end
+		end
+	end
+end
+
+-- StartCheckMounted
+function z:StartCheckMounted()
+	if (not InCombatLockdown()) then
+		-- self:Print("UNIT_AURA - z.mounted = "..tostring(z.mounted)..", IsMounted() = "..tostring(IsMounted()))
+		self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
+		if (not IsMounted()) then
+			-- Nasty hack, because IsMounted() does not work immediately after
+			-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
+			-- Currently, there are no events fired when IsMounted() is toggled on
+			-- Might have to do an OnUpdate check
+			self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+			self.checkMountedCounter = 4
+		end
+		self:CheckMounted()
+		self:CheckForChange(self)
+	end
+end
+
 -- CanCheckBuffs
 function z:CanCheckBuffs(allowCombat, soloBuffs)
 	lastCheckFail = nil
@@ -4303,8 +4344,12 @@ function z:UNIT_AURA(unit)
 		u:DrawCell()
 	end
 
-	if (unit == "player" and self:UnitHasBuff("player", 46755) or self:UnitHasBuff("player", 46898)) then	-- Food/Drink
-		self:SetupForSpell()
+	if (unit == "player") then
+		if (self:UnitHasBuff("player", 46755) or self:UnitHasBuff("player", 46898)) then	-- Food/Drink
+			self:SetupForSpell()
+		else
+			self:StartCheckMounted()
+		end
 	end
 end
 
@@ -4522,6 +4567,7 @@ function z:PLAYER_ENTERING_WORLD()
 	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
 	-- Buff timers aren't available immediately upon zoning
 	self:CheckStateChange()
+	self:StartCheckMounted()
 end
 
 -- FinishedZoning
@@ -5477,6 +5523,8 @@ function z:OnEnableOnce()
 	else
 		self.db.profile.showFubar = true
 	end
+
+	self.mounted = IsMounted()
 
 	self.linkSpells = true
 	self.OnEnableOnce = nil

@@ -27,19 +27,19 @@ ZOMGBlessingsManager = man
 z:CheckVersion("$Revision$")
 
 do
-	local specWeight1 = function(t1, t2, t3) return t1 > t2 and t1 > t3 end
-	local specWeight2 = function(t1, t2, t3) return t2 > t1 and t2 > t3 end
-	local specWeight3 = function(t1, t2, t3) return t3 > t1 and t3 > t2 end
-	local specWeight1or2 = function(t1, t2, t3) return t1 > t3 or t2 > t3 end
-	local specWeight1or3 = function(t1, t2, t3) return t1 > t2 or t3 > t2 end
+	local specWeight1p2 = function(unit, t1, t2, t3) return (t1 + t2) > t3 end
+	local specWeight1or3 = function(unit, t1, t2, t3) return t1 > t2 or t3 > t2 end
+	local specDKTank = function(unit, t1, t2, t3) return UnitAura(unit, frostPresence) ~= nil end
+	local specNotDKTank = function(unit, t1, t2, t3) return UnitAura(unit, frostPresence) == nil end
+	local specBearTank = function(unit, t1, t2, t3) return LGT:UnitHasTalent(unit, (GetSpellInfo(33853))) end
 
 	man.classSplits = {
-		WARRIOR	= {[1] = {title = L["Tank"], discover = specWeight3},	[2] = {title = L["Melee DPS"],	code = "m", discover = specWeight1or2}},
-		DEATHKNIGHT = {[1] = {title = L["Tank"], discover = specWeight2}, [2] = {title = L["Melee DPS"],	code = "c", discover = specWeight1or3}},
-		DRUID	= {[1] = {title = L["Healer"], discover = specWeight3},	[2] = {title = L["Tank"],		code = "t", discover = specWeight2}, [3] = {title = L["Melee DPS"], code = "m", discover = specWeight2}, [4] = {title = L["Caster DPS"], code = "c", discover = specWeight1}},
-		SHAMAN	= {[1] = {title = L["Healer"], discover = specWeight3},	[2] = {title = L["Melee DPS"],	code = "m", discover = specWeight2}, [3] = {title = L["Caster DPS"], code = "c", discover = specWeight1}},
-		PALADIN	= {[1] = {title = L["Healer"], discover = specWeight1},	[2] = {title = L["Tank"],		code = "t", discover = specWeight2}, [3] = {title = L["Melee DPS"], code = "m", discover = specWeight3}},
-		PRIEST	= {[1] = {title = L["Healer"], discover = specWeight1or2}, [2] = {title = L["Caster DPS"],code = "c", discover = specWeight3}},
+		WARRIOR	= {[1] = {title = L["Tank"], discover = 3},	[2] = {title = L["Melee DPS"],	code = "m", discover = specWeight1p2}},
+		DEATHKNIGHT = {[1] = {title = L["Tank"], discover = specDKTank}, [2] = {title = L["Melee DPS"],	code = "c", discover = specNotDKTank}},
+		DRUID	= {[1] = {title = L["Healer"], discover = 3},	[2] = {title = L["Tank"],		code = "t", discover = specBearTank}, [3] = {title = L["Melee DPS"], code = "m", discover = 2}, [4] = {title = L["Caster DPS"], code = "c", discover = 1}},
+		SHAMAN	= {[1] = {title = L["Healer"], discover = 3},	[2] = {title = L["Melee DPS"],	code = "m", discover = 2}, [3] = {title = L["Caster DPS"], code = "c", discover = 1}},
+		PALADIN	= {[1] = {title = L["Healer"], discover = 1},	[2] = {title = L["Tank"],		code = "t", discover = 2}, [3] = {title = L["Melee DPS"], code = "m", discover = 3}},
+		PRIEST	= {[1] = {title = L["Healer"], discover = specWeight1p2}, [2] = {title = L["Caster DPS"],code = "c", discover = 3}},
 	}
 end
 
@@ -377,21 +377,6 @@ function man:OnModuleInitialize()
 	self.OnModuleInitialize = nil
 end
 
-local function onButtonClick(self)
-	self.func(man)
-end
-local function onButtonEnter(self)
-	if (self.tooltipText) then
-		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-		GameTooltip:SetText(self:GetText(), 1, 1, 1)
-		GameTooltip:AddLine(self.tooltipText, nil, nil, nil, 1)
-		GameTooltip:Show()
-	end
-end
-local function onButtonLeave(self)
-	GameTooltip:Hide()
-end
-
 -- CreateDragDropItem
 function man:CreateDragDropItem()
 	local icon = CreateFrame("GameTooltip", "ZOMGBuffsTooltipDragger", UIParent, "GameTooltipTemplate")
@@ -694,6 +679,7 @@ local function splitDragStop(self)
 
 	if (target and target ~= self.col) then
 		man:SplitMovePlayer(icon.name, icon.col, target)
+		man:SplitPopulate()
 	end
 end
 
@@ -742,8 +728,6 @@ function man:SplitMovePlayer(name, from, to)
 	if (not next(codes)) then
 		self.db.profile.playerCodes = del(codes)
 	end
-
-	self:SplitPopulate()
 end
 
 -- SplitSetIcons
@@ -1059,24 +1043,39 @@ function man:SplitPopulate()
 	self:SplitDrawTalentDescriptors()
 end
 
--- SplitAutoAssign
-function man:SplitAutoAssign()
-	local f = self.splitframe
-	if (not f or not f:IsOpen()) then
-		return
-	end
+-- SplitAutoRoles
+function man:SplitAutoRoles()
+	self:SplitAutoAssignClass()
+	self:SplitPopulate()
+end
 
-	local splitDefs = self.classSplits[f.class]
-	if (splitDefs) then
-		for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
-			if (unitclass == f.class and subgroup <= self.db.profile.groups) then
+-- SplitAutoAssignClass
+-- nil class will auto assign all roles for whole roster
+function man:SplitAutoAssignClass(class)
+	for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
+		if ((not class or unitclass == class) and subgroup <= self.db.profile.groups) then
+			local splitDefs = self.classSplits[class]
+			if (splitDefs) then
 				local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
 				if (spec and s1 and s2 and s3) then
 					local belongsTo
 					for i,def in ipairs(splitDefs) do
-						if (def.discover(s1, s2, s3)) then
-							belongsTo = i
-							break
+						if (type(def.discover) == "number") then
+							if (def.discover == 1 and s1 > s2 and s1 > s3) then
+								belongsTo = i
+								break
+							elseif (def.discover == 2 and s2 > s1 and s2 > s3) then
+								belongsTo = i
+								break
+							elseif (def.discover == 3 and s3 > s1 and s3 > s2) then
+								belongsTo = i
+								break
+							end
+						else
+							if (def.discover(unit, s1, s2, s3)) then
+								belongsTo = i
+								break
+							end
 						end
 					end
 					if (belongsTo) then
@@ -1086,6 +1085,17 @@ function man:SplitAutoAssign()
 			end
 		end
 	end
+end
+
+-- SplitAutoAssign
+function man:SplitAutoAssign()
+	local f = self.splitframe
+	if (not f or not f:IsOpen()) then
+		return
+	end
+
+	self:SplitAutoAssignClass(f.class)
+	self:SplitPopulate()
 end
 
 -- SplitDrawTalentDescriptors
@@ -2748,19 +2758,58 @@ function man:GiveAllTemplates()
 	end
 end
 
--- MakeButton
-function man:MakeButton(parent, text, tooltip, func)
-	local b = CreateFrame("Button", nil, parent, "OptionsButtonTemplate")
-	b:GetRegions():SetAllPoints(b)			-- Makes the text part (first region) fit all over button, instead of just centered and fuxed when scaled
-	b.func = func
-	b:SetScript("OnClick", onButtonClick)
-	b:SetScript("OnEnter", onButtonEnter)
-	b:SetScript("OnLeave", onButtonLeave)
-	b:SetText(text)
-	b.tooltipText = tooltip
-	b:SetWidth(max(80, b:GetRegions():GetStringWidth() + 25))
-	--b:SetFrameLevel(main:GetFrameLevel() + 1)
-	return b
+do
+	local function onButtonClick(self)
+		self.func(man)
+	end
+	local function onButtonEnter(self)
+		if (self.tooltipText) then
+			GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+			GameTooltip:SetText(self:GetText(), 1, 1, 1)
+			GameTooltip:AddLine(self.tooltipText, nil, nil, nil, 1)
+			GameTooltip:Show()
+		end
+	end
+	local function onButtonLeave(self)
+		GameTooltip:Hide()
+	end
+
+	-- MakeButton
+	function man:MakeButton(parent, text, tooltip, func)
+		local b = CreateFrame("Button", nil, parent, "OptionsButtonTemplate")
+		b:GetRegions():SetAllPoints(b)			-- Makes the text part (first region) fit all over button, instead of just centered and fuxed when scaled
+		b.func = func
+		b:SetScript("OnClick", onButtonClick)
+		b:SetScript("OnEnter", onButtonEnter)
+		b:SetScript("OnLeave", onButtonLeave)
+		b:SetText(text)
+		b.tooltipText = tooltip
+		b:SetWidth(max(80, b:GetRegions():GetStringWidth() + 25))
+		return b
+	end
+end
+
+-- TalentsMissingFromSelectedGroups
+function man:TalentsMissingFromSelectedGroups()
+	local names = LGT:GetTalentMissingNames()
+	if (names) then
+		local temp = new(strsplit(",", names))
+		local list = new()
+		for i,name in pairs(temp) do
+			list[name] = true
+		end
+		del(temp)
+
+		for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
+			if (subgroup > self.db.profile.groups) then
+				list[unitname] = nil
+			end
+		end
+
+		local ret = next(list) ~= nil
+		del(list)
+		return ret
+	end
 end
 
 -- CreateMainMainFrame
@@ -2807,6 +2856,10 @@ function man:CreateMainMainFrame()
 	main.generate	= AddButton(L["Generate"],	L["Generate automatic templates from manager's main template. This will broadcast new templates to all paladins, so only use at start of raid to set initial configuration. Changes made later by individual paladins will be reflected in the blessings grid."], man.Generate)
 	main.broadcast	= AddButton(L["Broadcast"],	L["Broadcast these templates to all paladins (Simply a refresh)"], man.BroadcastTemplates)
 	main.groups		= AddButton("8 Groups",		L["Change how many groups are included in template generation and Paladin inclusion"], man.GroupsMenu)
+	main.autoroles	= AddButton(L["Auto Roles"],L["Automatically assign all player roles"], man.SplitAutoRoles)
+	if (self:TalentsMissingFromSelectedGroups()) then
+		main.autoroles:Disable()
+	end
 
 	main.classTitle = CreateFrame("Frame", "ZOMGBMClassTitle", main)
 	main.classTitle.cell = {}
@@ -3470,6 +3523,12 @@ function man:LibGroupTalents_Update(e, guid, unit, newSpec, n1, n2, n3, oldSpec,
 		self:ReadPaladinSpec(pala, name)
 		self:DrawPaladinByName(name)
 	end
+
+	if (self.frame and self.frame.autoroles) then
+		if (not self:TalentsMissingFromSelectedGroups()) then
+			self.frame.autoroles:Enable()
+		end
+	end
 end
 
 -- DrawPaladinByName
@@ -3503,6 +3562,7 @@ function man:SetButtons()
 		self.frame.broadcast:Hide()
 		self.frame.generate:Hide()
 		self.frame.groups:Hide()
+		self.frame.autoroles:Hide()
 	else
 		self.frame.configure:SetText(L["Configure"])
 		self.frame.configure.tooltipText = L["Configure the automatic template generation"]
@@ -3510,9 +3570,11 @@ function man:SetButtons()
 		if (self.canEdit) then
 			self.frame.broadcast:Show()
 			self.frame.generate:Show()
+			self.frame.autoroles:Show()
 		else
 			self.frame.broadcast:Hide()
 			self.frame.generate:Hide()
+			self.frame.autoroles:Hide()
 		end
 		self.frame.groups:Show()
 	end
@@ -4703,6 +4765,14 @@ function man:OnRaidRosterUpdate()
 		end
 	elseif (anyCameOnline) then
 		self:ScheduleEvent("ZOMGBlessings_AssignPaladins", self.AssignPaladins, 5, self)
+	end
+
+	if (self.frame) then
+		if (self:TalentsMissingFromSelectedGroups()) then
+			self.frame.autoroles:Disable()
+		else
+			self.frame.autoroles:Enable()
+		end
 	end
 
 	self:DrawClassCounts()

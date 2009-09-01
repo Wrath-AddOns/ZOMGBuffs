@@ -1848,6 +1848,12 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 			if (r) then
 				local reagent
 				if (type(r) == "table") then
+					if (type(rank) == "string") then
+						rank = strmatch(rank, "(%d+)")
+						if (rank) then
+							rank = rank + 0
+						end
+					end
 					if (r[rank]) then
 						reagent = r[rank]
 					else
@@ -1858,15 +1864,19 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 				end
 
 				local count = GetItemCount(reagent)
-				local colourCount
-				if (count < 5) then
-					colourCount = "|cFFFF4040"
-				elseif (count < 10) then
-					colourCount = "|cFFFFFF40"
+				if (count > 0) then
+					local colourCount
+					if (count < 5) then
+						colourCount = "|cFFFF4040"
+					elseif (count < 10) then
+						colourCount = "|cFFFFFF40"
+					else
+						colourCount = "|cFF40FF40"
+					end
+					reagentString = format(" (%s%d|r)", colourCount, count - 1)
 				else
-					colourCount = "|cFF40FF40"
+					reagentString = ""
 				end
-				reagentString = format(" (%s%d|r)", colourCount, count - 1)
 			else
 				reagentString = ""
 			end

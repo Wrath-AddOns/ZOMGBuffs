@@ -1591,7 +1591,7 @@ function zb:OnModuleInitialize()
 	-- GIVETEMPLATE - Comes from Blessing Manager generated and broadcasted templates
 	z.OnCommReceive.GIVETEMPLATE = function(self, prefix, sender, channel, newTemplate, quiet, playerRequested, retry)
 		if (zb:IsAllowedToChangeMe(sender)) then
-			if (not newTemplate or not next(newTemplate)) then
+			if (not newTemplate) then
 				if (sender ~= UNKNOWN and UnitExists(sender) and UnitIsConnected(sender)) then
 					z:SendCommMessage("WHISPER", sender, "NACK", not retry)
 				end
