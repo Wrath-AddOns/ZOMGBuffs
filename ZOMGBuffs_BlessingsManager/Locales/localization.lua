@@ -120,6 +120,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Use Guild Roster"]						= true,
 	["Ranks"]									= true,
 	["Select the guild ranks to include"]		= true,
+	["Auto Roles"]								= true,
+	["Automatically assign all player roles"]	= true,
 
 	-- Chat responder blessings recognition:
 	-- If not appropriate to translate into more than one thing, just make them all the same
