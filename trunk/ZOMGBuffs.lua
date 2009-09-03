@@ -464,7 +464,7 @@ z.options = {
 					name = L["Auto Buy Reagents"],
 					desc = L["Automatically purchase required reagents from Reagents Vendor"],
 					get = getPCOption,
-					set = function(v,n) setPCOption(v,n) z:SetupAutoBuy() end,
+					set = function(v,n) setPCOption(v,n) --[[ z:SetupAutoBuy() ]] end,
 					hidden = hideReagentOpts,
 					passValue = "autobuyreagents",
 					order = 1,
@@ -2299,7 +2299,11 @@ end
 -- GlobalCDSchedule
 function z:GlobalCDSchedule()
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
-	self:ScheduleEvent("ZOMGBuffs_GlobalCooldownEnd", self.GlobalCooldownEnd, self.globalCooldownEnd - GetTime() + 0.1, self)
+	local when = self.globalCooldownEnd - GetTime() + 0.1
+	if (when <= 0) then
+		when = 0.1
+	end
+	self:ScheduleEvent("ZOMGBuffs_GlobalCooldownEnd", self.GlobalCooldownEnd, when, self)
 end
 
 local HasIllusionBuff
@@ -2361,7 +2365,11 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	local icon, icontex
 	local p = self.db.profile
 
-	if (self.rosterInvalid and not soloBuffs) then
+	if (self.atVendor) then
+		return false, L["Selling"]
+	elseif (self.atTrainer) then
+		return false, L["Training"]
+	elseif (self.rosterInvalid and not soloBuffs) then
 		return false, "Waiting for RosterLib update"
 	elseif (self.zoneFlag and self.zoneFlag < GetTime() - 5) then
 		lastCheckFail = L["ZONED"]
@@ -4547,6 +4555,7 @@ end
 
 -- PLAYER_LEAVING_WORLD
 function z:PLAYER_LEAVING_WORLD()
+self:Print("PLAYER_LEAVING_WORLD")
 	self.zoneFlag = GetTime()
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
@@ -4555,6 +4564,7 @@ end
 
 -- PLAYER_ENTERING_WORLD
 function z:PLAYER_ENTERING_WORLD()
+self:Print("PLAYER_ENTERING_WORLD")
 	if (self.minimapFrame) then
 		self.minimapFrame:Hide()
 	end
@@ -4562,6 +4572,7 @@ function z:PLAYER_ENTERING_WORLD()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
 	self:DrawAllCells()
+self:Print("PLAYER_ENTERING_WORLD (after DrawAllCells)")
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
 	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
@@ -4622,6 +4633,7 @@ function z:OnClick()
 		if (self.db.profile.enabled) then
 			self:RequestSpells()
 		else
+			self.atTrainer, self.atVendor = nil
 			self:SetupForSpell()
 			self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
 		end
@@ -4683,7 +4695,7 @@ function z:OnTextUpdate()
 end
 
 -- SetupAutoBuy
-function z:SetupAutoBuy()
+--[[ function z:SetupAutoBuy()
 	if (self.db.char.autobuyreagents) then
 		self:RegisterEvent("MERCHANT_SHOW")
 	else
@@ -4691,7 +4703,7 @@ function z:SetupAutoBuy()
 			self:UnregisterEvent("MERCHANT_SHOW")
 		end
 	end
-end
+end ]]
 
 -- GetMerchantBuyItemList
 function z:GetMerchantBuyItemList()
@@ -4718,6 +4730,8 @@ end
 
 -- MERCHANT_SHOW
 function z:MERCHANT_SHOW()
+	self:SetupForSpell()
+	self.atVendor = true
 	if (not self.db.char.autobuyreagents) then
 		return
 	end
@@ -4771,6 +4785,24 @@ function z:MERCHANT_SHOW()
 	end
 
 	del(list)
+end
+
+-- MERCHANT_CLOSED
+function z:MERCHANT_CLOSED()
+	self.atVendor = nil
+	self:RequestSpells()
+end
+
+-- TRAINER_SHOW
+function z:TRAINER_SHOW()
+	self:SetupForSpell()
+	self.atTrainer = true
+end
+
+-- TRAINER_CLOSED
+function z:TRAINER_CLOSED()
+	self.atTrainer = nil
+	self:RequestSpells()
 end
 
 -- UNIT_MANA
@@ -5672,6 +5704,10 @@ function z:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_STOP")
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("UNIT_PET")
+	self:RegisterEvent("MERCHANT_SHOW")
+	self:RegisterEvent("MERCHANT_CLOSED")
+	self:RegisterEvent("TRAINER_SHOW")
+	self:RegisterEvent("TRAINER_CLOSED")
 
 	self:RegisterEvent("PLAYER_CONTROL_LOST")
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
@@ -5692,7 +5728,7 @@ function z:OnEnable()
 	self.chatAnswer = L["CHATANSWER"]
 
 	self:HookChat()
-	self:SetupAutoBuy()
+	--self:SetupAutoBuy()
 
 	self.icon:Show()
 
@@ -5708,6 +5744,7 @@ function z:OnDisable()
 		z.options.args.click.args = nil
 		z.options.args.click = nil
 	end
+	self.atTrainer, self.atVendor = nil
 	self.oldPots = del(self.oldPots)
 	self:SetupForSpell()
 	self.enabled = nil

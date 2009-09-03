@@ -118,6 +118,8 @@ L:RegisterTranslations("enUS", function() return {
 	-- Suspsended reasons for floating icon
 	["Suspended"]			= true,
 	["Not Refreshing because %s"] = true,
+	["Selling"]				= true,
+	["Training"]			= true,
 	["ZONED"]				= "you have recently zoned, please wait a few seconds",
 	["DEAD"]				= "you are dead",
 	["ERRORICON"]			= "ERROR: Missing self.icon",
