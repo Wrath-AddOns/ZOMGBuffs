@@ -4555,7 +4555,7 @@ end
 
 -- PLAYER_LEAVING_WORLD
 function z:PLAYER_LEAVING_WORLD()
-self:Print("PLAYER_LEAVING_WORLD")
+--self:Print("PLAYER_LEAVING_WORLD")
 	self.zoneFlag = GetTime()
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
@@ -4564,7 +4564,7 @@ end
 
 -- PLAYER_ENTERING_WORLD
 function z:PLAYER_ENTERING_WORLD()
-self:Print("PLAYER_ENTERING_WORLD")
+--self:Print("PLAYER_ENTERING_WORLD")
 	if (self.minimapFrame) then
 		self.minimapFrame:Hide()
 	end
@@ -4572,7 +4572,7 @@ self:Print("PLAYER_ENTERING_WORLD")
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
 	self:DrawAllCells()
-self:Print("PLAYER_ENTERING_WORLD (after DrawAllCells)")
+--self:Print("PLAYER_ENTERING_WORLD (after DrawAllCells)")
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
 	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
