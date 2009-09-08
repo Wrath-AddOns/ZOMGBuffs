@@ -2968,7 +2968,7 @@ function man:CreateMainFrame()
 		cell:SetHeight(36)
 		cell.name = cell:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 		cell.name:SetAllPoints()
-		local c = RAID_CLASS_COLORS.PALADIN
+		local c = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS).PALADIN
 		cell.name:SetTextColor(c.r, c.g, c.b)
 
 		cell.spec = cell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -3324,12 +3324,12 @@ function man:DrawIconsByName(who)
 	if (self.frame) then
 		local pala = self.pala[who]
 		if (not pala) then
-			error("Missing self.pala for "..tostring(who))
+			return
 		end
 
 		local row = self.frame.row[pala.row]
 		if (not row) then
-			error("Missing row for "..tostring(who))
+			return
 		end
 
 		self:DrawIcons(row)
@@ -3441,7 +3441,7 @@ function man:DrawPaladin(row)
 		end
 
 		if (UnitIsConnected(who)) then
-			local c = RAID_CLASS_COLORS.PALADIN
+			local c = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS).PALADIN
 			row.title.name:SetTextColor(c.r, c.g, c.b)
 			row.title.spec:SetTextColor(0, 1, 0)
 		else

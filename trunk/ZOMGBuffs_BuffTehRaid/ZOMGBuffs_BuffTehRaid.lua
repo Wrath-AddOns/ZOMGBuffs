@@ -854,7 +854,7 @@ function zg:GetActionInsert(buff, index)
 	if (altbuff and IsUsableSpell(altbuff)) then
 		spellname = altbuff
 	end
-	tinsert(self.actions, {name = spellname, type = buff.keycode})
+	tinsert(self.actions, {name = spellname, type = buff.keycode .. (index and index > 1 and index or "")})
 end
 
 -- GetActions
