@@ -2371,8 +2371,8 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 		return false, L["Training"]
 	elseif (self.rosterInvalid and not soloBuffs) then
 		return false, "Waiting for RosterLib update"
-	elseif (self.zoneFlag and self.zoneFlag < GetTime() - 5) then
-		lastCheckFail = L["ZONED"]
+	elseif (self.zoneFlag and self.zoneFlag > GetTime() - 5) then
+		return false, L["ZONED"]
 	elseif (UnitIsDeadOrGhost("player")) then
 		lastCheckFail = L["DEAD"]
 		icon = "skull"
@@ -3071,7 +3071,7 @@ end
 
 local defaultColour = {r = 0.5, g = 0.5, b = 1}
 function z:GetClassColour(class)
-	return (class and RAID_CLASS_COLORS[class]) or defaultColour
+	return (class and (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]) or defaultColour
 end
 
 -- MakePalaIcon
@@ -4516,7 +4516,8 @@ end
 -- PLAYER_CONTROL_GAINED
 function z:PLAYER_CONTROL_GAINED()
 	self.lostControl = nil
-	self:RequestSpells()
+	self.globalCooldownEnd = 1.5
+	self:GlobalCDSchedule()
 end
 
 -- UNIT_SPELLCAST_CHANNEL_START
@@ -4555,7 +4556,6 @@ end
 
 -- PLAYER_LEAVING_WORLD
 function z:PLAYER_LEAVING_WORLD()
---self:Print("PLAYER_LEAVING_WORLD")
 	self.zoneFlag = GetTime()
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
@@ -4564,7 +4564,6 @@ end
 
 -- PLAYER_ENTERING_WORLD
 function z:PLAYER_ENTERING_WORLD()
---self:Print("PLAYER_ENTERING_WORLD")
 	if (self.minimapFrame) then
 		self.minimapFrame:Hide()
 	end
@@ -4572,7 +4571,6 @@ function z:PLAYER_ENTERING_WORLD()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
 	self:DrawAllCells()
---self:Print("PLAYER_ENTERING_WORLD (after DrawAllCells)")
 	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
 	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
 	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
@@ -5697,6 +5695,7 @@ function z:OnEnable()
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 	self:RegisterEvent("PLAYER_UPDATE_RESTING")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("PLAYER_LEAVING_WORLD")
 	self:RegisterEvent("UNIT_SPELLCAST_SENT")
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:RegisterEvent("UNIT_SPELLCAST_FAILED")

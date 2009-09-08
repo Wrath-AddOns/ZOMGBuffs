@@ -22,11 +22,51 @@ ZOMGSelfBuffs = zs
 
 z:CheckVersion("$Revision$")
 
-local mismatchList		-- Rogue poisons that don't match their spell names
-if (GetLocale() == "enUS") then
-	mismatchList = {["Mind Numbing Poison"] = GetSpellInfo(5761)}		-- Mind-numbing Poison
-elseif (GetLocale() == "deDE") then
-	mismatchList = {["Verkrüppelungsgift"] = "Verkrüppelndes Gift"}		-- Crippling Poison
+local enchantMatching		-- Table of spellName -> enchantName conversions
+do
+	if (GetLocale() == "enUS") then
+		enchantMatching = {
+			[GetSpellInfo(5761)] = "Mind Numbing Poison",			-- Mind-numbing Poison
+			[GetSpellInfo(8232)] = "^Windfury (%d+)$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Flametongue (%d+)$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Earthliving (%d+)$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Frostbrand (%d+)$",			-- Frostbrand Weapon
+		}
+
+	elseif (GetLocale() == "deDE") then
+		enchantMatching = {
+			[GetSpellInfo(5761)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
+			[GetSpellInfo(8232)] = "^Windzorn (%d+)$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Flammenzunge (%d+)$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Lebensgeister (%d+)$",		-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Frostbrand (%d+)$",			-- Frostbrand Weapon
+		}
+
+	elseif (GetLocale() == "esES") then
+		enchantMatching = {
+			[GetSpellInfo(8232)] = "^Viento Furioso (%d+)$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Lengua de Fuego (%d+)$",		-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Vida terrestre (%d+)$",		-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Estigma de Escarcha (%d+)$",	-- Frostbrand Weapon
+		}
+
+	elseif (GetLocale() == "frFR") then
+		enchantMatching = {
+			[GetSpellInfo(5761)] = "Poison de Distraction mentale",	-- Poison de distraction mentale (Mind-numbing Poison)
+			[GetSpellInfo(8232)] = "^Furie-des-vents (%d+)$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Langue de feu (%d+)$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Viveterre (%d+)$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Arme de givre (%d+)$",			-- Frostbrand Weapon
+		}
+		
+	elseif (GetLocale() == "ruRU") then
+		enchantMatching = {
+			[GetSpellInfo(8232)] = "^Неистовство ветра (%d+)$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Язык пламени (%d+)$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Жизнь Земли (%d+)$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Ледяное клеймо (%d+)$",		-- Frostbrand Weapon
+		}
+	end
 end
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
@@ -267,12 +307,12 @@ do
 				tempTip:Hide()
 
 				if (spellFind and timeLeft) then
-					if (mismatchList) then
-						for k,v in pairs(mismatchList) do
-							spellFind = gsub(spellFind, k, v)
-							break
-						end
-					end
+					--if (mismatchList) then
+					--	for k,v in pairs(mismatchList) do
+					--		spellFind = gsub(spellFind, k, v)
+					--		break
+					--	end
+					--end
 
 					return spellFind, Expiration / 1000 / 60
 				end
@@ -285,7 +325,7 @@ end
 -- CheckEnchant
 function zs:CheckEnchant(slot, spellOrItem)
 	if (spellOrItem) then
-		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 1.5)) then
+		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 2.5)) then
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
 				local itemName, _, _, itemLevel = GetItemInfo(itemLink)
@@ -293,16 +333,39 @@ function zs:CheckEnchant(slot, spellOrItem)
 					-- Ignore itemLevel == 1 (Argent Lances etc)
 					return
 				end
+				local name, tex, _, _, _, itemType, subType = GetItemInfo(itemLink)
+				if (name) then
+					if (subType == "Fishing Poles") then
+						return
+					end
+				end
 			end
 
 			local hasEnchant, Expiration, Charges = select(1 + (3 * (slot - 16)), GetWeaponEnchantInfo())
 			if (hasEnchant) then
-				if (playerClass ~= "SHAMAN") then		-- Shaman weapon enchants do not match spell names, so we won't check them
+				local lookFor = enchantMatching[spellOrItem]
+
+				if (lookFor or playerClass ~= "SHAMAN") then		-- Shaman weapon enchants do not match spell names, so we won't check them
 					local enc, timeLeft = self:GetCurrentItemEnchant(slot)
 					if (enc) then
-						local temp = spellOrItem:gsub("%-", "%%-")
-						if (not strfind(enc, temp)) then
+						local temp = (lookFor or spellOrItem):gsub("%-", "%%-")
+						local found, pos, rank = strfind(enc, temp)
+						if (not found) then
 							hasEnchant = nil
+						elseif (rank) then
+							local foundRank = tonumber(rank)
+							if (foundRank) then
+								local name2, rank2 = GetSpellInfo(spellOrItem)
+								if (name2 and rank2) then
+									rank2 = tonumber(strmatch(rank2, "(%d+)"))
+									if (rank2) then
+										if (foundRank ~= rank2) then
+											-- Available enchant is a higher rank than one on weapon
+											hasEnchant = nil
+										end
+									end
+								end
+							end
 						end
 					end
 				end
