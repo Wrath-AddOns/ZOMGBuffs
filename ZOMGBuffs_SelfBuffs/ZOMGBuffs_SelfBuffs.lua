@@ -328,8 +328,8 @@ function zs:CheckEnchant(slot, spellOrItem)
 		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 2.5)) then
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
-				local itemName, _, _, itemLevel = GetItemInfo(itemLink)
-				if (itemLevel == 1) then
+				local itemName, _, quality, itemLevel = GetItemInfo(itemLink)
+				if (itemLevel == 1 and quality < 2) then
 					-- Ignore itemLevel == 1 (Argent Lances etc)
 					return
 				end
@@ -1242,27 +1242,7 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 
 	if (manual) then
 		if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
-			-- local ours
-			-- -- Manual cast buffs will override the current template and mark it as modified.
-			-- local buff = self.classBuffs[spell]
-			-- if (buff) then
-			-- 	if (buff.who == "self") then
-			-- 		-- Manual buff override
-			-- 		if (buff.dup) then
-			-- 			for k,v in pairs(self.classBuffs) do
-			-- 				if (v.dup == buff.dup) then
-			-- 					self:ModifyTemplate(k, nil)
-			-- 				end
-			-- 			end
-			-- 		end
-			-- 		ours = true
-			-- 	end
-			-- end
-            -- 
-			-- if (ours) then
-			-- z:CheckForChange(self)
-				self:ModifyTemplate(spell, true)
-			-- end
+			self:ModifyTemplate(spell, true)
 		end
 	end
 
