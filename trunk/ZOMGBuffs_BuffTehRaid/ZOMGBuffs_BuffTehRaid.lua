@@ -312,10 +312,7 @@ function zg:OnModifyTemplate(key, value)
 	if (buff) then
 		if (buff.limited) then
 			if (value) then
-				if (buff.onEnable) then
-					buff.onEnable()
-				end
-
+				local enDone
 				self:RegisterTickColumn(key)
 
 				if (not template.limited or not template.limited[key]) then
@@ -343,9 +340,17 @@ function zg:OnModifyTemplate(key, value)
 						if (name) then
 							if (UnitInParty(name) or UnitInRaid(name)) then
 								self:AddSpellTracker(key, name)
+								if (buff.onEnable) then
+									buff.onEnable(name)
+									enDone = true
+								end
 							end
 						end
 					end
+				end
+
+				if (not enDone and buff.onEnable) then
+					buff.onEnable()
 				end
 			else
 				self:UnregisterTickColumn(key)
@@ -486,10 +491,7 @@ function zg:TickInitForTemplate()
 	for Type,buff in pairs(self.buffs) do
 		if (buff.limited) then
 			if (template[Type]) then
-				if (buff.onEnable) then
-					buff.onEnable()
-				end
-
+				local enDone
 				self:RegisterTickColumn(Type)
 
 				if (buff.exclusive) then
@@ -499,10 +501,18 @@ function zg:TickInitForTemplate()
 							if (not buff.notself or not UnitIsUnit(name, "player")) then
 								if (UnitInParty(name) or UnitInRaid(name)) then
 									self:AddSpellTracker(Type, name)
+									if (buff.onEnable) then
+										buff.onEnable(name)
+										enDone = true
+									end
 								end
 							end
 						end
 					end
+				end
+
+				if (not enDone and buff.onEnable) then
+					buff.onEnable()
 				end
 			else
 				self:UnregisterTickColumn(Type)
@@ -1080,11 +1090,13 @@ function zg:OnModuleInitialize()
 			EARTHSHIELD = {
 				o = 1,
 				ids = {32594},						-- Earth Shield
-				onEnable = function()
-					local zs = ZOMGSelfBuffs
-					if (zs) then
-						zs:ModifyTemplate((GetSpellInfo(41151)), nil)		-- Lightning Shield
-						zs:ModifyTemplate((GetSpellInfo(37432)), nil)		-- Water Shield
+				onEnable = function(unit)
+					if (unit and UnitIsUnit("player", unit)) then
+						local zs = ZOMGSelfBuffs
+						if (zs) then
+							zs:ModifyTemplate((GetSpellInfo(41151)), nil)		-- Lightning Shield
+							zs:ModifyTemplate((GetSpellInfo(37432)), nil)		-- Water Shield
+						end
 					end
 				end,
 				colour = {0.7, 0.7, 0.2},
@@ -2456,6 +2468,9 @@ function zg:AddLimitedSpell(name, key)
 
 	if (buff.exclusive) then
 		self:AddSpellTracker(key, name)
+		if (buff.onEnable) then
+			buff.onEnable(name)
+		end
 	end
 end
 
