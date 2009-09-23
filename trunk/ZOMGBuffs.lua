@@ -3506,7 +3506,7 @@ local function DrawCell(self)
 
 	-- Wierdo check for UnitInParty/Raid here because of a bug with GetPartyAssignment that spams
 	-- system messages during zoning for people that ARE in your party/raid
-	if (z.db.profile.showroles and (UnitInParty(partyid) and UnitInRaid(partyid))) then
+	if (z.db.profile.showroles and not z.zoneFlag) then
 		local icon
 		if (GetPartyAssignment("MAINTANK", partyid)) then
 			icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
@@ -4583,8 +4583,8 @@ end
 -- FinishedZoning
 function z:FinishedZoning()
 	self:OnRaidRosterUpdate()
-	self:DrawAllCells()
 	self.zoneFlag = false
+	self:DrawAllCells()
 	self:RequestSpells()
 end
 
