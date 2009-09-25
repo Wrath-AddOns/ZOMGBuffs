@@ -4816,14 +4816,10 @@ function man:ChatConvertBlessing(code)
 		return "BOW"
 	elseif (code == L["bom"] or code == L["might"]) then
 		return "BOM"
-	elseif (code == L["bos"] or code == L["salv"] or code == L["sal"] or code == L["salvation"]) then
-		return "BOS"
 	elseif (code == L["san"] or code == L["sanc"] or code == L["sanctuary"]) then
 		return "SAN"
 	elseif (code == L["bok"] or code == L["kings"] or code == L["king"]) then
 		return "BOK"
-	elseif (code == L["bol"] or code == L["light"]) then
-		return "BOL"
 	end
 end
 

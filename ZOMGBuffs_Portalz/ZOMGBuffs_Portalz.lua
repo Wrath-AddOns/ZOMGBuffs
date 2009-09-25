@@ -366,6 +366,19 @@ end
 
 end
 
+-- IsItemEquiped
+local function IsItemEquiped(item)
+	for i = 1,18 do
+		local link = GetInventoryItemLink("player", i)
+		if (link) then
+			local id = strmatch(link, "|Hitem:(%d+):")
+			if (tonumber(id) == item) then
+				return true
+			end
+		end
+	end
+end
+
 local cycle = {
 	"SPELLS\\SHOCKWAVE10",
 	"SPELLS\\Shockwave10a",
@@ -433,20 +446,13 @@ function buttonOnUpdate(self, elapsed)
 	buttonOnUpdateHighlight(self.highlight1, elapsed)
 	buttonOnUpdateHighlight(self.highlight2, elapsed)
 	buttonOnUpdateHighlight(self.highlight3, elapsed)
-end
-end
 
--- IsItemEquiped
-local function IsItemEquiped(item)
-	for i = 1,18 do
-		local link = GetInventoryItemLink("player", i)
-		if (link) then
-			local id = strmatch(link, "|Hitem:(%d+):")
-			if (tonumber(id) == item) then
-				return true
-			end
+	if (self.equiped) then
+		if (not self.item or IsItemEquiped(self.item)) then
+			module.frame.warning:SetText("")
 		end
 	end
+end
 end
 
 -- ShowBindLocation
@@ -695,6 +701,7 @@ function module:CreateItemButtons()
 			[48955] = true,				-- Etched Loop of the Kirin Tor
 			[48956] = true,				-- Etched Ring of the Kirin Tor
 			[48957] = true,				-- Etched Signet of the Kirin Tor
+			[46874] = true,				-- Argent Crusader's Tabard
 		}
 
 		for id,equip in pairs(clickItems) do
