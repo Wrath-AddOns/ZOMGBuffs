@@ -35,7 +35,7 @@ do
 
 	elseif (GetLocale() == "deDE") then
 		enchantMatching = {
-			[GetSpellInfo(5761)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
+			[GetSpellInfo(3408)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
 			[GetSpellInfo(8232)] = "^Windzorn (%d+)$",				-- Windfury Weapon
 			[GetSpellInfo(8024)] = "^Flammenzunge (%d+)$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Lebensgeister (%d+)$",		-- Earthliving Weapon

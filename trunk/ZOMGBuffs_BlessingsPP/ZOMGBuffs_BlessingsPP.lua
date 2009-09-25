@@ -312,7 +312,7 @@ end
 local ppRankSearch = RANK.." (%d+)"
 function mod:ScanSpells()
 	if (not self.AllPallys) then
-		return
+		self.AllPallys = {}
 	end
 
 	local _, class = UnitClass("player")
