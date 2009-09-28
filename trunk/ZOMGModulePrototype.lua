@@ -429,6 +429,9 @@ function z.modulePrototype:SetupDB()
 			if (not template) then
 				if (self.db.char.defaultTemplate or self.db.profile.defaultTemplate) then
 					self:SelectTemplate(self.db.char.defaultTemplate or self.db.profile.defaultTemplate)
+					if (not templates.current) then
+						templates.current = {}
+					end
 				else
 					templates.current = {}
 				end
