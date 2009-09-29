@@ -1102,7 +1102,7 @@ function zg:OnModuleInitialize()
 				colour = {0.7, 0.7, 0.2},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,					-- Can only be cast on 1 target
-				stacks = GetEarthShieldStacks,		-- So, we had to hard code this eventually anyway huh..
+				stacks = GetEarthShieldStacks,
 				keycode = "earthshield",
 			},
 			WATERWALK = {
@@ -2120,7 +2120,7 @@ do
 	end
 
 	local function iconSetPosition(self)
-		if (not InCombatLockdown()) then
+		if (not InCombatLockdown() or self.dummy) then
 			self:SetPoint("CENTER")
 			self:SetScale(zg.db.char.trackerscale)
 			if (type(zg.db.char.postracker) == "table") then
@@ -2306,6 +2306,7 @@ function zg:SwitchTrackIconForReal(icon)
 		icon.posindex = nil
 		
 		local newIcon = self:AddSpellTracker(key, target)
+		newIcon.posindex = pos
 		newIcon:SetPosition()
 	end
 end
