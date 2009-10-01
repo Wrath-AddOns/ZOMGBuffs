@@ -313,6 +313,7 @@ local ppRankSearch = RANK.." (%d+)"
 function mod:ScanSpells()
 	if (not self.AllPallys) then
 		self.AllPallys = {}
+		self.player = UnitName("player")
 	end
 
 	local _, class = UnitClass("player")
@@ -549,6 +550,7 @@ end
 function mod:OnModuleEnable()
 	bm = ZOMGBlessingsManager
 
+	self.player = UnitName("player")
 	if (not PallyPower and bm) then
 		self.AllPallys = {}
 		self.player = UnitName("player")
