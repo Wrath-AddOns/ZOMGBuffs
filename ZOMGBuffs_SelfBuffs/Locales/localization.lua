@@ -44,5 +44,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Remember this spell when it's cast manually?"]		= true,
 	["Reagent Reminder"]									= true,
 	["Show message when spells requiring reagents are used"] = true,
+	["Flask of the North"]									= true,
+	["Special handling for Flask of the North"]				= true,
+	["Expiry prelude for flasks"]							= true,
 } end)
 
