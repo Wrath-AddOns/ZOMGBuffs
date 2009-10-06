@@ -5185,15 +5185,19 @@ end
 -- SendComm
 function z:SendComm(fname, ...)
 	if (UnitExists(fname) and UnitIsConnected(fname)) then
-		if (self:IsInBattlegrounds()) then
-			local name, server = UnitName(fname)
-			if (server and server ~= "") then
-				self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
-			else
-				self:SendCommMessage("WHISPER", name, ...)
-			end
+		if (UnitIsUnit("player", fname)) then
+			z.OnCommReceive[...](self, self.commPrefix, fname, "WHISPER", select(2, ...))
 		else
-			self:SendCommMessage("WHISPER", fname, ...)
+			if (self:IsInBattlegrounds()) then
+				local name, server = UnitName(fname)
+				if (server and server ~= "") then
+					self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
+				else
+					self:SendCommMessage("WHISPER", name, ...)
+				end
+			else
+				self:SendCommMessage("WHISPER", fname, ...)
+			end
 		end
 	end
 end
