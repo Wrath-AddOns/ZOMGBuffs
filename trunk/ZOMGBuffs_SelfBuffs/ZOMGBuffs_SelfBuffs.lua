@@ -6,7 +6,7 @@ end
 local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
-local playerClass, playerName
+local playerClass, playerName, playerGUID
 local template
 
 local InCombatLockdown	= InCombatLockdown
@@ -133,7 +133,6 @@ zs.options = {
 					name = L["Expiry Prelude"],
 					desc = L["Default rebuff prelude for all self buffs"],
 					func = timeFunc,
-					order = 2,
 					get = getPrelude,
 					set = setPrelude,
 					passValue = "default",
@@ -166,41 +165,6 @@ zs.options = {
 	}
 }
 zs.moduleOptions = zs.options
-
--- GetMyBuffs
---function zs:GetMyBuffs()
---	local myBuffs
---	for i = 1,40 do
---		local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
---		if (not name) then
---			break
---		end
---		if (endTime) then		-- isMine) then
---			local dur = endTime and (endTime - GetTime())
---			if (not myBuffs) then
---				myBuffs = new()
---			end
---			myBuffs[name] = (max > 0 and dur) or 99999
---		else
---			if (not z.zoneFlag) then	-- We can't warn immediately on zoning because time info often not available immediately
---				local t = self.classBuffs[name]
---				if (t) then
---					if (t.checkdups) then
---						if (template[name]) then
---							-- Another paladin using our defined aura
---							if (not myBuffs) then
---								myBuffs = new()
---							end
---							myBuffs[name] = 99999	-- We won't buff it because we have what we think we want
---						end
---					end
---				end
---			end
---		end
---	end
---
---	return myBuffs
---end
 
 -- GetExistingItemWithSequence
 local function GetExistingItemWithSequence(k, v)
@@ -307,13 +271,6 @@ do
 				tempTip:Hide()
 
 				if (spellFind and timeLeft) then
-					--if (mismatchList) then
-					--	for k,v in pairs(mismatchList) do
-					--		spellFind = gsub(spellFind, k, v)
-					--		break
-					--	end
-					--end
-
 					return spellFind, Expiration / 1000 / 60
 				end
 			end
@@ -486,6 +443,39 @@ function zs:CheckBuffs()
 						if (not minTimeLeft or t < minTimeLeft) then
 							minTimeLeft = t
 						end
+					end
+				end
+			end
+		end
+	end
+
+	if (not any) then
+		local safeFlaskIcon = select(3, GetSpellInfo(67016))			-- Flask of the North icon
+
+		-- Handle Flask of the North
+		local alc = GetSpellInfo(51304)
+		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
+			if (self.db.char.flask) then
+				local skip		-- Skip Flask of the North if any other potions/elixirs/flasks are buffed
+				for i = 1,1000 do
+					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
+					if not name then break end
+					if (strmatch(buff, "Inventory\\Icons\\INV_Potion") or
+						strmatch(buff, "Inventory\\Icons\\INV_Alchemy"))
+						and buff ~= safeFlaskIcon then
+						skip = true
+						break
+					end
+				end
+				if (not skip) then
+					local requiredTimeLeft = self.db.char.rebuff.flask or self.db.char.rebuff.default
+					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", (GetSpellInfo(67016)))
+					if (not name) then
+						self.db.char.activeFlaskOfTheNorth = nil
+					end
+					if (self.db.char.flask ~= self.db.char.activeFlaskOfTheNorth or not name or endTime - GetTime() < requiredTimeLeft) then
+						z:SetupForItem(nil, (GetItemInfo(47499)), self)
+						any = true
 					end
 				end
 			end
@@ -844,9 +834,20 @@ end
 
 -- GetSpellIcon
 function zs:GetSpellIcon(spell)
-	local name, _, icon = GetSpellInfo(self.classBuffs[spell].id)
-	return icon
+	local info = self.classBuffs[spell]
+	if (info) then
+		local name, _, icon = GetSpellInfo(info.id)
+		return icon
+	else
+		local icon = select(10, GetItemInfo(spell))
+		if (icon) then
+			return icon
+		end
+	end
 end
+
+local strClasses = {PALADIN = true, WARRIOR = true, DEATHKNIGHT = true}
+local casterClasses = {MAGE = true, WARLOCK = true, PRIEST = true}
 
 -- MakeSpellOptions
 do
@@ -1025,6 +1026,90 @@ do
 		end
 
 		del(list)
+
+		local alc = GetSpellInfo(51304)
+		if (GetSpellInfo(alc) and GetItemCount(47499, true) > 0) then
+			-- Flask of the North tracking
+			self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+
+			local m = zs.options.args.flaskOfNorth
+			if (not m) then
+				local function getFlask(v)
+					return zs.db.char.flask == v
+				end
+				local function setFlask(v, val)
+					zs.db.char.flask = val and v or nil
+					z:SetupForSpell()
+					zs:CheckBuffs()
+				end
+
+				m = {
+					type = "group",
+					name = L["Flask of the North"],
+					desc = L["Special handling for Flask of the North"],
+					order = 5,
+					hidden = function() return not zs:IsModuleActive() end,
+					args = {
+						ap = {
+							type = "toggle",
+							name = ATTACK_POWER_TOOLTIP,		-- Attack Power
+							desc = ATTACK_POWER_TOOLTIP,
+							order = 10,
+							hidden = function() return casterClasses[playerClass] end,
+							get = getFlask,
+							set = setFlask,
+							passValue = "ap",
+						},
+						str = {
+							type = "toggle",
+							name = SPELL_STAT1_NAME,			-- Strength
+							desc = SPELL_STAT1_NAME,
+							order = 20,
+							hidden = function() return not strClasses[playerClass] end,
+							get = getFlask,
+							set = setFlask,
+							passValue = "str",
+						},
+						spell = {
+							type = "toggle",
+							name = ITEM_MOD_SPELL_POWER_SHORT,	-- Spell Power
+							desc = ITEM_MOD_SPELL_POWER_SHORT,
+							order = 30,
+							hidden = function() return UnitPowerMax("player", 0) == 0 end,
+							get = getFlask,
+							set = setFlask,
+							passValue = "spell",
+						},
+						spacer = {
+							type = 'header',
+							name = " ",
+							order = 50,
+						},
+						rebuff = {
+							type = "range",
+							name = L["Expiry Prelude"],
+							desc = L["Expiry prelude for flasks"],
+							func = timeFunc,
+							order = 60,
+							get = getPrelude,
+							set = setPrelude,
+							passValue = "flask",
+							min = 0,
+							max = 15 * 60,
+							step = 5,
+							bigStep = 60,
+						},
+					}
+				}
+				self.options.args.flaskOfNorth = m
+			end
+		else
+			if (self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
+				self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+			end
+			self.options.args.flaskOfNorth = nil
+			self.db.char.activeFlaskOfTheNorth = nil
+		end
 	end
 end
 
@@ -1225,6 +1310,7 @@ end
 function zs:OnSpellsChanged()
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
+	playerGUID = UnitGUID("player")
 	self:GetClassBuffs()
 end
 
@@ -1300,45 +1386,116 @@ function zs:SetPaladinAuraKey(key)
 	end
 end
 
+do
+	-- Flask of the North tracking
+	local flaskTypes = {
+		[67016] = "spell",
+		[67017] = "ap",
+		[67018] = "str",
+	}
+	local events = {}
+
+	function events:SPELL_AURA_APPLIED(spellId)
+		local t = flaskTypes[spellId]
+		if (t) then
+			self.db.char.activeFlaskOfTheNorth = t
+		end
+	end
+
+	function events:SPELL_AURA_REMOVED(spellId)
+		if (flaskTypes[spellId]) then
+			self.db.char.activeFlaskOfTheNorth = nil
+		end
+	end
+
+	-- COMBAT_LOG_EVENT_UNFILTERED
+	function zs:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, ...)
+		if (sourceGUID == playerGUID) then
+			local f = events[event]
+			if (f) then
+				f(self, ...)
+			end
+		end
+	end
+end
+
 -- TooltipOnClick
 function zs:TooltipOnClick(name)
 	if (name) then
-		if (IsShiftKeyDown()) then
-			self:ModifyTemplate(name, nil)
-		else
-			local b
-			if (name == "mainhand" or name == "offhand") then
-				b = self.classBuffs[template[name]]
+		if (name == "flask") then
+			if (IsShiftKeyDown()) then
+				self.db.char.flask = nil
 			else
-				b = self.classBuffs[name]
-			end
+				local flask = new()
+				local current = 0
+				if (not casterClasses[playerClass]) then
+					tinsert(flask, "ap")
+					if (self.db.char.flask == "ap") then
+						current = #flask
+					end
+				end
+				if (strClasses[playerClass]) then
+					tinsert(flask, "str")
+					if (self.db.char.flask == "str") then
+						current = #flask
+					end
+				elseif (UnitPowerMax("player", 0) > 0) then
+					tinsert(flask, "spell")
+					if (self.db.char.flask == "spell") then
+						current = #flask
+					end
+				end
 
-			local nextOne, firstOne, replaceTo
-			local lowest = 99
-			if (b and b.dup) then
-				for find,s in pairs(self.classBuffs) do
-					if (not s.exclude or s.exclude()) then
-						if (b.dup == s.dup) then
-							if (s.o < lowest) then
-								lowest = s.o
-								firstOne = find
-							end
-							if (s.o == b.o + 1) then
-								replaceTo = find
+				current = current + 1
+				if (current > #flask) then
+					current = 0
+				end
+
+				self.db.char.flask = flask[current]
+
+				z:SetupForSpell()
+				zs:CheckBuffs()
+
+				del(flask)
+			end
+		else
+			if (IsShiftKeyDown()) then
+				self:ModifyTemplate(name, nil)
+			else
+				local b
+				if (name == "mainhand" or name == "offhand") then
+					b = self.classBuffs[template[name]]
+				else
+					b = self.classBuffs[name]
+				end
+
+				local nextOne, firstOne, replaceTo
+				local lowest = 99
+				if (b and b.dup) then
+					for find,s in pairs(self.classBuffs) do
+						if (not s.exclude or s.exclude()) then
+							if (b.dup == s.dup) then
+								if (s.o < lowest) then
+									lowest = s.o
+									firstOne = find
+								end
+								if (s.o == b.o + 1) then
+									replaceTo = find
+								end
 							end
 						end
 					end
 				end
-			end
 
-			if (replaceTo or firstOne) then
-				if (name == "mainhand" or name == "offhand") then
-					self.activeEnchant = nil
-					self:ModifyTemplate(name, replaceTo or firstOne)
-				else
-					if (name ~= (replaceTo or firstOne)) then
-						self:ModifyTemplate(name, nil)
-						self:ModifyTemplate(replaceTo or firstOne, true)
+				if (replaceTo or firstOne) then
+					if (name == "mainhand" or name == "offhand") then
+						self.activeEnchant = nil
+						self:ModifyTemplate(name, replaceTo or firstOne)
+					else
+						if (name ~= (replaceTo or firstOne)) then
+							self:ModifyTemplate(name, nil)
+							self:ModifyTemplate(replaceTo or firstOne, true)
+						end
 					end
 				end
 			end
@@ -1392,6 +1549,12 @@ function zs:SortedBuffList()
 	return list
 end
 
+local flaskTypes = {
+	ap = ATTACK_POWER_TOOLTIP,			-- Attack Power
+	str = SPELL_STAT1_NAME,				-- Strength
+	spell = ITEM_MOD_SPELL_POWER_SHORT,	-- Spell Power
+}
+
 -- TooltipUpdate
 function zs:TooltipUpdate(cat)
 	if (template and self.classBuffs) then
@@ -1427,6 +1590,26 @@ function zs:TooltipUpdate(cat)
 			end
 		end
 		del(list)
+
+		local alc = GetSpellInfo(51304)
+		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
+			cat:AddLine(
+				"text", GetSpellInfo(67016),
+				"textR", 0,
+				"textG", 0.44,
+				"textB", 0.87,
+				"text2", flaskTypes[self.db.char.flask] or NONE,
+				"text2R", 1,
+				"text2G", 1,
+				"text2B", 1,
+				"func", "TooltipOnClick",
+				"arg1", self,
+				"arg2", "flask",
+				"hasCheck", true,
+				"checked", true,
+				"checkIcon", select(3, GetSpellInfo(67016))
+			)
+		end
 	end
 end
 
@@ -1471,6 +1654,7 @@ function zs:OnModuleEnable()
 
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
+	playerGUID = UnitGUID("player")
 
 	if (playerClass == "ROGUE") then
 		self.db.char.reagents.flashpowder = nil
@@ -1487,6 +1671,12 @@ function zs:OnModuleEnable()
 
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	z:CheckForChange(self)
+
+	local alc = GetSpellInfo(51304)
+	if (GetSpellInfo(alc) and GetItemCount(47499, true) > 0) then
+		-- Flask of the North tracking
+		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	end
 end
 
 -- OnModuleDisable
