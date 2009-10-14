@@ -189,8 +189,8 @@ end
 z.blessingColour = {BOK = "|cFFFF80FF", BOM = "|cFFFF5050", BOL = "|cFF80FF80", BOS = "|cFFFFA0A0", BOW = "|cFF8080FF", SAC = "|cFFFF0000", SAN = "|cFF4040C0", BOF = "|cFFFFCC19", BOP = "|cFF00FF00"}
 do
 	local allBuffs = {
-		{opt = "mark",	ids = {26990, 26991},	class = "DRUID",	type = "MARK"},		-- Mark of the Wild, Gift of the Wild
-		{opt = "sta",	ids = {25389, 25392},	class = "PRIEST",	type = "STA"},		-- Power Word: Fortitude, Prayer of Fortitude
+		{opt = "mark",	ids = {26990, 26991},	class = "DRUID",	type = "MARK", runescroll = true},		-- Mark of the Wild, Gift of the Wild
+		{opt = "sta",	ids = {25389, 25392, 69377},	class = "PRIEST",	type = "STA", runescroll = true},	-- Power Word: Fortitude, Prayer of Fortitude, Fortitude
 		{opt = "int",	ids = {27126, 27127},	class = "MAGE",		type = "INT", manaOnly = true},	-- Arcane Intellect, Arcane Brilliance
 		{opt = "spirit",ids = {25312, 32999},	class = "PRIEST",	type = "SPIRIT", manaOnly = true},	-- Divine Spirit, Prayer of Spirit
 		{opt = "shadow",ids = {25433, 39374},	class = "PRIEST",	type = "SPIRIT"},	-- Shadow Protection, Prayer of Shadow Protection
@@ -892,15 +892,6 @@ z.options = {
 							passValue = "classIcon",
 							order = 5,
 						},
-						--border = {
-						--	type = 'toggle',
-						--	name = L["Border"],
-						--	desc = L["Enable border on the icon"],
-						--	get = getPCOption,
-						--	set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
-						--	passValue = "iconborder",
-						--	order = 6,
-						--},
 						name = {
 							type = 'toggle',
 							name = L["Name"],
@@ -1068,6 +1059,20 @@ z.options = {
 									set = setTrackOption,
 									passValue = "flask",
 									order = 8,
+								},
+								spacer = {
+									type = 'header',
+									name = " ",
+									order = 10,
+								},
+								runescroll = {
+									type = 'toggle',
+									name = L["RuneScroll/Drums"],
+									desc = L["Always show Stamina and Mark of the Wild Columns"],
+									get = getOption,
+									set = function(p,v) z.db.profile[p] = v z:SetBuffsList() z:OptionsShowList() end,
+									passValue = "runescroll",
+									order = 20,
 								},
 							},
 						},
@@ -3232,7 +3237,7 @@ local function DrawCell(self)
 	for j,icon in ipairs(self.buff) do
 		icon.spellName = nil
 		local b = z.buffs[j]
-		if (not b or (b.class and z.classcount[b.class] == 0)) then
+		if (not b or ((b.class and z.classcount[b.class] == 0) and (not b.runescroll or not z.db.profile.runescroll))) then
 			icon:SetTexture(nil)
 		else
 			if (UnitIsDeadOrGhost(partyid) or not UnitIsConnected(partyid)) then
@@ -3292,7 +3297,7 @@ local function DrawCell(self)
 
 			for j,icon in pairs(self.buff) do
 				local buff = z.buffs[j]
-				if (buff and (not buff.class or z.classcount[buff.class] > 0)) then
+				if (buff and ((not buff.class or z.classcount[buff.class] > 0) or (buff.runescroll and z.db.profile.runescroll))) then
 					if (not buff.manaOnly or z.manaClasses[class]) then
 						if (buff.list and buff.list[name]) then
 							icon:Show()
@@ -3892,7 +3897,17 @@ do
 	-- ShowBuffBar
 	function z:ShowBuffBar(cell, spellName, tex)
 		if (z.overrideBuffBar) then
-			if (z.overrideBuffBar == "buff") then
+			if (z.overrideBuffBar == "tick") then
+				local btr = ZOMGBuffTehRaid
+				if (btr) then
+					local found = btr.lookup[spellName]
+					local key = btr.tickColumns[z.overrideBuffBarIndex]
+					if (found and found.type == key) then
+						return true
+					end
+				end
+
+			elseif (z.overrideBuffBar == "buff") then
 				local buff = z.buffs[z.overrideBuffBarIndex]
 				if (buff) then
 					if (buff.type == "FLASK") then
@@ -5262,7 +5277,7 @@ function z:SetBuffsList()
 	del(self.buffs)
 	self.buffs = new()
 	for k,v in pairs(self.allBuffs) do
-		if (self.db.profile.track[v.opt] and (not v.class or self.classcount[v.class] > 0)) then
+		if (self.db.profile.track[v.opt] and (not v.class or self.classcount[v.class] > 0 or (v.runescroll and self.db.profile.runescroll))) then
 			tinsert(self.buffs, v)
 		end
 	end

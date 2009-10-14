@@ -1,6 +1,8 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
 
-L:RegisterTranslations("frFR", function() return {
+L:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["TITLE"]				= "ZOMGBuffs",
 	["TITLECOLOUR"]			= "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFEFFFFFFBuffs|r",
 	["HINT"]				= "|cffeda55fClic|r pour activer/désactiver l'auto-incantation, |cffeda55fClic-droit|r pour les options, |cffeda55fClic|r sur un buff pour modifier, |cffeda55fMaj-Clic|r sur un buff pour le supprimer du modèle self-buffs",
@@ -222,4 +224,7 @@ L:RegisterTranslations("frFR", function() return {
 	["CHATMATCH3"]			= "!buffs",
 	["CHATANSWER"]			= "<ZOMG>",
 	["PERSONDIES"]			= "^([^%s]+) est mort%.$",
-} end)
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="", handle-unlocalized="ignore")@
+end)

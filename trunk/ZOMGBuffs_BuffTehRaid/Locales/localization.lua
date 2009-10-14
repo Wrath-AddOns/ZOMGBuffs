@@ -52,6 +52,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Spell Tracker"]								= true,
 	["MISSING!"]									= true,
 	["%s has expired on %s"]						= true,
+	["%s cooldown ready for %s"]					= true,
 	["WARNING: The intended target for this icon has changed since you entered combat. (Was %s)"] = true,
 	["Sound"]										= true,
 	["Select a soundfile to play when player's tracked buff expires"] = true,
@@ -59,7 +60,9 @@ L:RegisterTranslations("enUS", function() return {
 	["Learnable"]									= true,
 	["Remember this spell when it's cast manually?"] = true,
 	["Key-Binding"]									= true,
-	["Define the key used for auto buffing from Spell Tracker (FIRST icon only)"] = true,
+	["Define the key used for rebuffing %s from it's Spell Tracker icon"] = true,
+	["No Auto-cast"]								= true,
+	["Disables auto-casting for %s in favor of rebuffing via tracker icons or their hotkeys"] = true,
 
 	["TICKCLICKHELP1"]								= "|cFFFFFFFFClick|r to toggle player",
 	["TICKCLICKHELP2"]								= "|cFFFFFFFFRight-Click|r to toggle everyone",

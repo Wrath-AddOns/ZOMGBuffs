@@ -1,6 +1,8 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBuffTehRaid")
 
-L:RegisterTranslations("frFR", function() return {
+L:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["Group Buff Configuration"]					= "Configuration des buffs de groupe",
 	["Anchor"]										= "Ancrage",
 	["Invert"]										= "Inversion",
@@ -35,4 +37,7 @@ L:RegisterTranslations("frFR", function() return {
 	["You are now responsible for Groups %s"]		= "Vous êtes maintenant responsable des buffs du groupe %s",
 	[" and "]										= " et ",
 	["Warning: %s has auto-assigned themselves to buff groups %s, but you have the Auto Group Assignment option disabled"] = "Attention : %s ont été auto-assigné pour buffer les groupes %s, cependant vous n'avez pas activez l'option d'auto-assignement",
-} end)
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGBuffTehRaid", handle-unlocalized="ignore")@
+end)

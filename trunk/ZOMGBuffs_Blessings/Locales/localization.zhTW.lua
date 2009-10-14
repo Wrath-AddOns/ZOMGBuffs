@@ -1,6 +1,8 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 
-L:RegisterTranslations("zhTW", function() return {
+L:RegisterTranslations("zhTW", function() return
+--@debug@
+{
 	["DPS"]												= "DPS",
 	["5-Man"]											= "5人",
 	["Kings"]											= "Kings",
@@ -60,4 +62,7 @@ L:RegisterTranslations("zhTW", function() return {
 	["You can no longer do certain buffs as defined in your template, these have been replaced."] = "在你的範本裏有些Buff不能再用了，它們已經被替換掉了。",
 	["Replaced %s with %s"]								= "將%s替換為%s",
 	["Removed %s"]										= "已刪除%s",
-} end)
+}
+--@end-debug@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGBlessings", handle-unlocalized="ignore")@
+end)

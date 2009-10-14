@@ -1,6 +1,8 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsManager")
 
-L:RegisterTranslations("frFR", function() return {
+L:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["TITLE"] =  "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFF Gestionnaire de bénédiction|r",
 	["TITLE_CONFIGURE"] = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFF Gestionnaire de bénédiction |cFF808080(configuration)|r",
 	["SPLITTITLE"] = "Sous-classes",
@@ -103,4 +105,7 @@ L:RegisterTranslations("frFR", function() return {
 		"This will assign paladins present with blessings based on the configured global template, taking into account talents so that paladins with Improved Blessing of Might, for example, will be favored to buff this blessing.\r\r"..
 		"|cFFFFFFFFBroadcast Button|r\r"..
 		"This will simply re-broadcast the current blessing layout, should anyone need this after a WoW crash for example.\r\r",
-} end)
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGBlessingsManager", handle-unlocalized="ignore")@
+end)

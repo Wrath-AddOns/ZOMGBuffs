@@ -5,5 +5,5 @@ L:RegisterTranslations("esMX", function() return
 {
 }
 --@end-debug@
---@localization(locale="esMX", format="lua_table", namespace="ZOMGLog")@
+--@localization(locale="esMX", format="lua_table", namespace="ZOMGLog", handle-unlocalized="ignore")@
 end)

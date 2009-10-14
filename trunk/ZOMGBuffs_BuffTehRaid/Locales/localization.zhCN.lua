@@ -1,6 +1,8 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGBuffTehRaid")
 
-L:RegisterTranslations("zhCN", function() return {
+L:RegisterTranslations("zhCN", function() return
+--@debug@
+{
 	["Group Buff Configuration"]					= "队伍Buff配置",
 	["Anchor"]										= "锚点",
 	["Invert"]										= "反转",
@@ -58,11 +60,12 @@ L:RegisterTranslations("zhCN", function() return {
 	["Learnable"]									= "可学习",
 	["Remember this spell when it's cast manually?"] = "当手动施放时是否自动启用",
 	["Key-Binding"]									= "按键绑定",
-	["Define the key used for auto buffing from Spell Tracker (FIRST icon only)"] = "设置法术跟踪自动Buff的按键（只能是第一个图标）",
 
 	["TICKCLICKHELP1"]								= "|cFFFFFFFF鼠标左键|r切换玩家",
 	["TICKCLICKHELP2"]								= "|cFFFFFFFF鼠标右键|r切换所有人",
 	["TICKCLICKHELP3"]								= "|cFFFFFFFFAlt点击|r切换$class",
 	["TICKCLICKHELP4"]								= "|cFFFFFFFFShift点击|r切换$party",
-} end)
-
+}
+--@end-debug@
+--@localization(locale="zhCN", format="lua_table", namespace="ZOMGBuffTehRaid", handle-unlocalized="ignore")@
+end)

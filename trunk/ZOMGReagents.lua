@@ -28,7 +28,9 @@ R:RegisterTranslations("enUS", function() return {
 	["Corpse Dust"]				= true,
 } end)
 
-R:RegisterTranslations("deDE", function() return{
+R:RegisterTranslations("deDE", function() return
+--@debug@
+{
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Arkanes Pulver",
 	["Flash Powder"]			= "Blitzstrahlpulver",
@@ -54,9 +56,14 @@ R:RegisterTranslations("deDE", function() return{
 	["Demonic Figurine"]		= "Dämonenstatuette",
 	["Infernal Stone"]			= "Höllenstein",
 	["Corpse Dust"]				= "Leichenstaub",
-} end)
+}
+--@end-debug@
+--@localization(locale="deDE", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("frFR", function() return{
+R:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Poudre des arcanes",
 	["Flash Powder"]			= "Poudre aveuglante",
@@ -82,9 +89,14 @@ R:RegisterTranslations("frFR", function() return{
 	["Demonic Figurine"]		= "Figurine démoniaque",
 	["Infernal Stone"]			= "Pierre infernale",
 	["Corpse Dust"]				= "Poussière de cadavre",
-} end)
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("esES", function() return{
+R:RegisterTranslations("esES", function() return
+--@debug@
+{
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Partículas Arcanas",
 	["Flash Powder"]			= "Partículas explosivas",
@@ -110,9 +122,14 @@ R:RegisterTranslations("esES", function() return{
 	["Demonic Figurine"]		= "Figurilla demoníaca",
 	["Infernal Stone"]			= "Piedra infernal",
 	["Corpse Dust"]				= "Polvo de cadáver",
-} end)
+}
+--@end-debug@
+--@localization(locale="esES", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("zhCN", function() return{
+R:RegisterTranslations("zhCN", function() return
+--@debug@
+{
 	["Ankh"]					= "十字章",
 	["Arcane Powder"]			= "魔粉",
 	["Flash Powder"]			= "闪光粉",
@@ -138,9 +155,14 @@ R:RegisterTranslations("zhCN", function() return{
 	["Demonic Figurine"]		= "恶魔雕像",
 	["Infernal Stone"]			= "地狱火石",
 	["Corpse Dust"]				= true,
-} end)
+}
+--@end-debug@
+--@localization(locale="zhCN", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("zhTW", function() return{
+R:RegisterTranslations("zhTW", function() return
+--@debug@
+{
 	["Ankh"]					= "十字章",
 	["Arcane Powder"]			= "魔粉",
 	["Flash Powder"]			= "閃光粉",
@@ -166,9 +188,14 @@ R:RegisterTranslations("zhTW", function() return{
 	["Demonic Figurine"]		= "惡魔刻像",
 	["Infernal Stone"]			= "地獄火石",
 --	["Corpse Dust"]				= true,
-} end)
+}
+--@end-debug@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("koKR", function() return {
+R:RegisterTranslations("koKR", function() return
+--@debug@
+{
 	["Ankh"]					= "십자가",
 	["Arcane Powder"]			= "불가사의한 가루",
 	["Flash Powder"]			= "섬광 화약",
@@ -194,9 +221,14 @@ R:RegisterTranslations("koKR", function() return {
 	["Demonic Figurine"]		= "악마의 구슬",
 	["Infernal Stone"]			= "지옥의 돌",
 --	["Corpse Dust"]				= true,
-} end )
+}
+--@end-debug@
+--@localization(locale="koKR", format="lua_table", namespace="ZOMGReagents")@
+end)
 
-R:RegisterTranslations("ruRU", function() return{
+R:RegisterTranslations("ruRU", function() return
+--@debug@
+{
 	["Ankh"]					= "Крест",
 	["Arcane Powder"]			= "Порошок чар",
 	["Flash Powder"]			= "Воспламеняющийся порошок",
@@ -222,6 +254,17 @@ R:RegisterTranslations("ruRU", function() return{
 	["Demonic Figurine"]		= "Демоническая статуэтка",
 	["Infernal Stone"]			= "Камень инфернала",
 	["Corpse Dust"]				= "Прах",
-} end )
+}
+--@end-debug@
+--@localization(locale="ruRU", format="lua_table", namespace="ZOMGReagents")@
+end)
+
+R:RegisterTranslations("esMX", function() return
+--@debug@
+{
+}
+--@end-debug@
+--@localization(locale="esMX", format="lua_table", namespace="ZOMGReagents")@
+end)
 
 R = nil

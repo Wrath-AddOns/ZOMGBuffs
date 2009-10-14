@@ -1,6 +1,8 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
 
-L:RegisterTranslations("zhCN", function() return {
+L:RegisterTranslations("zhCN", function() return
+--@debug@
+{
 	["TITLE"]				= "ZOMGBuffs",
 	["TITLECOLOUR"]			= "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFEFFFFFFBuffs|r",
 	["HINT"]				= "|cffeda55f鼠标左键|r开关自动施法，|cffeda55f鼠标右键|r开启选项菜单，|cffeda55f点击|r项目以修改，|cffeda55fShift点击|r项目可以将其从自我Buff模板中删除",
@@ -260,4 +262,7 @@ L:RegisterTranslations("zhCN", function() return {
 							"E-mail：{X-Email}\r"..
 							"网站：{X-Website}\r"..
 							"授权: {X-License}\r"
-} end)
+}
+--@end-debug@
+--@localization(locale="zhCN", format="lua_table", namespace="", handle-unlocalized="ignore")@
+end)

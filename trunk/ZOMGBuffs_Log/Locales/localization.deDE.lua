@@ -5,5 +5,5 @@ L:RegisterTranslations("deDE", function() return
 {
 }
 --@end-debug@
---@localization(locale="deDE", format="lua_table", namespace="ZOMGLog")@
+--@localization(locale="deDE", format="lua_table", namespace="ZOMGLog", handle-unlocalized="ignore")@
 end)
