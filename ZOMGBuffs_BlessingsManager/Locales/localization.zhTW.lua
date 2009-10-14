@@ -1,6 +1,8 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGBlessingsManager")
 
-L:RegisterTranslations("zhTW", function() return {
+L:RegisterTranslations("zhTW", function() return
+--@debug@
+{
 	["TITLE"]			= "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFF祝福管理器|r",
 	["TITLE_CONFIGURE"]	= "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFFFFFFFF祝福管理器|cFF808080(配置模式)|r",
 	["SPLITTITLE"]		= "職業分離",
@@ -140,4 +142,7 @@ L:RegisterTranslations("zhTW", function() return {
 	["king"]				= "王者",
 	["bol"]					= "bol",
 	["light"]				= "光明",
-} end)
+}
+--@end-debug@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGBlessingsManager", handle-unlocalized="ignore")@
+end)

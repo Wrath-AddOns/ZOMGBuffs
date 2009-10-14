@@ -116,8 +116,8 @@ function mod:ProcessChat(sender, msg)
 	elseif (strfind(msg, "^SELF")) then
 		local numbers, assign = strmatch(msg, "SELF ([0-9n]*)@([0-9n]*)")
 		if (numbers) then
-			self.AllPallys[sender] = {}
-			local s = self.AllPallys[sender]
+			local s = {}
+			self.AllPallys[sender] = s
 			for i = 1, 4 do
 				local rank = strsub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
 				local talent = strsub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
@@ -158,25 +158,28 @@ function mod:ProcessChat(sender, msg)
 
 	elseif (strfind(msg, "^ASELF")) then
 		local newaura = 0
-		self.AllPallys[sender].AuraInfo = { }
-		local _, _, numbers, assign = string.find(msg, "ASELF ([0-9a-fn]*)@([0-9n]*)")
-		for i = 1, PALLYPOWER_MAXAURAS do
-			local rank = string.sub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
-			local talent = string.sub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
-			if rank ~= "n" then
-				self.AllPallys[sender].AuraInfo[i] = { }
-				self.AllPallys[sender].AuraInfo[i].rank = tonumber(rank,16)
-				self.AllPallys[sender].AuraInfo[i].talent = tonumber(talent,16)
+		local p = self.AllPallys[sender]
+		if (p) then
+			p.AuraInfo = { }
+			local _, _, numbers, assign = string.find(msg, "ASELF ([0-9a-fn]*)@([0-9n]*)")
+			for i = 1, PALLYPOWER_MAXAURAS do
+				local rank = string.sub(numbers, (i - 1) * 2 + 1, (i - 1) * 2 + 1)
+				local talent = string.sub(numbers, (i - 1) * 2 + 2, (i - 1) * 2 + 2)
+				if rank ~= "n" then
+					p.AuraInfo[i] = { }
+					p.AuraInfo[i].rank = tonumber(rank,16)
+					p.AuraInfo[i].talent = tonumber(talent,16)
+				end
 			end
-		end
-		if assign then
-			if assign == "n" or assign == "" then 
-				assign = 0
-			end
-			newaura = assign + 0
+			if assign then
+				if assign == "n" or assign == "" then 
+					assign = 0
+				end
+				newaura = assign + 0
 
-			local zomgAuraKey = z.auraCycle[newaura + 0]
-			bm:OnReceiveAura(sender, zomgAuraKey)
+				local zomgAuraKey = z.auraCycle[newaura + 0]
+				bm:OnReceiveAura(sender, zomgAuraKey)
+			end
 		end
 
 	elseif (strfind(msg, "^ASSIGN")) then

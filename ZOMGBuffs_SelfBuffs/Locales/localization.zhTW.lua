@@ -1,6 +1,8 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 
-L:RegisterTranslations("zhTW", function() return {
+L:RegisterTranslations("zhTW", function() return
+--@debug@
+{
 	["Self Buff Configuration"]								= "自我Buff配置",
 	["Self"]												= "自我",
 	["Templates"]											= "範本",
@@ -42,5 +44,7 @@ L:RegisterTranslations("zhTW", function() return {
 	["Remember this spell when it's cast manually?"]		= "當手動施放時是否自動啟用",
 	["Reagent Reminder"]									= "材料提醒",
 	["Show message when spells requiring reagents are used"] = "當法術所需材料消耗時顯示資訊",
-} end)
-
+}
+--@end-debug@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGSelfBuffs", handle-unlocalized="ignore")@
+end)

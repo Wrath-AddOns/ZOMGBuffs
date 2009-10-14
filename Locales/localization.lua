@@ -34,7 +34,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Define the key used for auto buffing"] = true,
 	["%s%s%s|r to cast %s%s|r%s"] = true,
 	["%s%s%s|r to target"]	= true,
-	[" on %s"]				= true,
+	[" on %s"]				= true,							-- Raid popup tooltip: "Aura Name on PlayerName"
 	["|cFF808080%s|r [|Hplayer:%s|h%s|h's pet]"] = true,
 	["Reminders"]			= true,
 	["Options to help you notice when things need doing"] = true,
@@ -261,6 +261,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Show player role icons"] = true,
 	["Auto-casting is disabled"] = true,
 	["You can re-enable it by single clicking the ZOMGBuffs minimap/fubar icon"] = true,
+	["RuneScroll/Drums"]	= true,
+	["Always show Stamina and Mark of the Wild Columns"] = true,
 
 	["CHATMATCH1"]			= "!buff",
 	["CHATMATCH2"]			= "!zomg",

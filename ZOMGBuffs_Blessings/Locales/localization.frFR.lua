@@ -1,6 +1,8 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 
-L:RegisterTranslations("frFR", function() return {
+L:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["DPS"] = "DPS",
 	["5-Man"] = "Instance à 5",
 	["Kings"] = "Rois",
@@ -54,4 +56,7 @@ L:RegisterTranslations("frFR", function() return {
 	["Reset"] = "Réinitialiser",
 	["Reset default position of exception icon anchor"] = "Réinitialise la position de l'icone d'exception",
 	["%s blacklisted for 10 seconds"] = "%s mis sur liste noire pour 10s",
-} end)
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGBlessings", handle-unlocalized="ignore")@
+end)

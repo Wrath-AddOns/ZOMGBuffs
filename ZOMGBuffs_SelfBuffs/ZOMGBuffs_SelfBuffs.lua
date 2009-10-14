@@ -460,9 +460,7 @@ function zs:CheckBuffs()
 				for i = 1,1000 do
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
 					if not name then break end
-					if (strmatch(buff, "Inventory\\Icons\\INV_Potion") or
-						strmatch(buff, "Inventory\\Icons\\INV_Alchemy"))
-						and buff ~= safeFlaskIcon then
+					if (strmatch(buff, "INV_Potion") or strmatch(buff, "INV_Alchemy")) and buff ~= safeFlaskIcon then
 						skip = true
 						break
 					end
@@ -473,6 +471,7 @@ function zs:CheckBuffs()
 					if (not name) then
 						self.db.char.activeFlaskOfTheNorth = nil
 					end
+
 					if (self.db.char.flask ~= self.db.char.activeFlaskOfTheNorth or not name or endTime - GetTime() < requiredTimeLeft) then
 						z:SetupForItem(nil, (GetItemInfo(47499)), self)
 						any = true

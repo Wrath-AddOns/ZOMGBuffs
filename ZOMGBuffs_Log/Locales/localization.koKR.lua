@@ -5,5 +5,5 @@ L:RegisterTranslations("koKR", function() return
 {
 }
 --@end-debug@
---@localization(locale="koKR", format="lua_table", namespace="ZOMGLog")@
+--@localization(locale="koKR", format="lua_table", namespace="ZOMGLog", handle-unlocalized="ignore")@
 end)

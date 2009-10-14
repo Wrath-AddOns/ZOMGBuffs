@@ -145,22 +145,6 @@ do
 						name = " ",
 						order = 100,
 					},
-					keybinding = {
-						type = 'text',
-						name = L["Key-Binding"],
-						desc = L["Define the key used for auto buffing from Spell Tracker (FIRST icon only)"],
-						validate = "keybinding",
-						get = getOption,
-						set = function(v,n)
-							if (zg.db.char.keybinding) then
-								SetBinding(zg.db.char.keybinding, nil)
-							end
-							zg.db.char.keybinding = n
-							zg:SetTrackerKeyBindings()
-						end,
-						passValue = "keybinding",
-						order = 101,
-					},
 					scale = {
 						type = 'range',
 						name = L["Scale"],
@@ -272,15 +256,6 @@ local function ToggleKeyType(keytype, onoff)
 	end
 
 	if (onoff) then
-		--local dup = zg.buffs[keytype].dup
-		--if (dup) then
-		--	for j,z in pairs(zg.buffs) do
-		--		if (z.dup == dup) then
-		--			zg:ModifyTemplate(j, nil)
-		--		end
-		--	end
-		--end
-
 		zg:ModifyTemplate(keytype, true)
 		z:SetupForSpell()
 		zg:CheckBuffs()
@@ -360,12 +335,7 @@ function zg:OnModifyTemplate(key, value)
 	end
 end
 
--- SetMenu
-function zg:MakeSpellOptions()
-	if (self.options.args.singlespells or self.options.args.groupspells) then
-		return
-	end
-
+do
 	local function getLearnable(k)
 		return not zg.db.char.notlearnable or not zg.db.char.notlearnable[k]
 	end
@@ -382,30 +352,61 @@ function zg:MakeSpellOptions()
 			end
 		end
 	end
-	
-	local groupArgs, singleArgs
 
-	local list = self:SortedBuffList()
-	for i,key in ipairs(list) do
-		local info = self.buffs[key]
-		if (GetSpellInfo(info.list[1])) then		-- GetSpellCooldown(info.list[1])) then
-			local name = info.name or info.list[1]
-			local cName = ColourSpellFromKey(info)
-			local menu = {
-				type = "group",
-				name = cName,
-				desc = cName,
-				order = i,
-				isChecked = function(k) return template[key] end,
-				onClick = ToggleKeyType,
-				passValue = key,
-				args = {
-					header = {
-						type = "header",
-						name = cName,
-						order = 1,
-					},
-					rebuff = {
+	local function getKeybinding(k)
+		return zg.db.char.keybindings[k]
+	end
+	local function setKeybinding(k, v)
+		local oldkey = zg.db.char.keybindings[k]
+		if (oldKey) then
+			SetBinding(oldKey, nil)
+		end
+		zg.db.char.keybindings[k] = v
+		zg:SetTrackerKeyBindings()
+	end
+
+	local function getAutocast(k)
+		return zg.db.char.noautocast[k]
+	end
+	local function setAutocast(k, v)
+		zg.db.char.noautocast[k] = v and true or nil
+		z:SetupForSpell()
+		zg:CheckBuffs()
+	end
+
+	-- SetMenu
+	function zg:MakeSpellOptions()
+		if (self.options.args.singlespells or self.options.args.groupspells) then
+			return
+		end
+
+		local groupArgs, singleArgs
+
+		local list = self:SortedBuffList()
+		for i,key in ipairs(list) do
+			local info = self.buffs[key]
+			if (GetSpellInfo(info.list[1])) then
+				local name = info.name or info.list[1]
+				local cName = ColourSpellFromKey(info)
+				local menu = {
+					type = "group",
+					name = cName,
+					desc = cName,
+					order = i,
+					isChecked = function(k) return template[key] end,
+					onClick = ToggleKeyType,
+					passValue = key,
+					args = {
+						header = {
+							type = "header",
+							name = cName,
+							order = 1,
+						},
+					}
+				}
+
+				if (not info.noaura) then
+					menu.args.rebuff = {
 						type = "range",
 						name = L["Expiry Prelude"],
 						desc = format(L["Rebuff prelude for %s (0=Module default)"], cName),
@@ -419,69 +420,92 @@ function zg:MakeSpellOptions()
 						step = 1,
 						bigStep = 15,
 						order = 2,
-					},
-				}
-			}
+					}
+				end
 
-			if (info.limited) then
-				menu.args.nolearn = {
-					type = "toggle",
-					name = L["Learnable"],
-					desc = L["Remember this spell when it's cast manually?"],
-					order = 3,
-					get = getLearnable,
-					set = setLearnable,
-					passValue = key,
-				}
+				if (info.limited) then
+					menu.args.nolearn = {
+						type = "toggle",
+						name = L["Learnable"],
+						desc = L["Remember this spell when it's cast manually?"],
+						order = 3,
+						get = getLearnable,
+						set = setLearnable,
+						passValue = key,
+					}
 
-				if (not singleArgs) then
-					local menu = {
-						type = 'group',
-						name = L["Single Spells"],
-						desc = L["Single spell configuration"],
-						order = 2,
-						args = {
-							spacer = {
-								type = 'header',
-								name = " ",
-								order = 999,
-							},
-							reset = {
-								type = 'toggle',
-								name = L["Reset on Clear"],
-								desc = L["If noone is selected for this buff when you disable it, then the next time it is enabled, everyone will default to ON. If disabled, the last settings will be remembered"],
-								get = getOption,
-								set = setOption,
-								passValue = "resetOnClear",
-								order = 1000,
+					if (info.exclusive) then
+						menu.args.noautocast = {
+							type = 'toggle',
+							name = L["No Auto-cast"],
+							desc = format(L["Disables auto-casting for %s in favor of rebuffing via tracker icons or their hotkeys"], cName),
+							get = getAutocast,
+							set = setAutocast,
+							passValue = key,
+							order = 10,
+						}
+
+						menu.args.keybinding = {
+							type = 'text',
+							name = L["Key-Binding"],
+							desc = format(L["Define the key used for rebuffing %s from it's Spell Tracker icon"], cName),
+							validate = "keybinding",
+							get = getKeybinding,
+							set = setKeybinding,
+							passValue = key,
+							order = 20,
+						}
+					end
+
+					if (not singleArgs) then
+						local menu = {
+							type = 'group',
+							name = L["Single Spells"],
+							desc = L["Single spell configuration"],
+							order = 2,
+							args = {
+								spacer = {
+									type = 'header',
+									name = " ",
+									order = 999,
+								},
+								reset = {
+									type = 'toggle',
+									name = L["Reset on Clear"],
+									desc = L["If noone is selected for this buff when you disable it, then the next time it is enabled, everyone will default to ON. If disabled, the last settings will be remembered"],
+									get = getOption,
+									set = setOption,
+									passValue = "resetOnClear",
+									order = 1000,
+								},
 							}
 						}
-					}
-					self.options.args.singlespells = menu
-					singleArgs = menu.args
-				end
+						self.options.args.singlespells = menu
+						singleArgs = menu.args
+					end
 
-				singleArgs[name] = menu
-			else
-				if (not groupArgs) then
-					local menu = {
-						type = 'group',
-						name = L["Group Spells"],
-						desc = L["Group spell configuration"],
-						order = 1,
-						args = {
+					singleArgs[name] = menu
+				else
+					if (not groupArgs) then
+						local menu = {
+							type = 'group',
+							name = L["Group Spells"],
+							desc = L["Group spell configuration"],
+							order = 1,
+							args = {
+							}
 						}
-					}
 					
-					self.options.args.groupspells = menu
-					groupArgs = menu.args
-				end
+						self.options.args.groupspells = menu
+						groupArgs = menu.args
+					end
 
-				groupArgs[name] = menu
+					groupArgs[name] = menu
+				end
 			end
 		end
+		del(list)
 	end
-	del(list)
 end
 
 -- TickInitForTemplate
@@ -695,7 +719,7 @@ function zg:CheckBuffs()
 		for k,v in pairs(template) do			-- k = spellType (INT, STA etc.), v = buff data for that type
 			if (k ~= "modified" and k ~= "state" and k ~= "limited") then
 				local typeSpec = self.buffs[k]
-				if (typeSpec) then
+				if (typeSpec and not zg.db.char.noautocast[typeSpec.type]) then
 					local spell = typeSpec.list[1]
 					local start, dur = GetSpellCooldown(spell)
 					local now, later = IsUsableSpell(spell)
@@ -1189,7 +1213,35 @@ function zg:OnModuleInitialize()
 				colour = {1, 1, 0.7},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
+				notself = true,
 				keycode = "vigilance",
+			},
+		}
+
+	elseif (playerClass == "ROGUE") then
+		self.buffs = {
+			TRICKS = {
+				o = 1,
+				ids = {57934},						-- Tricks of the Trade
+				colour = {0.3, 1, 0.7},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,
+				notself = true,
+				noaura = true,						-- This gives no aura when applied, and should not auto learn on cast
+				noautobuff = true,					-- Special case for Tricks
+				keycode = "tricks",
+			},
+		}
+
+	elseif (playerClass == "DEATHKNIGHT") then
+		self.buffs = {
+			HYSTERIA = {
+				o = 1,
+				ids = {49016},						-- Hysteria
+				colour = {0.3, 1, 0.7},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,
+				keycode = "tricks",
 			},
 		}
 	end
@@ -1242,7 +1294,9 @@ function zg:OnModuleInitialize()
 
 	self.db = z:AcquireDBNamespace("BuffTehRaid")
 	z:RegisterDefaults("BuffTehRaid", "char", {
+		noautocast = {TRICKS = true},
 		reagents = {},
+		keybindings = {},
 		templates = defaultForClass,
 		defaultTemplate = "Default",
 		groupcast = 2,
@@ -1255,7 +1309,7 @@ function zg:OnModuleInitialize()
 		tracker = true,
 		trackerscale = 1,
 		tracksound = "Gong",
-		notlearnable = {},
+		notlearnable = {TRICKS = true},
 	} )
 	z:RegisterChatCommand({"/zomgraid", "/zomgbufftehraid"}, zg.options)
 	self.OnMenuRequest = self.options
@@ -1497,11 +1551,23 @@ local function tickOnEnter(self)
 			GameTooltip:Show()
 		end
 	end
+
+	if (z.overrideBuffBar ~= "tick" or z.overrideBuffBarIndex ~= index) then
+		z.overrideBuffBar = "tick"
+		z.overrideBuffBarIndex = index
+		z:DrawAllCells()
+	end
 end
 
--- gttOnLeave
-local function gttOnLeave()
+-- tickOnLeave
+local function tickOnLeave(self)
 	GameTooltip:Hide()
+
+	if (z.overrideBuffBar and z.overrideBuffBarIndex) then
+		z.overrideBuffBar = nil
+		z.overrideBuffBarIndex = nil
+		z:DrawAllCells()
+	end
 end
 
 -- TickOne
@@ -1541,7 +1607,7 @@ function zg:CreateTick()
 
 	tick:SetScript("OnClick", tickOnClick)
 	tick:SetScript("OnEnter", tickOnEnter)
-	tick:SetScript("OnLeave", gttOnLeave)
+	tick:SetScript("OnLeave", tickOnLeave)
 
 	return tick
 end
@@ -1943,31 +2009,80 @@ do
 		return r, g, 0
 	end
 
+	-- icon.UpdateUsable
+	local function iconUpdateUsable(self)
+		local start, duration, enable = GetSpellCooldown(self.spell)
+		if (enable == 1) then
+			self.icon:SetVertexColor(1, 1, 1)
+		else
+			self.icon:SetVertexColor(0.5, 0.5, 0.5)
+		end
+	end
+
+	-- icon.UpdateCooldown
 	local function iconUpdateCooldown(self)
 		local start, duration, enable = GetSpellCooldown(self.spell)
 		if (start) then
 			CooldownFrame_SetTimer(self.cooldown, start, duration, enable)
+
+			if (enable == 1 and (start == 0 or (start+duration) - GetTime() < 1.5)) then
+				local got, count, endTime, maxDuration = self:GetSpellFromUnit()
+				if (not got) then
+					self.swirl:Show()
+				end
+
+				if (self.wasOnCooldown) then
+					local buff = zg.buffs[self.key]
+					if (buff) then
+						z:Notice(format(L["%s cooldown ready for %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
+						PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+					end
+				end
+				self.wasOnCooldown = nil
+			else
+				if (enable == 1 and start > 0) then
+					self.startSwirl = (start + duration) - GetTime()
+				end
+				self.swirl:Hide()
+				self.wasOnCooldown = true
+			end
 		end
 	end
 
-	local function iconGetSpellFromUnit(self)
+	local sacredShield, _, sacredShieldIcon = GetSpellInfo(53601)
+
+	-- icon.SacredShieldTimer
+	local function iconSacredShieldTimer(self)
 		for i = 1,40 do
-			local name, rank, buff, count, _, maxDuration, endTime = UnitBuff(self.target, i)
-			if (not name) then
-				return
+			local name, rank, texture, count, _, maxDuration, endTime = UnitBuff(self.target, i, "PLAYER")
+			if (name == sacredShield and texture == sacredShieldIcon) then
+				return name, rank, texture, count, _, maxDuration, endTime
 			end
-			if (name == self.spell) then
-				if (endTime) then
-					self.timeLeft = endTime - GetTime()
-					self.maxTime = maxDuration
-				end
-				return name ~= nil, count, endTime, maxDuration
-			end
+		end
+	end
+
+	-- icon.GetSpellFromUnit
+	local function iconGetSpellFromUnit(self)
+		local name, rank, buff, count, _, maxDuration, endTime
+		if (self.spell == sacredShield) then
+			-- Special case for Sacred Shield because the buffed aura and the proc have
+			-- the same name so we check the texture matches the buff's spell info
+			-- Otherwise the aura timer can go a bit wobbly as it matches wrong one
+			name, rank, buff, count, _, maxDuration, endTime = self:SacredShieldTimer()
+		else
+			name, rank, buff, count, _, maxDuration, endTime = UnitBuff(self.target, self.spell, nil, "PLAYER")
+		end
+		if (name and endTime) then
+			self.timeLeft = endTime - GetTime()
+			self.maxTime = maxDuration
+			return name ~= nil, count, endTime, maxDuration
 		end
 		self.timeLeft = nil
 	end
 
+	-- icon.UpdateAura
 	local function iconUpdateAura(self)
+		local buff = zg.buffs[self.key]
 		local got, count, endTime, maxDuration = self:GetSpellFromUnit()
 		if (got) then
 			if (endTime) then
@@ -1992,16 +2107,14 @@ do
 		end
 
 		if (self.had) then
+			self.had = nil
 			if (UnitIsVisible(self.target)) then
-				self.had = nil
-				local buff = zg.buffs[self.key]
-
 				if (self.temp) then
 					zg:StopSpellTracker(self.key)
 					return
 				end
 
-				if (buff) then
+				if (buff and not buff.noaura) then
 					z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
 					PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
 				end
@@ -2012,17 +2125,24 @@ do
 		self.stacks = 0
 		self.count:SetText("0")
 		self.count:SetTextColor(1, 0, 0)
-		self.swirl:Show()
+
+		local start, duration, enable = GetSpellCooldown(self.spell)
+		if (enable == 1 and (start == 0 or (start+duration) - GetTime() < 1.5)) then
+			self.swirl:Show()
+		else
+			self.swirl:Hide()
+		end
 	end
 
+	-- icon.UpdateTooltip
 	local function iconUpdateTooltip(self)
 		local got, count, endTime, maxDuration = self:GetSpellFromUnit()
 		local buff = zg.buffs[self.key]
 		if (not buff) then return end
 		local buffColour = z:HexColour(unpack(buff.colour))
 		local keyb
-		if (zg.db.char.keybinding and self.keybinding) then
-			keyb = format(" (|cFF80FF80%s|r)", zg.db.char.keybinding)
+		if (self.keybinding) then
+			keyb = format(" (|cFF80FF80%s|r)", self.keybinding)
 		else
 			keyb = ""
 		end
@@ -2034,6 +2154,12 @@ do
 		if (not got) then
 			GameTooltip:AddLine(L["MISSING!"], 1, 0, 0)
 		else
+			local buff = zg.buffs[self.key]
+			if (buff) then
+				-- We refresh initial stacks here, during login this is usually wrong because talents are not yet read
+				self.initialStacks = type(buff.stacks) == "function" and buff.stacks() or buff.stacks
+			end
+
 			local r, g, b
 			if (self.stacks and self.initialStacks and self.initialStacks > 1) then
 				r, g, b = SmoothColour(self.stacks / self.initialStacks)
@@ -2058,17 +2184,14 @@ do
 		GameTooltip:Show()
 	end
 
-	local function iconOnDragStart(self)
-		self:StartMoving()
-	end
-
+	-- icon.OnDragStop
 	local function iconOnDragStop(self)
 		self:StopMovingOrSizing()
-		if (self.posindex) then
+		if (self.posKey) then
 			if (not zg.db.char.postracker) then
 				zg.db.char.postracker = {}
 			end
-			zg.db.char.postracker[self.posindex] = z:GetPosition(self)
+			zg.db.char.postracker[self.posKey] = z:GetPosition(self)
 		end
 
 		if (self.swirl:IsShown()) then
@@ -2077,11 +2200,16 @@ do
 		end
 	end
 
+	-- icon.OnUpdate
 	local function iconOnUpdate(self, elapsed)
 		if (self.timeLeft) then
 			self.timeLeft = self.timeLeft - elapsed
 			if (self.timeLeft > 0) then
-				self.name:SetText(date("%M:%S", self.timeLeft):gsub("^0", ""))
+				if (self.timeLeft < 5) then
+					self.name:SetFormattedText("%1.1f", self.timeLeft)
+				else
+					self.name:SetText(date("%M:%S", self.timeLeft):gsub("^0", ""))
+				end
 				local r, g, b = SmoothColour(self.timeLeft / self.maxTime)
 				self.name:SetTextColor(r, g, b)
 				self.name:Show()
@@ -2091,40 +2219,88 @@ do
 		else
 			self.name:Hide()
 		end
+
+		if (self.startSwirl) then
+			self.startSwirl = self.startSwirl - elapsed
+			if (self.startSwirl <= 0) then
+				self.startSwirl = nil
+				self:UpdateCooldown()
+			end
+		end
 	end
 
+	-- icon.OnEvent
 	local function iconOnEvent(self, event, unit, ...)
-		if (event == "UNIT_AURA") then
-			if (UnitIsUnit(unit, self.target)) then
-				self:UpdateAura()
-			end
-		elseif (event == "ACTIONBAR_UPDATE_COOLDOWN") then
+		local f = self[event]
+		if (f) then
+			f(self, unit, ...)
+		end
+	end
+
+	local function iconUNIT_AURA(self, unit)
+		if (UnitIsUnit(unit, self.target)) then
+			self:UpdateAura()
+		end
+	end
+
+	local function iconACTIONBAR_UPDATE_COOLDOWN(self)
+		self:UpdateCooldown()
+	end
+
+	local function iconACTIONBAR_UPDATE_USABLE(self)
+		self:UpdateUsable()
+	end
+
+	local function iconPLAYER_ENTERING_WORLD(self)
+		-- Put text back where we need it, things like ButtonFacade move things around during login
+		self:SetTextAnchors()
+	end
+
+	local function iconUNIT_SPELLCAST_SUCCEEDED(self, player, spell, rank)
+		if (UnitIsUnit(player, "player") and spell == self.spell) then
+			self:UpdateAura()
 			self:UpdateCooldown()
 		end
 	end
 
+	-- icon.OnShow
 	local function iconOnShow(self)
 		self:RegisterEvent("UNIT_AURA")
 		self:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+		self:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
+		self:RegisterEvent("PLAYER_ENTERING_WORLD")
+		self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 		self:SetPosition()
 		self:UpdateAura()
+		self:SetTextAnchors()
 		self:UpdateCooldown()
+		self:UpdateUsable()
 		zg:SetTrackerKeyBindings()
 	end
 
+	-- icon.OnHide
 	local function iconOnHide(self)
 		self.swirl:Hide()
 		self:UnregisterEvent("UNIT_AURA")
 		self:UnregisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+		self:UnregisterEvent("ACTIONBAR_UPDATE_USABLE")
+		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+		self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 		self.key = nil
+
+		if (not InCombatLockdown() and self.keybinding) then
+			SetBinding(self.keybinding, nil)
+			self.keybinding = nil
+		end
 	end
 
+	-- icon.SetPosition
 	local function iconSetPosition(self)
 		if (not InCombatLockdown() or self.dummy) then
 			self:SetPoint("CENTER")
 			self:SetScale(zg.db.char.trackerscale)
 			if (type(zg.db.char.postracker) == "table") then
-				pos = zg.db.char.postracker[self.posindex]
+				pos = zg.db.char.postracker[self.posKey]
 				if (pos) then
 					z:RestorePosition(self, pos)
 				end
@@ -2132,7 +2308,7 @@ do
 		end
 	end
 
-	-- SetTrackerAttributes
+	-- icon.SetTrackerAttributes
 	local function iconSetTrackerAttributes(self, target, key)
 		local buff = zg.buffs[key]
 		local spell = buff.list[1]
@@ -2165,8 +2341,24 @@ do
 		end
 	end
 
+	-- icon.SetTextAnchors
+	local function iconSetTextAnchors(self)
+		self.name:ClearAllPoints()
+		self.name:SetPoint("TOPLEFT")
+		self.name:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, -20)
+
+		self.count:ClearAllPoints()
+		self.count:SetPoint("BOTTOMLEFT")
+		self.count:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, 20)
+	end
+
+	-- icon.OnLeave
+	local function iconOnLeave()
+		GameTooltip:Hide()
+	end
+
 	-- CreateTrackIcon
-	function zg:CreateTrackIcon()
+	function zg:CreateTrackIcon(key)
 		local iname, inh
 
 		if (InCombatLockdown()) then
@@ -2174,13 +2366,14 @@ do
 			inh = "ActionButtonTemplate"
 			iname = "ZOMGDummyTrackIcon"..self.dummytrackIconIndex
 		else
-			self.trackIconIndex = (self.trackIconIndex or 0) + 1
 			inh = "SecureActionButtonTemplate,ActionButtonTemplate"
-			iname = "ZOMGTrackIcon"..self.trackIconIndex
+			iname = "ZOMGTrackIcon"..key
 		end
+		assert(not _G[iname])
 
 		local icon = CreateFrame("Button", iname, UIParent, inh)
-		icon.dummy = InCombatLockdown() or nil
+		icon.dummy = InCombatLockdown()
+		icon.posKey = key
 
 		local LibButtonFacade = LibStub("LibButtonFacade",true)
 		if (LibButtonFacade) then
@@ -2190,7 +2383,11 @@ do
 		if (not self.trackIcons) then
 			self.trackIcons = {}
 		end
-		tinsert(self.trackIcons, icon)
+		if (InCombatLockdown()) then
+			tinsert(self.trackIcons, icon)
+		else
+			self.trackIcons[key] = icon
+		end
 
 		icon:RegisterForDrag(nil)
 
@@ -2203,12 +2400,10 @@ do
 		icon.count = getglobal(iname.."Count")
 		icon.cooldown = getglobal(iname.."Cooldown")
 
-		icon.name:ClearAllPoints()
-		icon.name:SetPoint("TOPLEFT")
-		icon.name:SetPoint("BOTTOMRIGHT", icon, "TOPRIGHT", 0, -20)
 		icon.name:SetJustifyV("TOP")
 		icon.name:SetNonSpaceWrap(true)
 		icon.name:SetFontObject("NumberFontNormal")
+		icon.count:SetJustifyH("CENTER")
 
 		icon.icon:SetTexCoord(0.06, 0.94, 0.06, 0.94)
 		icon.border:SetVertexColor(0, 1, 0, 0.6)
@@ -2222,40 +2417,55 @@ do
 		icon:RegisterForDrag("LeftButton")
 		icon:SetMovable(true)
 
-		icon.UpdateCooldown = iconUpdateCooldown
-		icon.GetSpellFromUnit = iconGetSpellFromUnit
-		icon.UpdateAura = iconUpdateAura
-		icon.UpdateTooltip = iconUpdateTooltip
-		icon.SetPosition = iconSetPosition
-		icon.SetTrackerAttributes = iconSetTrackerAttributes
+		icon.UpdateCooldown			= iconUpdateCooldown
+		icon.UpdateUsable			= iconUpdateUsable
+		icon.GetSpellFromUnit		= iconGetSpellFromUnit
+		icon.SacredShieldTimer		= iconSacredShieldTimer
+		icon.UpdateAura				= iconUpdateAura
+		icon.UpdateTooltip			= iconUpdateTooltip
+		icon.SetPosition			= iconSetPosition
+		icon.SetTrackerAttributes	= iconSetTrackerAttributes
+		icon.SetTextAnchors			= iconSetTextAnchors
 
-		icon:SetScript("OnDragStart", iconOnDragStart)
-		icon:SetScript("OnDragStop", iconOnDragStop)
-		icon:SetScript("OnUpdate", iconOnUpdate)
-		icon:SetScript("OnEvent", iconOnEvent)
-		icon:SetScript("OnEnter", icon.UpdateTooltip)
-		icon:SetScript("OnLeave", gttOnLeave)
-		icon:SetScript("OnShow", iconOnShow)
-		icon:SetScript("OnHide", iconOnHide)
+		icon.UNIT_AURA				= iconUNIT_AURA
+		icon.ACTIONBAR_UPDATE_COOLDOWN = iconACTIONBAR_UPDATE_COOLDOWN
+		icon.ACTIONBAR_UPDATE_USABLE = iconACTIONBAR_UPDATE_USABLE
+		icon.PLAYER_ENTERING_WORLD	= iconPLAYER_ENTERING_WORLD
+		icon.UNIT_SPELLCAST_SUCCEEDED = iconUNIT_SPELLCAST_SUCCEEDED
 
 		icon:Hide()
 
-		self.trackIcon = icon
+		icon:SetScript("OnDragStart",	icon.StartMoving)
+		icon:SetScript("OnDragStop",	iconOnDragStop)
+		icon:SetScript("OnUpdate",		iconOnUpdate)
+		icon:SetScript("OnEvent",		iconOnEvent)
+		icon:SetScript("OnEnter",		icon.UpdateTooltip)
+		icon:SetScript("OnLeave",		iconOnLeave)
+		icon:SetScript("OnShow",		iconOnShow)
+		icon:SetScript("OnHide",		iconOnHide)
+
 		return icon
 	end
 end
 
 -- SetTrackerKeyBindings
 function zg:SetTrackerKeyBindings()
-	if (self.db.char.keybinding and not InCombatLockdown()) then
-		SetBinding(self.db.char.keybinding, nil)
+	if (self.db.char.keybindings and not InCombatLockdown()) then
 		if (self.trackIcons) then
-			for i,icon in ipairs(self.trackIcons) do
-				if (icon:IsShown() and icon.posindex == 1) then
-					SetBindingClick(self.db.char.keybinding, icon:GetName(), "LeftButton")
-					icon.keybinding = true
-				else
+			for i,icon in pairs(self.trackIcons) do
+				if (icon.keybinding) then
+					SetBinding(icon.keybinding, nil)
 					icon.keybinding = nil
+				end
+			end
+
+			for i,icon in pairs(self.trackIcons) do
+				if (not icon.dummy and icon:IsShown()) then
+					local key = self.db.char.keybindings[icon.posKey]
+					if (key) then
+						SetBindingClick(key, icon:GetName(), "LeftButton")
+						icon.keybinding = key
+					end
 				end
 			end
 		end
@@ -2277,18 +2487,16 @@ function zg:AddSpellTracker(key, target)
 	end
 
 	local icon = self:IsSpellTracking(key)
-
 	if (icon) then
 		if (UnitIsUnit(icon.target, target)) then
 			return
 		end
 	else
-		icon = self:GetFreeTrackIcon()
+		icon = self:GetFreeTrackIcon(key)
 	end
 
 	icon:SetTrackerAttributes(target, key)
 
-	icon.posindex = self:GetNewIconIndex()
 	if (not InCombatLockdown() or icon.dummy) then
 		icon:Show()
 	end
@@ -2300,34 +2508,39 @@ end
 -- SwitchTrackIconForReal
 function zg:SwitchTrackIconForReal(icon)
 	if (icon.dummy) then
-		local target, key, spell, pos = icon.target, icon.key, icon.spell, icon.posindex
-		zg:FreeIconIndex(icon.posindex)
+		local target, key, spell = icon.target, icon.key, icon.spell
 		icon:Hide()
-		icon.posindex = nil
-		
+
 		local newIcon = self:AddSpellTracker(key, target)
-		newIcon.posindex = pos
 		newIcon:SetPosition()
 	end
 end
 
 -- GetFreeTrackIcon
-function zg:GetFreeTrackIcon()
-	local dummy = InCombatLockdown() or nil
+function zg:GetFreeTrackIcon(key)
+	local dummy = InCombatLockdown()
 	if (self.trackIcons) then
-		for i,icon in ipairs(self.trackIcons) do
-			if (not icon.key and dummy == icon.dummy) then
-				icon.remove = nil
-				icon.temp = nil
-				icon.had = nil
-				icon.spell = nil
-				icon.key = nil
-				icon.target = nil
+		if (dummy) then
+			for i,icon in ipairs(self.trackIcons) do
+				if (not icon.key and dummy == icon.dummy) then
+					icon.remove = nil
+					icon.temp = nil
+					icon.had = nil
+					icon.spell = nil
+					icon.key = nil
+					icon.target = nil
+					icon.posKey = key
+					return icon
+				end
+			end
+		else
+			local icon = self.trackIcons[key]
+			if (icon) then
 				return icon
 			end
 		end
 	end
-	return self:CreateTrackIcon()
+	return self:CreateTrackIcon(key)
 end
 
 -- StopSpellTracker
@@ -2335,13 +2548,9 @@ function zg:StopSpellTracker(key)
 	local icon = self:IsSpellTracking(key)
 	if (icon) then
 		if (not icon.dummy and InCombatLockdown()) then
-			if (not self.stopSpellTracking) then
-				self.stopSpellTracking = new()
-			end
+			self.stopSpellTracking = self.stopSpellTracking or new()
 			tinsert(self.stopSpellTracking, key)
 		else
-			zg:FreeIconIndex(icon.posindex)
-			icon.posindex = nil
 			icon:Hide()
 		end
 
@@ -2353,11 +2562,15 @@ end
 
 -- IsSpellTracking
 function zg:IsSpellTracking(key)
-	local needDummy = InCombatLockdown()
 	if (self.trackIcons) then
-		for i,icon in ipairs(self.trackIcons) do
-			if (icon.key == key and icon:IsShown()) then
-				return icon
+		local icon = self.trackIcons[key]
+		if (icon and icon.key == key and icon:IsShown()) then
+			return icon
+		else
+			for i,icon in ipairs(self.trackIcons) do
+				if (icon.key == key and icon:IsShown()) then
+					return icon
+				end
 			end
 		end
 	end
@@ -2375,6 +2588,7 @@ function zg:IsTrackingPlayer(unitname)
 end
 
 -- GetNewIconIndex
+--[[
 function zg:GetNewIconIndex()
 	if (not self.trackerIndices) then
 		self.trackerIndices = new(1)
@@ -2413,6 +2627,7 @@ function zg:FreeIconIndex(index)
 		end
 	end
 end
+]]
    
 -- SpellCastSucceeded
 function zg:SpellCastSucceeded(spell, rank, target, manual, listClick)
@@ -2428,11 +2643,6 @@ function zg:SpellCastSucceeded(spell, rank, target, manual, listClick)
 					elseif (info.limited and (manual or listClick)) then
 						self:AddLimitedSpell(target, info.type)
 					end
-				--elseif (info.exclusive) then
-				--	local icon = self:AddSpellTracker(info.type, target)
-				--	if (icon) then
-				--		icon.temp = true
-				--	end
 				end
 			end
 		end
@@ -2615,6 +2825,13 @@ function zg:OnResetDB()
 		end
 
 		self:TickInitForTemplate()
+
+		if (self.trackerIcons) then
+			for i,icon in pairs(self.trackerIcons) do
+				icon:SetPosition()
+			end
+		end
+		self:SetTrackerKeyBindings()
 	end
 end
 
@@ -2624,6 +2841,28 @@ function zg:OnModuleEnable()
 		local class = select(2, UnitClass("player"))
 		if (class ~= playerClass and self.OnModuleInitialize) then
 			self:OnModuleInitialize()
+		end
+
+		local pos = zg.db.char.postracker
+		if (pos and pos[1]) then
+			-- Import old tracker icon positions to new save indexes
+			local n = {}
+			zg.db.char.postracker = n
+
+			if (class == "PALADIN") then
+				n.SACREDSHIELD = pos[1]
+				n.BEACON = pos[2]
+				n.SACRIFICE = pos[3]
+				n.FREEDOM = pos[4]
+			elseif (class == "SHAMAN") then
+				n.EARTHSHIELD = pos[1]
+			elseif (class == "MAGE") then
+				n.FOCUSMAGIC = pos[1]
+			elseif (class == "PRIEST") then
+				n.FEARWARD = pos[1]
+			elseif (class == "WARRIOR") then
+				n.VIGILANCE = pos[1]
+			end
 		end
 
 		z:MakeOptionsReagentList()

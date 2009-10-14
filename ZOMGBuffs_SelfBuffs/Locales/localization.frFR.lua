@@ -1,6 +1,8 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 
-L:RegisterTranslations("frFR", function() return {
+L:RegisterTranslations("frFR", function() return
+--@debug@
+{
 	["Self Buff Configuration"] = "Configuration des buffs personnel",
 	["Self"] = "personnel",
 	["Templates"] = "Modèles",
@@ -38,5 +40,7 @@ L:RegisterTranslations("frFR", function() return {
 	["Combat Warnings"] = "Alertes en combat",
 	["Warn about expiring buffs in combat. Note that auto buffing cannot be done in combat, this is simply a reminder"] = "Avertissement des buffs expirants en combat. Notez que les buffs ne peuvent pas être lancés automatquement en combat, il s'agit simplement d'un pense bête",
 	["%s, %s%d|r %s remain"] = "%s, %s%d|r %s restant",
-} end)
-
+}
+--@end-debug@
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGSelfBuffs", handle-unlocalized="ignore")@
+end)

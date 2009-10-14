@@ -5,5 +5,5 @@ L:RegisterTranslations("zhCN", function() return
 {
 }
 --@end-debug@
---@localization(locale="zhCN", format="lua_table", namespace="ZOMGLog")@
+--@localization(locale="zhCN", format="lua_table", namespace="ZOMGLog", handle-unlocalized="ignore")@
 end)

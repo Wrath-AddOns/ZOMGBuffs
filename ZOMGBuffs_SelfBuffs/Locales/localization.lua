@@ -48,4 +48,3 @@ L:RegisterTranslations("enUS", function() return {
 	["Special handling for Flask of the North"]				= true,
 	["Expiry prelude for flasks"]							= true,
 } end)
-
