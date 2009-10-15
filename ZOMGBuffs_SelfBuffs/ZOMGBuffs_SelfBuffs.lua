@@ -1333,7 +1333,6 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
-z:Print(format("SpellCastSucceeded(%s, %s, %s, %s)", tostring(spell), tostring(rank), tostring(target), tostring(manual)))
 	if (spell == self.lastEnchantSet and target == UnitName("player")) then
 		if (z.icon.mod == self) then
 			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
