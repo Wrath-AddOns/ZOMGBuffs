@@ -1211,9 +1211,27 @@ function zs:MakeItemOptions()
 	del(list)
 end
 
+-- ValidateTemplate
+-- Cleanup a bug that would put any casted spell into the template..
+function zs:ValidateTemplate(template)
+	if (template) then
+		for key in pairs(template) do
+			local buff = self.classBuffs[key]
+			if (not buff) then
+				if (key ~= "modified" and key ~= "mainhand" and key ~= "offhand") then
+					template[key] = nil
+				end
+			elseif (buff.who == "weapon") then
+				template[key] = nil
+			end
+		end
+	end
+end
+
 -- SelectTemplate
 function zs:OnSelectTemplate(templateName)
 	template = self:GetTemplates().current
+	self:ValidateTemplate()
 
 	for key,buff in pairs(self.classBuffs) do
 		if (template[key]) then
@@ -1315,6 +1333,7 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
+z:Print(format("SpellCastSucceeded(%s, %s, %s, %s)", tostring(spell), tostring(rank), tostring(target), tostring(manual)))
 	if (spell == self.lastEnchantSet and target == UnitName("player")) then
 		if (z.icon.mod == self) then
 			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
@@ -1327,7 +1346,15 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 
 	if (manual) then
 		if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
-			self:ModifyTemplate(spell, true)
+			local buff = self.classBuffs[spell]
+			if (buff) then
+				if (buff.who == "weapon") then
+					self:ModifyTemplate("mainhand", spell)
+					z:SetupForSpell()			-- Avoid race condition with weapon buffs not refreshing immediately
+				else
+					self:ModifyTemplate(spell, true)
+				end
+			end
 		end
 	end
 
@@ -1670,6 +1697,8 @@ function zs:OnModuleEnable()
 
 	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	z:CheckForChange(self)
+
+	self:ValidateTemplate(template)
 
 	local alc = GetSpellInfo(51304)
 	if (GetSpellInfo(alc) and GetItemCount(47499, true) > 0) then
