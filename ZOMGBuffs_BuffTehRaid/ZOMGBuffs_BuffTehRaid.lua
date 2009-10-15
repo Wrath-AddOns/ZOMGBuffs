@@ -2015,6 +2015,7 @@ do
 		if (enable == 1) then
 			self.icon:SetVertexColor(1, 1, 1)
 		else
+			self.needsCooldown = true
 			self.icon:SetVertexColor(0.5, 0.5, 0.5)
 		end
 	end
@@ -2033,7 +2034,8 @@ do
 
 				if (self.wasOnCooldown) then
 					local buff = zg.buffs[self.key]
-					if (buff) then
+					if (buff and self.needsCooldown) then
+						self.needsCooldown = nil
 						z:Notice(format(L["%s cooldown ready for %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
 						PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
 					end
@@ -2325,6 +2327,7 @@ do
 		if (oldUnit and not UnitIsUnit(oldUnit, target)) then
 			self.timeLeft = nil
 			self.had = nil
+			self.needsCooldown = nil
 		end
 
 		if (not self.dummy and not InCombatLockdown()) then
@@ -2526,6 +2529,7 @@ function zg:GetFreeTrackIcon(key)
 					icon.remove = nil
 					icon.temp = nil
 					icon.had = nil
+					icon.needsCooldown = nil
 					icon.spell = nil
 					icon.key = nil
 					icon.target = nil
