@@ -126,6 +126,15 @@ do
 						passValue = "tracker",
 						order = 1,
 					},
+					lock = {
+						type = 'toggle',
+						name = L["Lock"],
+						desc = L["Lock all the Tracker icons to their current position"],
+						get = getOption,
+						set = setOption,
+						passValue = "lock",
+						order = 10,
+					},
 					sound = {
 						type = 'text',
 						name = L["Sound"],
@@ -2186,6 +2195,13 @@ do
 		GameTooltip:Show()
 	end
 
+	-- icon.OnDragStart
+	local function iconOnDragStart(self)
+		if (not zg.db.char.lock) then
+			self:StartMoving()
+		end
+	end
+
 	-- icon.OnDragStop
 	local function iconOnDragStop(self)
 		self:StopMovingOrSizing()
@@ -2438,7 +2454,7 @@ do
 
 		icon:Hide()
 
-		icon:SetScript("OnDragStart",	icon.StartMoving)
+		icon:SetScript("OnDragStart",	iconOnDragStart)
 		icon:SetScript("OnDragStop",	iconOnDragStop)
 		icon:SetScript("OnUpdate",		iconOnUpdate)
 		icon:SetScript("OnEvent",		iconOnEvent)
