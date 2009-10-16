@@ -2117,6 +2117,7 @@ do
 			self.timeLeft = nil
 		end
 
+		local start, duration, enable = GetSpellCooldown(self.spell)
 		if (self.had) then
 			self.had = nil
 			if (UnitIsVisible(self.target)) then
@@ -2128,6 +2129,9 @@ do
 				if (buff and not buff.noaura) then
 					z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
 					PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+					if (enable == 1) then
+						self.needsCooldown = nil
+					end
 				end
 			end
 		end
@@ -2137,7 +2141,6 @@ do
 		self.count:SetText("0")
 		self.count:SetTextColor(1, 0, 0)
 
-		local start, duration, enable = GetSpellCooldown(self.spell)
 		if (enable == 1 and (start == 0 or (start+duration) - GetTime() < 1.5)) then
 			self.swirl:Show()
 		else
@@ -2306,9 +2309,15 @@ do
 		self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 		self.key = nil
 
-		if (not InCombatLockdown() and self.keybinding) then
-			SetBinding(self.keybinding, nil)
-			self.keybinding = nil
+		if (not InCombatLockdown()) then
+			if (self.keybinding) then
+				SetBinding(self.keybinding, nil)
+				self.keybinding = nil
+			end
+
+			self:SetAttribute("unit", nil)
+			self:SetAttribute("type", nil)
+			self:SetAttribute("spell", nil)
 		end
 	end
 

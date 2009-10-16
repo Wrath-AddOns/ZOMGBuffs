@@ -5,5 +5,5 @@ L:RegisterTranslations("esES", function() return
 {
 }
 --@end-debug@
---@localization(locale="esES", format="lua_table", namespace="ZOMGBlessingsManager", handle-unlocalized="ignore")@
+--@localization(locale="esES", format="lua_table", namespace="ZOMGBlessingsManager", handle-unlocalized="ignore", same-key-is-true="true")@
 end)

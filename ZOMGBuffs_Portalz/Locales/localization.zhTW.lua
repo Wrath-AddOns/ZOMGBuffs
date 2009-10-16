@@ -5,5 +5,5 @@ L:RegisterTranslations("zhTW", function() return
 {
 }
 --@end-debug@
---@localization(locale="zhTW", format="lua_table", namespace="ZOMGPortalz", handle-unlocalized="ignore")@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGPortalz", handle-unlocalized="ignore", same-key-is-true="true")@
 end)
