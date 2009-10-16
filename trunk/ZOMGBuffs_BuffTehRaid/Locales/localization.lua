@@ -63,6 +63,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Define the key used for rebuffing %s from it's Spell Tracker icon"] = true,
 	["No Auto-cast"]								= true,
 	["Disables auto-casting for %s in favor of rebuffing via tracker icons or their hotkeys"] = true,
+	["Lock"]										= true,
+	["Lock all the Tracker icons to their current position"] = true,
 
 	["TICKCLICKHELP1"]								= "|cFFFFFFFFClick|r to toggle player",
 	["TICKCLICKHELP2"]								= "|cFFFFFFFFRight-Click|r to toggle everyone",
