@@ -3,6 +3,8 @@
 	return
 end
 
+local wowVersion = tonumber((select(2,GetBuildInfo())))
+
 local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
@@ -555,9 +557,12 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "PRIEST") then
 		classBuffs = {
 			{id = 25218, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
-			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},									-- Inner Fire
+			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},					-- Inner Fire
 			{id = 45455, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
+		if (wowVersion > 10505) then		-- WoW 3.3 or better
+			tinsret(classBuffs, {id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"})				-- Vampiric Embrace (changed to a self buff with 3.3)
+		end
 
 	elseif (playerClass == "WARLOCK") then
 		classBuffs = {
@@ -1333,7 +1338,8 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
-	if (spell == self.lastEnchantSet and target == UnitName("player")) then
+	local buff = self.classBuffs[spell]
+	if (buff and buff.who == "weapon") then
 		if (z.icon.mod == self) then
 			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
 				z:SetupForSpell()
@@ -1345,7 +1351,6 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 
 	if (manual) then
 		if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
-			local buff = self.classBuffs[spell]
 			if (buff) then
 				if (buff.who == "weapon") then
 					self:ModifyTemplate("mainhand", spell)
