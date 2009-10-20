@@ -5,6 +5,6 @@ L:RegisterTranslations("zhTW", function() return
 {
 }
 --@end-debug@
---@localization(locale="zhTW", format="lua_table", namespace="ZOMGBuffTehRaid", handle-unlocalized="ignore", same-key-is-true="true")@
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGBuffTehRaid", handle-unlocalized="ignore")@
 end)
 
