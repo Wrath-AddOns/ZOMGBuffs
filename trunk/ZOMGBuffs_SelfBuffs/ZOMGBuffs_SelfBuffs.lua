@@ -1338,13 +1338,26 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
+	local ospell = spell
 	local buff = self.classBuffs[spell]
+	if (not buff and target == "") then
+		rank = tonumber(strmatch(rank, "(%d+)"))
+		if (rank) then
+			for name,info in pairs(self.classBuffs) do
+				local strrank = info.sequence and info.sequence[rank]
+				if (strrank) then
+					if (name .. strrank == spell) then
+						spell = name
+						buff = info
+						break
+					end
+				end
+			end
+		end
+	end
 	if (buff and buff.who == "weapon") then
 		if (z.icon.mod == self) then
-			if ((z.icon:GetAttribute("spell") or z.icon:GetAttribute("item")) == spell) then
-				z:SetupForSpell()
-				z:RequestSpells()
-			end
+			z:SetupForSpell()
 		end
 		self.activeEnchant = nil
 	end
