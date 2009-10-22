@@ -431,7 +431,10 @@ end
 -- SendSelf
 function mod:SendSelf()
 	if (not self.initialized) then
-		return
+		self:ScanSpells()
+		if (not self.initialized) then
+			return
+		end
 	end
 
 	local s = self:GetSelf() .. "@"
@@ -487,7 +490,7 @@ function mod:SendSelf()
 	s = ""
 	local AuraInfo = self.AllPallys[self.player].AuraInfo
 	for i = 1, PALLYPOWER_MAXAURAS do
-		if not AuraInfo[i] then
+		if not AuraInfo or not AuraInfo[i] then
 			s = s.."nn"
 		else
 			s = s .. string.format("%x%x", AuraInfo[i].rank, AuraInfo[i].talent)

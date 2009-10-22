@@ -417,8 +417,10 @@ function zs:CheckBuffs()
 							cdef = cdef()
 						end
 						if (c > cdef) then
-							c = cdef
-							charges[k] = cdef
+							if (LGT:GetUnitTalents("player")) then
+								c = cdef
+								charges[k] = cdef
+							end
 						end
 					end
 
