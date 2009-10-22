@@ -2438,7 +2438,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 			icon = "icon"
 			icontex = texture
 		elseif (playerClass == "PRIEST" and p.notWithSpiritTap) then
-			if (self:UnitHasBuff("player", 15338)) then		-- Spirit Tap
+			if (self:UnitHasBuff("player", 15271)) then		-- Spirit Tap
 				lastCheckFail = L["SPIRITTAP"]
 				icon = "spirittap"
 			end
@@ -4012,8 +4012,15 @@ do
 		end
 
 		if (self ~= z.icon) then
-			local spec = LGT:GetUnitTalentSpec(self:GetAttribute("unit"))
+			local unit = self:GetAttribute("unit")
+			local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
 			if (spec) then
+				local _, class = UnitClass(unit)
+				if (class == "DEATHKNIGHT" or (class == "DRUID" and s2 > s1 + s3)) then
+					local role = LGT:GetUnitRole(unit)
+					spec = format("%s (%s)", spec, role == "tank" and TANK or DAMAGE)
+				end
+
 				GameTooltipTextRight1:SetText(spec)
 				GameTooltipTextRight1:SetTextColor(0.5, 0.5, 0.5)
 				GameTooltipTextRight1:Show()
