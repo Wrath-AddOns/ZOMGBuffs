@@ -2620,7 +2620,7 @@ function man:OnReceiveBroadcastTemplatePart(sender, name, class, buff)
 	self:argCheck(name, 2, "string")
 	self:argCheck(class, 3, "string")
 	self:argCheck(buff, 4, "string", "nil")
---@no-debug@
+--@end-debug@
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala[name]
 		if (pala) then
@@ -2639,7 +2639,7 @@ function man:OnReceiveBroadcastAura(sender, name, aura)
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(buff, 3, "string", "nil")
---@no-debug@
+--@end-debug@
 
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala[name]
@@ -2663,7 +2663,7 @@ function man:OnReceiveTemplatePart(sender, name, classOrName, spell)
 	self:argCheck(name, 2, "string")
 	self:argCheck(classOrName, 3, "string")
 	self:argCheck(spell, 4, "string", "nil")
---@no-debug@
+--@end-debug@
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala and self.pala[name]
 		if (pala) then
@@ -3725,7 +3725,7 @@ function man:SetCell(row, col, Type, panel)
 	self:argCheck(row, 1, "number")
 	self:argCheck(col, 2, "number")
 	self:argCheck(Type, 3, "string", "nil")
---@no-debug@
+--@end-debug@
 	if (panel) then
 		if (row and col) then
 			local class = self.expandpanel.class
@@ -3851,7 +3851,7 @@ function man:SetException(name, row, col, n)
 	self:argCheck(row, 2, "number")
 	self:argCheck(col, 3, "number")
 	self:argCheck(n, 4, "string", "nil")
---@no-debug@
+--@end-debug@
 	local class = classOrder[col]
 	if (not man.configuring and self.canEdit) then
 		local pala, palaName = self:GetPalaFromRow(row)
@@ -4659,7 +4659,7 @@ function man:OnModifyTemplate(key, value)
 --@debug@
 	self:argCheck(key, 1, "string")
 	self:argCheck(value, 2, "string", "nil")
---@no-debug@
+--@end-debug@
 end
 
 -- OnReceiveAck

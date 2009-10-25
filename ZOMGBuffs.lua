@@ -96,7 +96,7 @@ do
 		__newindex = function(self) error("Attempt to assign to a recycled table") end,
 		__index = function(self) return errorTable end,		--error("Attempt to access a recycled table") end,
 	}
---@no-debug@
+--@end-debug@
 
 	local next, select, pairs, type = next, select, pairs, type
 	local list = setmetatable({},{__mode='k'})
@@ -108,7 +108,7 @@ do
 --@debug@
 			setmetatable(t, nil)
 			assert(not next(t))
---@no-debug@
+--@end-debug@
 			for i = 1, select('#', ...) do
 				t[i] = select(i, ...)
 			end
@@ -129,7 +129,7 @@ do
 --@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@no-debug@
+--@end-debug@
 		end
 	end
 	function deepDel(t)
@@ -148,7 +148,7 @@ do
 --@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@no-debug@
+--@end-debug@
 		end
 	end
 	function copy(old)
@@ -398,7 +398,7 @@ function z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 		end
 	end
 end
---@no-debug@
+--@end-debug@
 
 local function getOption(v)
 	return z.db.profile[v]
