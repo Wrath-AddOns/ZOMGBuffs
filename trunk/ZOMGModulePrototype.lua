@@ -62,7 +62,7 @@ end
 function z.modulePrototype.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 	z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 end
---@no-debug@
+--@end-debug@
 
 function z.modulePrototype:MakeTemplateDescription()
 	return L["Load this template"]
@@ -244,7 +244,7 @@ function z.modulePrototype:ModifyTemplate(key, value)
 --@debug@
 	self:argCheck(key, 1, "string")
 	self:argCheck(value, 2, "string", "boolean", "nil")
---@no-debug@
+--@end-debug@
 	if (self.db) then
 		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
 

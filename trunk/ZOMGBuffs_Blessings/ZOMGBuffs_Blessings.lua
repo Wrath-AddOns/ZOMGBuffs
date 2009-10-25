@@ -734,7 +734,7 @@ function zb:OnModifyTemplate(class, type, response)
 --@debug@
 	self:argCheck(class, 1, "string")
 	self:argCheck(type, 2, "string", "nil")
---@no-debug@
+--@end-debug@
 	self:BroadcastTemplate(response)
 end
 
