@@ -1547,7 +1547,7 @@ function man:ReadPaladinSpec(pala, name)
 				pala.canEdit = false
 			end
 		end
-		if (not pala.template) then
+		if (not pala.template or not next(pala.template)) then
 			z:SendComm(name, "REQUESTTEMPLATE", nil)
 		end
 	end
