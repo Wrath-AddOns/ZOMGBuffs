@@ -5208,7 +5208,10 @@ end
 function z:SendComm(fname, ...)
 	if (UnitExists(fname) and UnitIsConnected(fname)) then
 		if (UnitIsUnit("player", fname)) then
-			z.OnCommReceive[...](self, self.commPrefix, fname, "WHISPER", select(2, ...))
+			local func = z.OnCommReceive[...]
+			if (func) then
+				func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
+			end
 		else
 			if (self:IsInBattlegrounds()) then
 				local name, server = UnitName(fname)
