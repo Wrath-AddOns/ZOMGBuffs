@@ -1540,13 +1540,17 @@ function man:ReadPaladinSpec(pala, name)
 		pala.canEdit = true
 	end
 	local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
-	if (not pala.spec) then
-		z:SendComm(name, "REQUESTCAPABILITY", nil)
-		if (pala.canEdit == nil) then
-			pala.canEdit = false
+	if (type(ver) == "number") then
+		if (not pala.spec) then
+			z:SendComm(name, "REQUESTCAPABILITY", nil)
+			if (pala.canEdit == nil) then
+				pala.canEdit = false
+			end
+		end
+		if (not pala.template) then
+			z:SendComm(name, "REQUESTTEMPLATE", nil)
 		end
 	end
-	z:SendComm(name, "REQUESTTEMPLATE", nil)
 end
 
 -- AssignPaladins
@@ -1617,19 +1621,21 @@ function man:AssignPaladins()
 		else
 			self:ReadPaladinSpec(pala, name)
 
-			if (ver) then
-				if (type(ver) == "string" and strfind(ver, "PallyPower")) then
-					pala.gotCapabilities = true
-					pala.canEdit = true
-					if (ZOMGBlessingsPP) then
-						ZOMGBlessingsPP:Announce()
-					end
+			local ver = ZOMGBuffs.versionRoster and ZOMGBuffs.versionRoster[name]
+			if (type(ver) == "string" and strfind(ver, "PallyPower")) then
+				pala.gotCapabilities = true
+				pala.canEdit = true
+				if (ZOMGBlessingsPP) then
+					ZOMGBlessingsPP:Announce()
 				end
-			end
+			elseif (not ver) then
+				self.coveringHellos = self.coveringHellos or new()
+				if ((self.coveringHellos[name] or 0) < GetTime() - 60) then
+					self.coveringHellos[name] = GetTime()
 
-			if (not ver) then
-				-- Cover occasional times when the pala misses the hello, and doesn't send one
-				z:SendComm(name, "HELLO", z.version)
+					-- Cover occasional times when the pala misses the hello, and doesn't send one
+					z:SendComm(name, "HELLO", z.version)
+				end
 			end
 		end
 	end
