@@ -1666,7 +1666,7 @@ function man:OnReceiveTemplate(sender, template, modified)
 
 	local pala = self.pala and self.pala[sender]
 	if (pala) then
-		pala.template = copy(template)
+		pala.template = copy(template) or {}
 		pala.template.modified = nil
 
 		local def = pala.template.default
