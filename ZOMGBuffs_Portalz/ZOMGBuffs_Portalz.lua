@@ -701,6 +701,10 @@ function module:CreateItemButtons()
 			[48955] = true,				-- Etched Loop of the Kirin Tor
 			[48956] = true,				-- Etched Ring of the Kirin Tor
 			[48957] = true,				-- Etched Signet of the Kirin Tor
+			[51557] = true,				-- Runed Signet of the Kirin Tor
+			[51558] = true,				-- Runed Loop of the Kirin Tor
+			[51559] = true,				-- Runed Ring of the Kirin Tor
+			[51560] = true,				-- Runed Band of the Kirin Tor
 			[46874] = true,				-- Argent Crusader's Tabard
 		}
 
