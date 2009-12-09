@@ -464,7 +464,7 @@ z.options = {
 					name = L["Auto Buy Reagents"],
 					desc = L["Automatically purchase required reagents from Reagents Vendor"],
 					get = getPCOption,
-					set = function(v,n) setPCOption(v,n) --[[ z:SetupAutoBuy() ]] end,
+					set = function(v,n) setPCOption(v,n) end,
 					hidden = hideReagentOpts,
 					passValue = "autobuyreagents",
 					order = 1,
@@ -1528,14 +1528,16 @@ function z:GetAllActions()
 			{name = L["Target"], desc = L["Targetting"], type = "target"},
 		}
 		for name, mod in self:IterateModulesWithMethod("GetActions") do
-			if (mod.ResetActions) then
-				mod:ResetActions()
-			end
-			local moreActions = mod:GetActions()
-			if (moreActions) then
-				for i,action in ipairs(moreActions) do
-					action.mod = mod
-					tinsert(self.actions, action)
+			if (mod:IsModuleActive()) then
+				if (mod.ResetActions) then
+					mod:ResetActions()
+				end
+				local moreActions = mod:GetActions()
+				if (moreActions) then
+					for i,action in ipairs(moreActions) do
+						action.mod = mod
+						tinsert(self.actions, action)
+					end
 				end
 			end
 		end
@@ -3165,10 +3167,12 @@ function z:PeriodicListCheck()
 		local highlight, rebuffer
 		for name, module in self:IterateModulesWithMethod("RebuffQuery") do
 			rebuffer = true
-			if (module:RebuffQuery(unitid)) then
-				highlight = true
-				any = true
-				break
+			if (module:IsModuleActive()) then
+				if (module:RebuffQuery(unitid)) then
+					highlight = true
+					any = true
+					break
+				end
 			end
 		end
 
@@ -3503,9 +3507,11 @@ local function DrawCell(self)
 	local highlight, rebuffer
 	for modname, module in z:IterateModulesWithMethod("RebuffQuery") do
 		rebuffer = true
-		if (module:RebuffQuery(partyid)) then
-			highlight = true
-			break
+		if (module:IsModuleActive()) then
+			if (module:RebuffQuery(partyid)) then
+				highlight = true
+				break
+			end
 		end
 	end
 
@@ -4252,7 +4258,9 @@ function z:OnRaidRosterUpdate()
 	end
 
 	for name, module in self:IterateModulesWithMethod("OnRaidRosterUpdate") do
-		module:OnRaidRosterUpdate()
+		if (module:IsModuleActive()) then
+			module:OnRaidRosterUpdate()
+		end
 	end
 
 	if (self.MaybeLoadManager) then
@@ -4425,7 +4433,9 @@ function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
 
 		if (spell == self.lastCastS and rank == self.lastCastR) then
 			for name, module in self:IterateModulesWithMethod("SpellCastSucceeded") do
-				module:SpellCastSucceeded(self.lastCastS, self.lastCastR, self.lastCastN, not self.clickCast, self.clickList)
+				if (module:IsModuleActive()) then
+					module:SpellCastSucceeded(self.lastCastS, self.lastCastR, self.lastCastN, not self.clickCast, self.clickList)
+				end
 			end
 		end
 
@@ -4501,7 +4511,9 @@ function z:PLAYER_REGEN_ENABLED()
 	self:RequestSpells()
 
 	for name, module in self:IterateModulesWithMethod("OnRegenEnabled") do
-		module:OnRegenEnabled()
+		if (module:IsModuleActive()) then
+			module:OnRegenEnabled()
+		end
 	end
 
 	if (self.updateListWidthOOC) then
@@ -4523,7 +4535,9 @@ function z:PLAYER_REGEN_DISABLED()
 	end
 
 	for name, module in self:IterateModulesWithMethod("OnRegenDisabled") do
-		module:OnRegenDisabled()
+		if (module:IsModuleActive()) then
+			module:OnRegenDisabled()
+		end
 	end
 
 	if (self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
@@ -4570,8 +4584,10 @@ function z:UNIT_PET(ownerid)
 
 		if (petid and UnitExists(petid) and UnitCanAssist("player", petid)) then
 			for name, module in self:IterateModulesWithMethod("RebuffQuery") do
-				if (module:RebuffQuery(petid)) then
-					module:CheckBuffs()
+				if (module:IsModuleActive()) then
+					if (module:RebuffQuery(petid)) then
+						module:CheckBuffs()
+					end
 				end
 			end
 		end
@@ -4691,7 +4707,9 @@ function z:OnTooltipUpdate()
 	end
 
 	for name, module in self:IterateModulesWithMethod("TooltipUpdate") do
-		module:TooltipUpdate(cat)
+		if (module:IsModuleActive()) then
+			module:TooltipUpdate(cat)
+		end
 	end
 
 	--UpdateAddOnMemoryUsage()
@@ -4715,17 +4733,6 @@ function z:OnTextUpdate()
   		end
   	end
 end
-
--- SetupAutoBuy
---[[ function z:SetupAutoBuy()
-	if (self.db.char.autobuyreagents) then
-		self:RegisterEvent("MERCHANT_SHOW")
-	else
-		if (self:IsEventRegistered("MERCHANT_SHOW")) then
-			self:UnregisterEvent("MERCHANT_SHOW")
-		end
-	end
-end ]]
 
 -- GetMerchantBuyItemList
 function z:GetMerchantBuyItemList()
@@ -4883,7 +4890,9 @@ function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
 		end
 
 		for name, module in self:IterateModulesWithMethod("BuffResponse") do
-			module:BuffResponse(sender, msg)
+			if (module:IsModuleActive()) then
+				module:BuffResponse(sender, msg)
+			end
 		end
 	end
 end
@@ -5758,7 +5767,6 @@ function z:OnEnable()
 	self.chatAnswer = L["CHATANSWER"]
 
 	self:HookChat()
-	--self:SetupAutoBuy()
 
 	self.icon:Show()
 

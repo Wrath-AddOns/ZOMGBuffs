@@ -472,7 +472,7 @@ function zb:CheckBuffs()
 		end
 	end
 
-	if (z.db.profile.waitforraid > 0) then
+	if (z.db.profile.waitforraid > 0 and not skipGreater) then
 		-- See if enough of raid present
 		local count = GetNumRaidMembers()
 		if (count > 0) then
@@ -489,7 +489,7 @@ function zb:CheckBuffs()
 	z.waitingForRaid = nil
 	z.waitingForClass = nil
 
-	if (z.db.profile.waitforclass) then
+	if (z.db.profile.waitforclass and not skipGreater) then
 		-- TODO Test: 1 in range, but all IsVisible(), because catch range on blessings is huge (80+ yards)   ??????
 		-- Currently it waits for all to be in range, which has some issues if extra people are in raid but not attending
 
@@ -704,7 +704,7 @@ function zb:ShowBuffBar(cell, name)
 		local unitname = UnitName(unit)
 		local _, class = UnitClass(unit)
 		if (class and unitname) then
-			local need = template[name] or template[class]
+			local need = template[unitname] or template[class]
 			if (need) then
 				local got = z.blessings[name]
 				if (got) then

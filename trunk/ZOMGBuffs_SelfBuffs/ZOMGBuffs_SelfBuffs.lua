@@ -1201,6 +1201,15 @@ function zs:MakeItemOptions()
 	end
 
 	if (any) then
+		args.learnable = {
+			type = "toggle",
+			name = L["Learnable"],
+			desc = L["Learnable"],
+			order = 1000,
+			get = function() return self.db.char.itemsLearnable end,
+			set = function(k,n) self.db.char.itemsLearnable = n end,
+		}
+
 		if (not zs.options.args.item) then
 			zs.options.args.item = {
 				type = "group",
@@ -1340,38 +1349,40 @@ end
 
 -- SpellCastSucceeded
 function zs:SpellCastSucceeded(spell, rank, target, manual)
-	local ospell = spell
-	local buff = self.classBuffs[spell]
-	if (not buff and target == "") then
-		rank = tonumber(strmatch(rank, "(%d+)"))
-		if (rank) then
-			for name,info in pairs(self.classBuffs) do
-				local strrank = info.sequence and info.sequence[rank]
-				if (strrank) then
-					if (name .. strrank == spell) then
-						spell = name
-						buff = info
-						break
+	if (self.db.char.itemsLearnable) then
+		local ospell = spell
+		local buff = self.classBuffs[spell]
+		if (not buff and target == "") then
+			rank = tonumber(strmatch(rank, "(%d+)"))
+			if (rank) then
+				for name,info in pairs(self.classBuffs) do
+					local strrank = info.sequence and info.sequence[rank]
+					if (strrank) then
+						if (name .. strrank == spell) then
+							spell = name
+							buff = info
+							break
+						end
 					end
 				end
 			end
 		end
-	end
-	if (buff and buff.who == "weapon") then
-		if (z.icon.mod == self) then
-			z:SetupForSpell()
+		if (buff and buff.who == "weapon") then
+			if (z.icon.mod == self) then
+				z:SetupForSpell()
+			end
+			self.activeEnchant = nil
 		end
-		self.activeEnchant = nil
-	end
 
-	if (manual) then
-		if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
-			if (buff) then
-				if (buff.who == "weapon") then
-					self:ModifyTemplate("mainhand", spell)
-					z:SetupForSpell()			-- Avoid race condition with weapon buffs not refreshing immediately
-				else
-					self:ModifyTemplate(spell, true)
+		if (manual) then
+			if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
+				if (buff) then
+					if (buff.who == "weapon") then
+						self:ModifyTemplate("mainhand", spell)
+						z:SetupForSpell()			-- Avoid race condition with weapon buffs not refreshing immediately
+					else
+						self:ModifyTemplate(spell, true)
+					end
 				end
 			end
 		end
@@ -1663,6 +1674,7 @@ function zs:OnModuleInitialize()
 	self.db = z:AcquireDBNamespace("SelfBuffs")
 	z:RegisterDefaults("SelfBuffs", "char", {
 		useauto = true,
+		itemsLearnable = true,
 		templates = {},
 		reagents = {},
 		combatnotice = true,

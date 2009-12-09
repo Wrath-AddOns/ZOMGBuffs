@@ -506,6 +506,7 @@ function mod:SendSymCount()
 	self:SendMessage("SYMCOUNT "..(GetItemCount(21177) or 0))
 end
 
+local lastZOMG
 -- SendMessage
 function mod:SendMessage(msg)
 	local dist
@@ -517,8 +518,19 @@ function mod:SendMessage(msg)
 		dist = "PARTY"
 	end
 	if (dist) then
-		SendAddonMessage(ppPrefix, "ZOMG", dist)
-		SendAddonMessage(ppPrefix, msg, dist)
+		if (_G.ChatThrottleLib) then
+			if ((lastZOMG or 0) < GetTime() - 15) then
+				lastZOMG = GetTime()
+				_G.ChatThrottleLib:SendAddonMessage("NORMAL", ppPrefix, "ZOMG", dist)
+			end
+			_G.ChatThrottleLib:SendAddonMessage("NORMAL", ppPrefix, msg, dist)
+		else
+			if ((lastZOMG or 0) < GetTime() - 15) then
+				lastZOMG = GetTime()
+				SendAddonMessage(ppPrefix, "ZOMG", dist)
+			end
+			SendAddonMessage(ppPrefix, msg, dist)
+		end
 	end
 end
 
