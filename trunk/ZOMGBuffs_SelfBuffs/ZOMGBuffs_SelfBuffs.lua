@@ -563,7 +563,7 @@ function zs:GetClassBuffs()
 			{id = 45455, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
 		if (wowVersion > 10505) then		-- WoW 3.3 or better
-			tinsret(classBuffs, {id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"})				-- Vampiric Embrace (changed to a self buff with 3.3)
+			tinsert(classBuffs, {id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"})				-- Vampiric Embrace (changed to a self buff with 3.3)
 		end
 
 	elseif (playerClass == "WARLOCK") then
