@@ -30,6 +30,14 @@ local UnitIsPVP			= UnitIsPVP
 local UnitInRaid		= UnitInRaid
 local UnitIsUnit		= UnitIsUnit
 
+local function UnitFullName(unit)
+	local name, server = UnitName(unit)
+	if (server and server ~= "") then
+		name = format("%s-%s", name, server)
+	end
+	return name
+end
+
 local function getOption(k)
 	return zg.db.char[k]
 end
@@ -956,7 +964,7 @@ function zg:RebuffQuery(unit)
 			if (template[key] and not got[key]) then
 				if (not info.onlyManaUsers or manaUser) then
 					if (info.limited) then
-						if (limited and limited[key] and limited[key][UnitName(unit)]) then
+						if (limited and limited[key] and limited[key][UnitFullName(unit)]) then
 							del(got)
 							return true
 						end
@@ -1375,7 +1383,7 @@ function zg:TickColumnCallback(unit, key, enable)
 		error(format("No column for key %q", tostring(key)), 2)
 	end
 	if (column) then
-		local name = UnitName(unit)
+		local name = UnitFullName(unit)
 		if (name) then
 			if (enable == nil) then
 				local list = template.limited and template.limited[key]
@@ -1518,9 +1526,9 @@ local function tickOnClick(self, button)
 			end
 
 		else
-			zg:TickOne(index, UnitName(unitid), enable)									-- Tick this one
+			zg:TickOne(index, UnitFullName(unitid), enable)									-- Tick this one
 			if (offIndex) then
-				zg:TickOne(offIndex, UnitName(unitid), false)
+				zg:TickOne(offIndex, UnitFullName(unitid), false)
 			end
 		end
 
@@ -1549,7 +1557,7 @@ local function tickOnEnter(self)
 			if (not done) then
 				done = true
 				GameTooltip:SetOwner(self, "ANCHOR_TOP")
-				GameTooltip:SetText(format(L["%s on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(UnitName(unitid))))
+				GameTooltip:SetText(format(L["%s on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(UnitFullName(unitid))))
 			end
 			help = help:gsub("$class", cclass)
 			help = help:gsub("$party", cgroup)
