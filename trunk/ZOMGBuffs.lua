@@ -2,6 +2,8 @@ local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
+local wowVersion = tonumber((select(2, GetBuildInfo())))
+
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
 BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
@@ -5213,24 +5215,31 @@ function z:GetGroupNumber(unit)
 	return 1
 end
 
+-- CanSendXRealm
+local function CanSendXRealm(fname)
+	return wowVersion > 11159 or not strfind(fname, "%-") or select(2, IsInInstance()) == "battleground"
+end
+
 -- SendComm
 function z:SendComm(fname, ...)
 	if (UnitExists(fname) and UnitIsConnected(fname)) then
-		if (UnitIsUnit("player", fname)) then
-			local func = z.OnCommReceive[...]
-			if (func) then
-				func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
-			end
-		else
-			if (self:IsInBattlegrounds()) then
-				local name, server = UnitName(fname)
-				if (server and server ~= "") then
-					self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
-				else
-					self:SendCommMessage("WHISPER", name, ...)
+		if (CanSendXRealm(fname)) then
+			if (UnitIsUnit("player", fname)) then
+				local func = z.OnCommReceive[...]
+				if (func) then
+					func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
 				end
 			else
-				self:SendCommMessage("WHISPER", fname, ...)
+				if (self:IsInBattlegrounds()) then
+					local name, server = UnitName(fname)
+					if (server and server ~= "") then
+						self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
+					else
+						self:SendCommMessage("WHISPER", name, ...)
+					end
+				else
+					self:SendCommMessage("WHISPER", fname, ...)
+				end
 			end
 		end
 	end

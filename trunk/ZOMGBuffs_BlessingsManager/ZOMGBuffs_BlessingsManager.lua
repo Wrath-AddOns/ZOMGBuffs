@@ -671,7 +671,7 @@ local function splitDragStop(self)
 
 	for n = 1,man:SplitColumnCount(f.class) do
 		local column = f.column[n]
-		if (MouseIsOver(column)) then
+		if (column:IsMouseOver()) then
 			target = n
 			break
 		end

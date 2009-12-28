@@ -559,8 +559,7 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "PRIEST") then
 		classBuffs = {
 			{id = 25218, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
-			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080", exclude = function() return IsUsableSpell(GetSpellInfo(48168)) end},					-- Inner Fire
-      {id = 48168, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},					-- Inner Fire (+spellpower)			
+			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},					-- Inner Fire
 			{id = 15473, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
 		}
 		if (wowVersion > 10505) then		-- WoW 3.3 or better
