@@ -2765,6 +2765,26 @@ function zg:OnSpellsChanged()
 	z:CheckForChange(self)
 end
 
+-- OnRaidRosterUpdate
+function zg:OnRaidRosterUpdate()
+	-- Some magic to clear our X-Realm names from our settings if they no longer exist to us
+	local lim = template and template.limited
+	if (lim) then
+		for key,list in pairs(lim) do
+			for name in pairs(list) do
+				if (not UnitExists(name)) then
+					list[name] = nil
+					self:StopSpellTracker(key)
+					if (not next(list)) then
+						lim[key] = nil
+						break
+					end
+				end
+			end
+		end
+	end
+end
+
 -- ValidateTemplate
 function zg:ValidateTemplate(template)
 	for key,info in pairs(self.buffs) do

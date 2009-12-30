@@ -301,6 +301,10 @@ end
 
 -- OnSelectTemplate
 function zb:OnSelectTemplate(templateName)
+	local last = self:GetTemplates().last
+	if (last) then
+		last.state = nil
+	end
 	template = self:GetTemplates().current
 	self:ValidateTemplate(template)
 	z:Log("bless", nil, "select", templateName)
@@ -900,6 +904,14 @@ end
 -- OnRaidRosterUpdate
 function zb:OnRaidRosterUpdate()
 	if (template) then
+		for key,info in pairs(template) do
+			if (strfind(key, "%-")) then
+				if (not UnitExists(key)) then
+					template[key] = nil
+				end
+			end
+		end
+
 		z:CheckForChange(zb)		-- Because raid IDs can change
 		z:SendClass("PALADIN", "HELLO", z.version)
 	end

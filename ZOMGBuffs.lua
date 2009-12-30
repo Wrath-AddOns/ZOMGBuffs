@@ -5738,6 +5738,7 @@ function z:OnEnable()
 	self:SetKeyBindings()
 
 	self:RegisterEvent("RAID_ROSTER_UPDATE")
+	self:RegisterEvent("PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE")
 	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
