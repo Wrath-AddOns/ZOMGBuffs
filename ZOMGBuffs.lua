@@ -3519,15 +3519,29 @@ local function DrawCell(self)
 
 	-- Wierdo check for UnitInParty/Raid here because of a bug with GetPartyAssignment that spams
 	-- system messages during zoning for people that ARE in your party/raid
+	local icon
 	if (z.db.profile.showroles and not z.zoneFlag) then
-		local icon
-		if (GetPartyAssignment("MAINTANK", partyid)) then
-			icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
-		elseif (GetPartyAssignment("MAINASSIST", partyid)) then
-			icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
+		if (select(2, IsInInstance()) == "party") then
+			-- No point getting it otherwise, as they can be wrong. Usually the values you had
+			-- from previous instance if you're running more than one with the same people
+			local isTank, isHealer, isDamage = UnitGroupRolesAssigned(partyid)
+			if (isTank) then
+				icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
+			elseif (isHealer) then
+				icon = "|TInterface\\Addons\\ZOMGBuffs\\Textures\\RoleHealer:0|t"
+			elseif (isDamage) then
+				icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
+			end
+		else
+			if (GetPartyAssignment("MAINTANK", partyid)) then
+				icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
+			elseif (GetPartyAssignment("MAINASSIST", partyid)) then
+				icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
+			end
 		end
-
-		self.name:SetFormattedText("%s %s", unitname, icon or "")
+	end
+	if (icon) then
+		self.name:SetFormattedText("%s %s", unitname, icon)
 	else
 		self.name:SetText(unitname)
 	end
