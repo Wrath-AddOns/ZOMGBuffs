@@ -1378,8 +1378,8 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 			if (z:CanLearn() and (not zs.db.char.notlearnable or not zs.db.char.notlearnable[spell])) then
 				if (buff) then
 					if (buff.who == "weapon") then
-						self:ModifyTemplate("mainhand", spell)
-						z:SetupForSpell()			-- Avoid race condition with weapon buffs not refreshing immediately
+						--self:ModifyTemplate("mainhand", spell)
+						--z:SetupForSpell()			-- Avoid race condition with weapon buffs not refreshing immediately
 					else
 						self:ModifyTemplate(spell, true)
 					end

@@ -1042,7 +1042,7 @@ function zg:OnModuleInitialize()
 		self.reagents = {
 			[GetItemInfo(17028) or R["Holy Candle"]] = {20, 1, 500, minLevel = 48, maxLevel = 59},
 			[GetItemInfo(17029) or R["Sacred Candle"]] = {20, 1, 500, minLevel = 60, maxLevel = 79},
-			[GetItemInfo(44615) or R["Devout Candle"]] = {20, 1, 500, minLevel = 80, maxLevel = 89},
+			[GetItemInfo(44615) or R["Devout Candle"]] = {20, 1, 500, minLevel = 77, maxLevel = 89},
 		}
 
 	elseif (playerClass == "DRUID") then
@@ -2772,7 +2772,7 @@ function zg:OnRaidRosterUpdate()
 	if (lim) then
 		for key,list in pairs(lim) do
 			for name in pairs(list) do
-				if (not UnitExists(name)) then
+				if (not UnitInRaid(name) and not UnitInParty(name)) then
 					list[name] = nil
 					self:StopSpellTracker(key)
 					if (not next(list)) then
