@@ -561,6 +561,7 @@ end
 function mod:Announce()
 	self:SendMessage("ZOMG")								-- Let's other ZOMGBuffs users that this is not really PallyPower
 	self:SendMessage("REQ")
+	self:SendMessage("FREEASSIGN YES")
 	self:SendSelf()
 end
 

@@ -5229,31 +5229,24 @@ function z:GetGroupNumber(unit)
 	return 1
 end
 
--- CanSendXRealm
-local function CanSendXRealm(fname)
-	return wowVersion > 11159 or not strfind(fname, "%-") or select(2, IsInInstance()) == "battleground"
-end
-
 -- SendComm
 function z:SendComm(fname, ...)
 	if (UnitExists(fname) and UnitIsConnected(fname)) then
-		if (CanSendXRealm(fname)) then
-			if (UnitIsUnit("player", fname)) then
-				local func = z.OnCommReceive[...]
-				if (func) then
-					func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
+		if (UnitIsUnit("player", fname)) then
+			local func = z.OnCommReceive[...]
+			if (func) then
+				func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
+			end
+		else
+			if (self:IsInBattlegrounds()) then
+				local name, server = UnitName(fname)
+				if (server and server ~= "") then
+					self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
+				else
+					self:SendCommMessage("WHISPER", name, ...)
 				end
 			else
-				if (self:IsInBattlegrounds()) then
-					local name, server = UnitName(fname)
-					if (server and server ~= "") then
-						self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
-					else
-						self:SendCommMessage("WHISPER", name, ...)
-					end
-				else
-					self:SendCommMessage("WHISPER", fname, ...)
-				end
+				self:SendCommMessage("WHISPER", fname, ...)
 			end
 		end
 	end

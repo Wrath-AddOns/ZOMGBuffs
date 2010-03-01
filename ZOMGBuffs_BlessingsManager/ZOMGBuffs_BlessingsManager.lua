@@ -1626,7 +1626,9 @@ function man:AssignPaladins()
 				pala.gotCapabilities = true
 				pala.canEdit = true
 				if (ZOMGBlessingsPP) then
-					ZOMGBlessingsPP:Announce()
+					if (not pala.template or not next(pala.template)) then
+						ZOMGBlessingsPP:Announce()
+					end
 				end
 			elseif (not ver) then
 				self.coveringHellos = self.coveringHellos or new()
