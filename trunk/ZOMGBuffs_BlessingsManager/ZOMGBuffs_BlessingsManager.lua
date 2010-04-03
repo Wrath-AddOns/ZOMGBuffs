@@ -27,6 +27,7 @@ ZOMGBlessingsManager = man
 z:CheckVersion("$Revision$")
 
 do
+	local frostPresence = GetSpellInfo(48263)
 	local specWeight1p2 = function(unit, t1, t2, t3) return (t1 + t2) > t3 end
 	local specWeight1or3 = function(unit, t1, t2, t3) return t1 > t2 or t3 > t2 end
 	local specDKTank = function(unit, t1, t2, t3) return UnitAura(unit, frostPresence) ~= nil end
@@ -1054,7 +1055,7 @@ end
 function man:SplitAutoAssignClass(class)
 	for unit, unitname, unitclass, subgroup, index in z:IterateRoster() do
 		if ((not class or unitclass == class) and subgroup <= self.db.profile.groups) then
-			local splitDefs = self.classSplits[class]
+			local splitDefs = self.classSplits[unitclass]
 			if (splitDefs) then
 				local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
 				if (spec and s1 and s2 and s3) then
