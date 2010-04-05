@@ -864,7 +864,7 @@ function man:SplitCreateColumns()
 end
 
 -- SplitClass
-function man:SplitClass(class, dontClose)
+function man:SplitClass(class, dontClose, keepClosed)
 	-- Create frame
 	if (not self.splitframe) then
 		self:SplitCreateFrame()
@@ -877,8 +877,13 @@ function man:SplitClass(class, dontClose)
 			f:Close()
 			return
 		end
+		if (keepClosed) then
+			f:Close()
+		end
 	else
-		f:Open()
+		if (not keepClosed) then
+			f:Open()
+		end
 	end
 
 	f.class = class
@@ -1080,6 +1085,7 @@ function man:SplitAutoAssignClass(class)
 						end
 					end
 					if (belongsTo) then
+						self:SplitClass(unitclass, false, true)
 						self:SplitMovePlayer(unitname, nil, belongsTo)
 					end
 				end
