@@ -553,6 +553,9 @@ function zs:GetClassBuffs()
 			{id = 28176, o = 3, duration = 30, who = "self", dup = 1, c = "FF8080"},					-- Fel Armor
 			{id = 6229, o = 6, duration = 0.5, default = 5, who = "self", noauto = true, c = "FF60FF"},				-- Shadow Ward
 			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
+			{id = 79268, o = 8, duration = 0.15, who = "self", c = "9482C9", nocombatnotice = true,		-- Soul Harvest
+				skip = function() return not (UnitPower("player", SPELL_POWER_SOUL_SHARDS) < 3) end		-- Skip if shards are full
+			},
 		}
 
 	elseif (playerClass == "HUNTER") then
