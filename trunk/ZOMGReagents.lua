@@ -58,34 +58,7 @@ R:RegisterTranslations("deDE", function() return
 	["Corpse Dust"]				= "Leichenstaub",
 }
 --@end-debug@
-{
-	Ankh = "Ankh",
-	["Arcane Powder"] = "Arkanes Pulver",
-	["Ashwood Seed"] = "Eschenholzsamenkorn",
-	["Corpse Dust"] = "Leichenstaub",
-	["Demonic Figurine"] = "Dämonenstatuette",
-	["Devout Candle"] = "Andachtskerze",
-	["Flash Powder"] = "Blitzstrahlpulver",
-	["Flintweed Seed"] = "Flintgrassaat",
-	["Holy Candle"] = "Heilige Kerze",
-	["Hornbeam Seed"] = "Hainbuchensamenkorn",
-	["Infernal Stone"] = "Höllenstein",
-	["Ironwood Seed"] = "Eisenholzsamenkorn",
-	["Maple Seed"] = "Ahornsamenkorn",
-	["Rune of Portals"] = "Rune der Portale",
-	["Rune of Teleportation"] = "Rune der Teleportation",
-	["Sacred Candle"] = "Hochheilige Kerze",
-	["Soul Shard"] = "Seelensplitter",
-	["Starleaf Seed"] = "Sternblattsamen",
-	["Stranglethorn Seed"] = "Schlingendornsamenkorn",
-	["Symbol of Divinity"] = "Symbol der Offenbarung",
-	["Symbol of Kings"] = "Symbol der Könige",
-	["Wild Berries"] = "Wilde Beeren",
-	["Wild Quillvine"] = "Wilde Federranke",
-	["Wild Spineleaf"] = "Wildes Wirbelkraut",
-	["Wild Thornroot"] = "Wilder Dornwurz",
-}
-
+--@localization(locale="deDE", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("frFR", function() return
@@ -118,34 +91,7 @@ R:RegisterTranslations("frFR", function() return
 	["Corpse Dust"]				= "Poussière de cadavre",
 }
 --@end-debug@
-{
-	Ankh = "Ankh",
-	["Arcane Powder"] = "Poudre des arcanes",
-	["Ashwood Seed"] = "Graine de frêne",
-	["Corpse Dust"] = "Poussière de cadavre",
-	["Demonic Figurine"] = "Figurine démoniaque",
-	["Devout Candle"] = "Bougie de dévot",
-	["Flash Powder"] = "Poudre aveuglante",
-	["Flintweed Seed"] = "Graine d'herbe-silex",
-	["Holy Candle"] = "Bougie sanctifiée",
-	["Hornbeam Seed"] = "Graine de charme",
-	["Infernal Stone"] = "Pierre infernale",
-	["Ironwood Seed"] = "Graine de bois de fer",
-	["Maple Seed"] = "Graine d'érable",
-	["Rune of Portals"] = "Rune des portails",
-	["Rune of Teleportation"] = "Rune de téléportation",
-	["Sacred Candle"] = "Bougie sacrée",
-	["Soul Shard"] = "Fragment d'âme",
-	["Starleaf Seed"] = "Graine de feuillétoile",
-	["Stranglethorn Seed"] = "Graine de strangleronce",
-	["Symbol of Divinity"] = "Symbole de divinité",
-	["Symbol of Kings"] = "Symbole des rois",
-	["Wild Berries"] = "Baie sauvage",
-	["Wild Quillvine"] = "Vigneplume sauvage",
-	["Wild Spineleaf"] = "Atric sauvage",
-	["Wild Thornroot"] = "Ronceterre sauvage",
-}
-
+--@localization(locale="frFR", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("esES", function() return
@@ -178,34 +124,7 @@ R:RegisterTranslations("esES", function() return
 	["Corpse Dust"]				= "Polvo de cadáver",
 }
 --@end-debug@
-{
-	Ankh = "Ankh",
-	["Arcane Powder"] = "Partículas Arcanas",
-	["Ashwood Seed"] = "Semilla bosqueceniza",
-	["Corpse Dust"] = "Polvo de cadáver",
-	["Demonic Figurine"] = "Figurilla demoníaca",
-	["Devout Candle"] = "Vela devota",
-	["Flash Powder"] = "Partículas explosivas",
-	["Flintweed Seed"] = "Semilla de silexia",
-	["Holy Candle"] = "Vela sagrada",
-	["Hornbeam Seed"] = "Semillas de carpinus",
-	["Infernal Stone"] = "Piedra infernal",
-	["Ironwood Seed"] = "Semilla de maderaférrea",
-	["Maple Seed"] = "Semillas de arce",
-	["Rune of Portals"] = "Runa de portales",
-	["Rune of Teleportation"] = "Runa de teletransporte",
-	["Sacred Candle"] = "Vela sacra",
-	["Soul Shard"] = "Fragmento de alma",
-	["Starleaf Seed"] = "Semilla de azahar",
-	["Stranglethorn Seed"] = "Semilla Tuercespina",
-	["Symbol of Divinity"] = "Símbolo de Divinidad",
-	["Symbol of Kings"] = "Símbolo de Reyes",
-	["Wild Berries"] = "Frutos silvestres",
-	["Wild Quillvine"] = "Videpluma salvaje",
-	["Wild Spineleaf"] = "Espinela salvaje",
-	["Wild Thornroot"] = "Raíz de espina salvaje",
-}
-
+--@localization(locale="esES", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("zhCN", function() return
@@ -238,34 +157,7 @@ R:RegisterTranslations("zhCN", function() return
 	["Corpse Dust"]				= true,
 }
 --@end-debug@
-{
-	Ankh = "十字章",
-	["Arcane Powder"] = "魔粉",
-	["Ashwood Seed"] = "灰木种子",
-	["Corpse Dust"] = "尸尘",
-	["Demonic Figurine"] = "恶魔雕像",
-	["Devout Candle"] = "虔诚蜡烛",
-	["Flash Powder"] = "闪光粉",
-	["Flintweed Seed"] = "灼草种子",
-	["Holy Candle"] = "圣洁蜡烛",
-	["Hornbeam Seed"] = "角树种子",
-	["Infernal Stone"] = "地狱火石",
-	["Ironwood Seed"] = "铁木种子",
-	["Maple Seed"] = "枫树种子",
-	["Rune of Portals"] = "传送门符文",
-	["Rune of Teleportation"] = "传送符文",
-	["Sacred Candle"] = "神圣蜡烛",
-	["Soul Shard"] = "灵魂碎片",
-	["Starleaf Seed"] = "星叶种子",
-	["Stranglethorn Seed"] = "荆棘种子",
-	["Symbol of Divinity"] = "神圣符印",
-	["Symbol of Kings"] = "神圣符印",
-	["Wild Berries"] = "野生漿果",
-	["Wild Quillvine"] = "野生刺藤",
-	["Wild Spineleaf"] = "野生松叶",
-	["Wild Thornroot"] = "野生棘根草",
-}
-
+--@localization(locale="zhCN", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("zhTW", function() return
@@ -298,34 +190,7 @@ R:RegisterTranslations("zhTW", function() return
 --	["Corpse Dust"]				= true,
 }
 --@end-debug@
-{
-	Ankh = "十字章",
-	["Arcane Powder"] = "魔粉",
-	["Ashwood Seed"] = "灰木種子",
-	["Corpse Dust"] = "屍塵",
-	["Demonic Figurine"] = "惡魔刻像",
-	["Devout Candle"] = "虔誠蠟燭",
-	["Flash Powder"] = "閃光粉",
-	["Flintweed Seed"] = "火石草種子",
-	["Holy Candle"] = "神聖蠟燭",
-	["Hornbeam Seed"] = "角樹種子",
-	["Infernal Stone"] = "地獄火石",
-	["Ironwood Seed"] = "鐵木種子",
-	["Maple Seed"] = "楓樹種子",
-	["Rune of Portals"] = "傳送門符文",
-	["Rune of Teleportation"] = "傳送符文",
-	["Sacred Candle"] = "聖潔蠟燭",
-	["Soul Shard"] = "靈魂碎片",
-	["Starleaf Seed"] = "星葉種子",
-	["Stranglethorn Seed"] = "荊棘種子",
-	["Symbol of Divinity"] = "神聖符印",
-	["Symbol of Kings"] = "王者印記",
-	["Wild Berries"] = "野性漿果",
-	["Wild Quillvine"] = "野生羽蔓",
-	["Wild Spineleaf"] = "野脊葉",
-	["Wild Thornroot"] = "野生棘根草",
-}
-
+--@localization(locale="zhTW", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("koKR", function() return
@@ -358,34 +223,7 @@ R:RegisterTranslations("koKR", function() return
 --	["Corpse Dust"]				= true,
 }
 --@end-debug@
-{
-	Ankh = "십자가",
-	["Arcane Powder"] = "불가사의한 가루",
-	["Ashwood Seed"] = "잿빛나무 씨앗",
-	-- ["Corpse Dust"] = "",
-	["Demonic Figurine"] = "악마의 구슬",
-	-- ["Devout Candle"] = "",
-	["Flash Powder"] = "섬광 화약",
-	["Flintweed Seed"] = "차돌나무 씨앗",
-	["Holy Candle"] = "신성한 양초",
-	["Hornbeam Seed"] = "자작나무 씨앗",
-	["Infernal Stone"] = "지옥의 돌",
-	["Ironwood Seed"] = "강철나무 씨앗",
-	["Maple Seed"] = " 단풍나무 씨앗",
-	["Rune of Portals"] = "차원이동의 룬",
-	["Rune of Teleportation"] = "순간이동의 룬",
-	["Sacred Candle"] = "성스러운 양초",
-	["Soul Shard"] = "영혼의 조각",
-	-- ["Starleaf Seed"] = "",
-	["Stranglethorn Seed"] = "가시덩굴 씨앗",
-	["Symbol of Divinity"] = "신앙의 징표",
-	["Symbol of Kings"] = "왕의 징표",
-	["Wild Berries"] = "야생 가지",
-	["Wild Quillvine"] = "야생 가시덩굴",
-	-- ["Wild Spineleaf"] = "",
-	["Wild Thornroot"] = "야생 가시",
-}
-
+--@localization(locale="koKR", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("ruRU", function() return
@@ -418,34 +256,7 @@ R:RegisterTranslations("ruRU", function() return
 	["Corpse Dust"]				= "Прах",
 }
 --@end-debug@
-{
-	Ankh = "Крест",
-	["Arcane Powder"] = "Порошок чар",
-	["Ashwood Seed"] = "Семена ясеня",
-	["Corpse Dust"] = "Прах",
-	["Demonic Figurine"] = "Демоническая статуэтка",
-	["Devout Candle"] = "Свеча благочестия",
-	["Flash Powder"] = "Воспламеняющийся порошок",
-	["Flintweed Seed"] = "Семена кремень-травы",
-	["Holy Candle"] = "Святая свеча",
-	["Hornbeam Seed"] = "Семена граба",
-	["Infernal Stone"] = "Камень инфернала",
-	["Ironwood Seed"] = "Семена железного дерева",
-	["Maple Seed"] = "Семена клена",
-	["Rune of Portals"] = "Руна порталов",
-	["Rune of Teleportation"] = "Руна телепортации",
-	["Sacred Candle"] = "Священная свеча",
-	["Soul Shard"] = "Осколок души",
-	["Starleaf Seed"] = "Семечко звездолиста",
-	["Stranglethorn Seed"] = "Семена из Тернистой долины",
-	["Symbol of Divinity"] = "Символ божественности",
-	["Symbol of Kings"] = "Символ королей",
-	["Wild Berries"] = "Лесные ягоды",
-	["Wild Quillvine"] = "Дикая перьелоза",
-	["Wild Spineleaf"] = "Дикий шиполист",
-	["Wild Thornroot"] = "Дикий шипокорень",
-}
-
+--@localization(locale="ruRU", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R:RegisterTranslations("esMX", function() return
@@ -453,34 +264,7 @@ R:RegisterTranslations("esMX", function() return
 {
 }
 --@end-debug@
-{
-	-- Ankh = "",
-	-- ["Arcane Powder"] = "",
-	-- ["Ashwood Seed"] = "",
-	-- ["Corpse Dust"] = "",
-	-- ["Demonic Figurine"] = "",
-	-- ["Devout Candle"] = "",
-	-- ["Flash Powder"] = "",
-	-- ["Flintweed Seed"] = "",
-	-- ["Holy Candle"] = "",
-	-- ["Hornbeam Seed"] = "",
-	-- ["Infernal Stone"] = "",
-	-- ["Ironwood Seed"] = "",
-	-- ["Maple Seed"] = "",
-	-- ["Rune of Portals"] = "",
-	-- ["Rune of Teleportation"] = "",
-	-- ["Sacred Candle"] = "",
-	-- ["Soul Shard"] = "",
-	-- ["Starleaf Seed"] = "",
-	-- ["Stranglethorn Seed"] = "",
-	-- ["Symbol of Divinity"] = "",
-	-- ["Symbol of Kings"] = "",
-	-- ["Wild Berries"] = "",
-	-- ["Wild Quillvine"] = "",
-	-- ["Wild Spineleaf"] = "",
-	-- ["Wild Thornroot"] = "",
-}
-
+--@localization(locale="esMX", format="lua_table", namespace="ZOMGReagents")@
 end)
 
 R = nil
