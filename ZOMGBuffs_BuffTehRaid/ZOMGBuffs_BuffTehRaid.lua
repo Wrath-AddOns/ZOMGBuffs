@@ -80,29 +80,6 @@ do
 		handler = zg,
 		disabled = function() return z:IsDisabled() end,
 		args = {
-			groups = {
-				type = 'group',
-				name = L["Groups"],
-				desc = L["Select the groups to buff"],
-				order = 5,
-				hidden = function() return not zg:IsModuleActive() or not zg:HasAnyNonExclusiveBuffs() end,
-				args = {
-					auto = {
-						type = 'toggle',
-						name = L["Auto-Assign"],
-						desc = L["Auto assign sensible group assignment based the order of your name alphabilically compared to others of your class. All going well, and all using ZOMGBuffs and everyone should end up with different assignments without need for discussion"],
-						get = getOption,
-						set = function(k,v) setOption(k,v) zg:AutoGroupAssignment() end,
-						passValue = "autogroups",
-						order = 1,
-					},
-					space = {
-						type = 'header',
-						name = " ",
-						order = 2,
-					},
-				},
-			},
 			template = {
 				type = 'group',
 				name = L["Templates"],
@@ -199,18 +176,6 @@ do
 				order = 201,
 				hidden = function() return not zg:IsModuleActive() end,
 				args = {
-					groupcast = {
-						type = 'range',
-						name = L["Minimum Group"],
-						desc = L["How many players of a group must need a buff before the group version is cast"],
-						get = getOption,
-						set = function(k,v) setOption(k,v,true) end,
-						passValue = "groupcast",
-						order = 99,
-						min = 1,
-						max = 5,
-						step = 1,
-					},
 					rebuff = {
 						type = 'range',
 						name = L["Expiry Prelude"],
@@ -232,25 +197,6 @@ do
 	}
 end
 
-do
-	local disfunc = function() return zg.db.char.autogroups end
-	local getG = function(i) return zg.db.char.groups[i] end
-	local setG = function(i,n) zg.db.char.groups[i] = n and true or nil z:CheckForChange(zg) end
-	local args = zg.options.args.groups.args
-	for i = 1,8 do
-		args[i] = {
-			type = 'toggle',
-			name = format(L["Group %d"], i),
-			desc = L["Enable buffing of this group"],
-			order = i + 10,
-			get = getG,
-			set = setG,
-			disabled = disfunc,
-			passValue = i,
-		}
-	end
-end
-
 local function getOption(v)
 	return zg.db.char[v]
 end
@@ -261,7 +207,7 @@ end
 
 -- ColourSpellFromKey(key)
 local function ColourSpellFromKey(key)
-	local name = key.name or key.list[1]
+	local name = key.name or key.spellname
 	local colour = z:HexColour(unpack(key.colour or {1, 1, 1}))
 	return format("%s%s|r", colour, name), colour
 end
@@ -348,6 +294,12 @@ function zg:OnModifyTemplate(key, value)
 				self:UnregisterTickColumn(key)
 				self:StopSpellTracker(key)
 			end
+		elseif buff.dup and value then
+			for i,s in pairs(self.buffs) do
+				if (buff.dup == s.dup and i ~= key) then
+					self:ModifyTemplate(i, nil)
+				end
+			end
 		end
 	end
 end
@@ -402,8 +354,8 @@ do
 		local list = self:SortedBuffList()
 		for i,key in ipairs(list) do
 			local info = self.buffs[key]
-			if (GetSpellInfo(info.list[1])) then
-				local name = info.name or info.list[1]
+			if (GetSpellInfo(info.spellname)) then
+				local name = info.name or info.spellname
 				local cName = ColourSpellFromKey(info)
 				local menu = {
 					type = "group",
@@ -440,17 +392,17 @@ do
 					}
 				end
 
-				if (info.limited) then
-					menu.args.nolearn = {
-						type = "toggle",
-						name = L["Learnable"],
-						desc = L["Remember this spell when it's cast manually?"],
-						order = 3,
-						get = getLearnable,
-						set = setLearnable,
-						passValue = key,
-					}
+				menu.args.nolearn = {
+					type = "toggle",
+					name = L["Learnable"],
+					desc = L["Remember this spell when it's cast manually?"],
+					order = 3,
+					get = getLearnable,
+					set = setLearnable,
+					passValue = key,
+				}
 
+				if (info.limited) then
 					if (info.exclusive) then
 						menu.args.noautocast = {
 							type = 'toggle',
@@ -578,7 +530,6 @@ end
 function zg:GetBuffedMembers()
 	local temp = new()
 	local totals = 0
-	local dbGroups = self.db.char.groups
 	local minTimeLeft
 	local totalMembers, totalPresent = 0, 0
 	local anyBlacklisted
@@ -589,7 +540,7 @@ function zg:GetBuffedMembers()
 		totalMembers = totalMembers + 1
 		totals = totals + 1
 
-		if (dbGroups[grp] or notInRaid) then
+		if (notInRaid) then
 			local pvpBlock = (z.db.profile.skippvp and UnitIsPVP(unitid)) and not UnitIsPVP("player")
 			local present = UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and not pvpBlock
 			local absent						-- They're not in zone, afk, or offline
@@ -667,8 +618,7 @@ function zg:FindUnitInRangeMissing(typ)
 		error(format("Unrecognised type %q", tostring(typ)), 2)
 	end
 	local buffEveryone = not t.onlyManaUsers
-	local list = t.list
-	local rangeCheckSpell = list[1]
+	local rangeCheckSpell = t.spellname
 	local limitedPeople = t.limited and template.limited and template.limited[typ]
 
 	local requiredTimeLeft = (self.db.char.rebuff and self.db.char.rebuff[typ]) or self.db.char.rebuff.default
@@ -714,10 +664,9 @@ function zg:CheckBuffs()
 	end
 
 	local temp, totals, minTimeLeft, percentPresent, anyBlacklisted = self:GetBuffedMembers()
-	local skipClassBuffs = z.db.profile.singlesAlways or (z.db.profile.singlesInBG and select(2, IsInInstance()) == "pvp") or (z.db.profile.singlesInArena and select(2, IsInInstance()) == "arena")
 	local db = self.db.char
 
-	if (z.db.profile.waitforraid > 0 and not skipClassBuffs and self.groupBuffer) then
+	if (z.db.profile.waitforraid > 0) then
 		-- See if enough of raid present
 		if (percentPresent < z.db.profile.waitforraid) then	-- Wait for % of raid before buffing
 			z.waitingForRaid = floor(percentPresent * 100)
@@ -728,7 +677,6 @@ function zg:CheckBuffs()
 	z.waitingForRaid = nil
 
 	-- Now go through this and find anything we need to buff
-	local dbGroups = db.groups
 	local notInRaid = GetNumRaidMembers() == 0
 	local any
 	
@@ -737,7 +685,7 @@ function zg:CheckBuffs()
 			if (k ~= "modified" and k ~= "state" and k ~= "limited") then
 				local typeSpec = self.buffs[k]
 				if (typeSpec and not zg.db.char.noautocast[typeSpec.type]) then
-					local spell = typeSpec.list[1]
+					local spell = typeSpec.spellname
 					local start, dur = GetSpellCooldown(spell)
 					local now, later = IsUsableSpell(spell)
 					if (now and (start == 0 or GetTime() - 0.5 > start + dur)) then
@@ -747,25 +695,11 @@ function zg:CheckBuffs()
 
 							local unit = self:FindUnitInRangeMissing(k)
 							if (unit) then
-								local buffSpec = typeSpec.list
-								local t1, t2
-								if (buffSpec[2]) then
-									t1, t2 = IsUsableSpell(buffSpec[2])
-								end
-
 								local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
-								local toBuff
-								if (skipClassBuffs or (missingBuff < db.groupcast or not (t1 or t2))) then
-									-- Do single buff
-									z:Notice(format(L["%s needs %s"], z:ColourUnit(unit), z:LinkSpell(buffSpec[1], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									toBuff = buffSpec[1]
-									any = true
-								else
-									-- Do group buff
-									z:Notice(format(L["%s needs %s"], RAID, z:LinkSpell(buffSpec[2], colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
-									toBuff = buffSpec[2]
-									any = true
-								end
+								local toBuff = typeSpec.spellname
+								local whoNotice = (GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY) or z:ColourUnit(unit)
+								z:Notice(format(L["%s needs %s"], whoNotice, z:LinkSpell(toBuff, colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
+								any = true
 
 								local special = typeSpec.spellPrefs and typeSpec.spellPrefs[toBuff]
 								if (special and IsUsableSpell(special)) then
@@ -796,41 +730,39 @@ function zg:CheckBuffs()
 		-- Catch any pets that missed the group buffing
 		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
 			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid)) then
- 				if (db.groups[subgroup]) then
- 					local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
-					for i = 1,40 do
-						local name, rank, buff, count, _, max, endTime = UnitBuff(unitid, i)
-						if (not name) then
-							break
-						end
+				local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
+				for i = 1,40 do
+					local name, rank, buff, count, _, max, endTime = UnitBuff(unitid, i)
+					if (not name) then
+						break
+					end
 
-						local buff = self.lookup[name]
-						if (buff) then
-							local dur = endTime and (endTime - GetTime())
-							if (template[buff.type]) then
-								local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
-								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
-									local colour = buff.colour and z:HexColour(unpack(buff.colour))
-									z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.list[1], colour, true, z.db.profile.short and buff.name)), "buffreminder")
-									local special = buff.spellPrefs and buff.spellPrefs[buff.list[1]]
-									if (special and IsUsableSpell(special)) then
-										z:SetupForSpell(unit, special, self)
-									else
-										z:SetupForSpell(unit, buff.list[1], self)
-									end
-									any = true
-									break
+					local buff = self.lookup[name]
+					if (buff) then
+						local dur = endTime and (endTime - GetTime())
+						if (template[buff.type]) then
+							local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
+							if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
+								local colour = buff.colour and z:HexColour(unpack(buff.colour))
+								z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
+								local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
+								if (special and IsUsableSpell(special)) then
+									z:SetupForSpell(unit, special, self)
+								else
+									z:SetupForSpell(unit, buff.spellname, self)
 								end
+								any = true
+								break
+							end
 
-								if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
-									minTimeLeft = dur - requiredTimeLeft
-								end
+							if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
+								minTimeLeft = dur - requiredTimeLeft
 							end
 						end
 					end
-					if (any) then
-						break
-					end
+				end
+				if (any) then
+					break
 				end
 			end
 		end
@@ -899,13 +831,13 @@ function zg:UNIT_AURA(unit)
 end
 
 -- GetActionInsert
-function zg:GetActionInsert(buff, index)
-	local spellname = buff.list[index]
+function zg:GetActionInsert(buff)
+	local spellname = buff.spellname
 	local altbuff = buff.spellPrefs and buff.spellPrefs[spellname]
 	if (altbuff and IsUsableSpell(altbuff)) then
 		spellname = altbuff
 	end
-	tinsert(self.actions, {name = spellname, type = buff.keycode .. (index and index > 1 and index or "")})
+	tinsert(self.actions, {name = spellname, type = buff.keycode})
 end
 
 -- GetActions
@@ -917,15 +849,9 @@ function zg:GetActions()
 		for i,key in ipairs(list) do
 			local buff = self.buffs[key]
 
-			if (buff.list and GetSpellInfo(buff.list[1])) then		-- GetSpellCooldown(buff.list[1])) then
+			if (buff.spellname and GetSpellInfo(buff.spellname)) then		-- GetSpellCooldown(buff.list[1])) then
 				if (buff.keycode) then
-					if (buff.group and buff.list[2]) then
-						for j = 1,#buff.list do
-							self:GetActionInsert(buff, j)
-						end
-					else
-						self:GetActionInsert(buff, 1)
-					end
+					self:GetActionInsert(buff)
 				end
 			end
 		end
@@ -993,56 +919,32 @@ function zg:OnModuleInitialize()
 	playerClass = select(2, UnitClass("player"))
 
 	if (playerClass == "PRIEST") then
-		local spirit = GetSpellInfo(39234)
-		local t1, t2 = IsUsableSpell(spirit)
 		self.buffs = {
 			STA = {
 				o = 1,
 				name = SPELL_STAT3_NAME,
-				ids = {25389, 25392},				-- Power Word: Fortitude, Prayer of Fortitude
+				id = 21562,
 				group = true,
-				reagents = {nil, {
-						[1] = GetItemInfo(17028) or R["Holy Candle"],
-						[2] = GetItemInfo(17029) or R["Sacred Candle"],
-						[3] = GetItemInfo(44615) or R["Devout Candle"],
-					},
-				},
+				aliases = { 6307, 469 },	-- Commanding Shout, Blood Pact
 				required = true,
 				colour = {0.7, 0.7, 1},
 				keycode = "stamina",
 			},
-			SPIRIT = {
-				o = 2,
-				name = SPELL_STAT5_NAME,
-				ids = {25312, 32999},				-- Divine Spirit, Prayer of Spirit
-				group = true,
-				reagents = {nil, R["Sacred Candle"]},
-				required = t1 or t2,
-				onlyManaUsers = true,
-				colour = {0.3, 0.5, 1},
-				keycode = "spirit",
-			},
 			SHADOWPROT = {
-				o = 3,
-				ids = {25433, 39374},				-- Shadow Protection, Prayer of Shadow Protection
+				o = 2,
+				id = 27683,
 				group = true,
-				reagents = {nil, R["Sacred Candle"]},
 				colour = {0.7, 0.2, 0.7},
 				keycode = "shadowprot",
 			},
 			FEARWARD = {
-				o = 4,
-				ids = {6346},						-- Fear Ward
+				o = 3,
+				id = 6346,
 				colour = {1, 0.7, 0.3},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,					-- Can only be cast on 1 target
 				keycode = "fearward",
 			}
-		}
-		self.reagents = {
-			[GetItemInfo(17028) or R["Holy Candle"]] = {20, 1, 500, minLevel = 48, maxLevel = 59},
-			[GetItemInfo(17029) or R["Sacred Candle"]] = {20, 1, 500, minLevel = 60, maxLevel = 79},
-			[GetItemInfo(44615) or R["Devout Candle"]] = {20, 1, 500, minLevel = 77, maxLevel = 89},
 		}
 
 	elseif (playerClass == "DRUID") then
@@ -1050,32 +952,20 @@ function zg:OnModuleInitialize()
 			MARK = {
 				o = 1,
 				name = L["Mark"],
-				ids = {26990, 26991},				-- Mark of the Wild, Gift of the Wild
+				id = 1126,
+				aliases = { 20217 },					-- Blessing of Kings
 				group = true,
-				reagents = {nil, {
-						[1] = GetItemInfo(17021) or R["Wild Berries"],
-						[2] = GetItemInfo(17026) or R["Wild Thornroot"],
-						[3] = GetItemInfo(22148) or R["Wild Quillvine"],
-						[4] = GetItemInfo(44605) or R["Wild Spineleaf"],
-					},
-				},
 				required = true,
 				colour = {0.9, 0.5, 0.9},
 				keycode = "mark",
 			},
 			THORNS = {
 				o = 2,
-				ids = {26992},						-- Thorns
+				id = 467,
 				colour = {0.7, 0.7, 0.3},
 				limited = true,						-- Allow limited targets config
 				keycode = "thorns",
 			}
-		}
-		self.reagents = {
-			[GetItemInfo(17021) or R["Wild Berries"]] = {20, 1, 500, minLevel = 50, maxLevel = 59},
-			[GetItemInfo(17026) or R["Wild Thornroot"]] = {20, 1, 500, minLevel = 60, maxLevel = 69},
-			[GetItemInfo(22148) or R["Wild Quillvine"]] = {20, 1, 500, minLevel = 70, maxLevel = 79},
-			[GetItemInfo(44605) or R["Wild Spineleaf"]] = {20, 1, 500, minLevel = 80, maxLevel = 89},
 		}
 
 	elseif (playerClass == "MAGE") then
@@ -1083,37 +973,19 @@ function zg:OnModuleInitialize()
 			INT = {
 				o = 1,
 				name = SPELL_STAT4_NAME,
-				ids = {27126, 27127},				-- Arcane Intellect, Arcane Brilliance
+				id = 1459,
 				spellPrefs = {
-					[GetSpellInfo(27126)] = GetSpellInfo(61024),	-- Dalaran Intellect
-					[GetSpellInfo(27127)] = GetSpellInfo(61316),	-- Dalaran Brilliance
+					[GetSpellInfo(1459)] = GetSpellInfo(61316),	-- Dalaran Brilliance
 				},
 				group = true,
-				reagents = {nil, R["Arcane Powder"]},
 				required = true,
 				onlyManaUsers = true,
 				colour = {0.3, 0.3, 1},
 				keycode = "int"
 			},
-			DAMPEN = {
-				o = 2,
-				ids = {33944},						-- Dampen Magic
-				dup = 1,							-- Dup ID: Matching IDs are mutually exclusive per player
-				colour = {0.3, 1, 0.8},
-				limited = true,						-- Allow limited targets config
-				keycode = "dampen",
-			},
-			AMPLIFY = {
-				o = 3,
-				ids = {33946},						-- Amplify Magic
-				dup = 1,							-- Dup ID: Matching IDs are mutually exclusive per player
-				colour = {1, 1, 0.25},
-				limited = true,						-- Allow limited targets config
-				keycode = "amplify",
-			},
 			FOCUSMAGIC = {
-				o = 4,
-				ids = {54646},						-- Focus Magic
+				o = 2,
+				id = 54646,						-- Focus Magic
 				onlyManaUsers = true,
 				colour = {0.80, 0.2, 1},
 				limited = true,						-- Allow limited targets config
@@ -1123,20 +995,17 @@ function zg:OnModuleInitialize()
 				defaultRebuff = 5,
 			} 		
 		}
-		self.reagents = {
-			[GetItemInfo(17020) or R["Arcane Powder"]] = {20, 1, 500, minLevel = 56},
-		}
 	elseif (playerClass == "SHAMAN") then
 		self.buffs = {
 			EARTHSHIELD = {
 				o = 1,
-				ids = {32594},						-- Earth Shield
+				id = 974,
 				onEnable = function(unit)
 					if (unit and UnitIsUnit("player", unit)) then
 						local zs = ZOMGSelfBuffs
 						if (zs) then
-							zs:ModifyTemplate((GetSpellInfo(41151)), nil)		-- Lightning Shield
-							zs:ModifyTemplate((GetSpellInfo(37432)), nil)		-- Water Shield
+							zs:ModifyTemplate((GetSpellInfo(324)), nil)		-- Lightning Shield
+							zs:ModifyTemplate((GetSpellInfo(52127)), nil)		-- Water Shield
 						end
 					end
 				end,
@@ -1148,16 +1017,16 @@ function zg:OnModuleInitialize()
 			},
 			WATERWALK = {
 				o = 2,
-				ids = {546},						-- Water Walking
-				reagents = {17058},					-- Fish Oil
+				id = 546,						-- Water Walking
+				reagent = 17058,					-- Fish Oil
 				colour = {0.5, 0.5, 1},
 				limited = true,						-- Allow limited targets config
 				keycode = "water",
 			},
 			WATERBREATH = {
 				o = 2,
-				ids = {131},						-- Water Breathing
-				reagents = {17057},					-- Shiny Fish Scales
+				id = 131,						-- Water Breathing
+				reagent = 17057,					-- Shiny Fish Scales
 				colour = {0.2, 0.8, 1},
 				limited = true,						-- Allow limited targets config
 				keycode = "breath",
@@ -1166,16 +1035,9 @@ function zg:OnModuleInitialize()
 	
 	elseif (playerClass == "WARLOCK") then
 		self.buffs = {
-			SEEINVIS = {
-				o = 1,
-				ids = {132},						-- Detect Invisibility
-				colour = {0.7, 0.2, 0.2},
-				limited = true,						-- Allow limited targets config
-				keycode = "seeinvis",
-			},
 			WATERBREATH = {
-				o = 2,
-				ids = {5697},						-- Unending Breath
+				o = 1,
+				id = 5697,						-- Unending Breath
 				colour = {0.5, 1, 0.5},
 				limited = true,						-- Allow limited targets config
 				keycode = "breath",
@@ -1184,27 +1046,37 @@ function zg:OnModuleInitialize()
 
 	elseif (playerClass == "PALADIN") then
 		self.buffs = {
-			BEACON = {
+			KINGS = {
 				o = 1,
-				ids = {53563},						-- Beacon of Light
+				id = 20217,
+				aliases = { 1126 },					-- Mark of the Wild
+				group = true,
+				required = true,
+				dup = 1,
+				colour = {0.7, 0.7, 0.2},
+				keycode = "kings",
+			},
+			MIGHT = {
+				o = 2,
+				id = 19740,
+				group = true,
+				required = true,
+				dup = 1,
+				colour = {0.7, 0.7, 0.2},
+				keycode = "might",
+			},
+			BEACON = {
+				o = 3,
+				id = 53563,						-- Beacon of Light
 				colour = {1, 1, 0.5},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
 				keycode = "beacon",
 				defaultRebuff = 5,
 			},
-			SACREDSHIELD = {
-				o = 2,
-				ids = {53601},						-- Sacred Shield
-				colour = {0.7, 0.7, 0.2},
-				limited = true,
-				exclusive = true,
-				keycode = "sacredshield",
-				defaultRebuff = 5,
-			},
 			FREEDOM = {
-				o = 3,
-				ids = {1044},						-- Hand of Freedom
+				o = 4,
+				id = 1044,						-- Hand of Freedom
 				colour = {1, 0.8, 0.1},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
@@ -1212,8 +1084,8 @@ function zg:OnModuleInitialize()
 				defaultRebuff = 5,
 			},
 			SACRIFICE = {
-				o = 4,
-				ids = {6940},						-- Hand of Sacrifice
+				o = 5,
+				id = 6940,						-- Hand of Sacrifice
 				colour = {1, 0, 0},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
@@ -1226,7 +1098,7 @@ function zg:OnModuleInitialize()
 		self.buffs = {
 			VIGILANCE = {
 				o = 1,
-				ids = {50720},						-- Vigilance
+				id = 50720,						-- Vigilance
 				colour = {1, 1, 0.7},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
@@ -1239,7 +1111,7 @@ function zg:OnModuleInitialize()
 		self.buffs = {
 			TRICKS = {
 				o = 1,
-				ids = {57934},						-- Tricks of the Trade
+				id = 57934,						-- Tricks of the Trade
 				colour = {0.3, 1, 0.7},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
@@ -1252,9 +1124,9 @@ function zg:OnModuleInitialize()
 
 	elseif (playerClass == "DEATHKNIGHT") then
 		self.buffs = {
-			HYSTERIA = {
+			TRICKS = {
 				o = 1,
-				ids = {49016},						-- Hysteria
+				id = 49016,						-- Unholy Frenzy (was hysteria before)
 				colour = {0.3, 1, 0.7},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,
@@ -1271,15 +1143,12 @@ function zg:OnModuleInitialize()
 	self.keycodeLookup = new()
 	self.spellIcons = new()
 	for key,info in pairs(self.buffs) do
-		info.list = new()
-		for i,id in ipairs(info.ids) do
-			local name, _, icon = GetSpellInfo(id)
-			if (not name) then
-				error("No spell info for SpellID "..id)
-			end
-			tinsert(info.list, name)
-			self.spellIcons[name] = icon
+		local name, _, icon = GetSpellInfo(info.id)
+		if (not name) then
+			error("No spell info for SpellID "..info.id)
 		end
+		info.spellname = name
+		self.spellIcons[name] = icon
 		self.keycodeLookup[info.keycode] = key
 	end
 	
@@ -1298,12 +1167,8 @@ function zg:OnModuleInitialize()
 		end
 	end)
 
-	self.groupBuffer = nil
-	local defaultForClass = {Default = {}}
+	local defaultForClass = {Default = {}, current = {}}
 	for k,v in pairs(self.buffs) do
-		if (v.group) then
-			self.groupBuffer = true
-		end
 		if (v.required) then
 			defaultForClass.Default[k] = true
 		end
@@ -1312,13 +1177,11 @@ function zg:OnModuleInitialize()
 	self.db = z:AcquireDBNamespace("BuffTehRaid")
 	z:RegisterDefaults("BuffTehRaid", "char", {
 		noautocast = {TRICKS = true},
-		reagents = {},
+		reagent = {},
 		keybindings = {},
 		templates = defaultForClass,
 		defaultTemplate = "Default",
 		groupcast = 2,
-		groups = {true, true, true, true, true, true, true, true},
-		autogroups = false,
 		rebuff = {
 			default = 30,
 		},
@@ -1336,29 +1199,26 @@ function zg:OnModuleInitialize()
 	self.required = 0
 	for k,v in pairs(self.buffs) do
 		v.type = k
-		for i,buff in pairs(v.list) do
-			self.lookup[buff] = v
+		self.lookup[v.spellname] = v
+
+		if v.aliases then
+			for _, aliasid in ipairs(v.aliases) do
+				local name = GetSpellInfo(aliasid)
+				if (not name) then
+					error("No spell info for SpellID "..aliasid)
+				end
+				self.lookup[name] = v
+			end
 		end
 	end
 	if (playerClass == "MAGE") then
-		self.lookup[GetSpellInfo(46302)] = self.buffs.INT			-- Kiru's Song of Victory
-		self.lookup[GetSpellInfo(61024)] = self.buffs.INT			-- Dalaran Intellect
 		self.lookup[GetSpellInfo(61316)] = self.buffs.INT			-- Dalaran Brilliance
 		--self.lookup[GetSpellInfo(57567)] = self.buffs.INT			-- Fel Intellegence	(only for improved.. need to detect who cast it... sigh)
 	end
 
-	--z.OnCommReceive.AUTOGROUPASSIGNED = function(self, prefix, sender, channel, class, displayList)
-	--	if (not zg.db.char.autogroups and class == playerClass) then
-	--		if (not zg.autoGroupWarned) then
-	--			zg.autoGroupWarned = true
-	--			self:Print(L["Warning: %s has auto-assigned themselves to buff groups %s, but you have the Auto Group Assignment option disabled"], z:ColourUnitByName(sender), table.concat(displayList, ", "))
-	--		end
-	--	end
-	--end
-
 	for k,buff in pairs(self.buffs) do
 		if (buff.limited) then
-			self:RegisterTickHandler(k, self, zg.TickColumnCallback, buff.list[1], buff.ids[1])
+			self:RegisterTickHandler(k, self, zg.TickColumnCallback, buff.spellname, buff.id)
 		end
 	end
 
@@ -1680,9 +1540,6 @@ function zg:CheckTickColumns(cell)
 	end
 
 	local b = z.buffs[1] and cell.buff and cell.buff[1]
-	if (not b and z.classcount.PALADIN > 0) then
-		b = cell.palaIcon[1]
-	end
 	if (b) then
 		b:ClearAllPoints()
 		if (count == 0) then
@@ -1803,89 +1660,6 @@ function zg:HasAnyNonExclusiveBuffs()
 	end
 end
 
--- AutoGroupAssignment
-function zg:AutoGroupAssignment()
-	if (not self.db or not self.db.char.autogroups) then
-		return
-	end
-	if (not self:HasGroupBuffs()) then
-		return
-	end
-
-	local playerName = UnitName("player")
-	local count = z.classcount[playerClass]
-	local list = new()
-	local maxGroup = 1
-	if (GetNumRaidMembers() > 0) then
-		for i = 1,GetNumRaidMembers() do
-			local name, rank, subgroup, level, _, class = GetRaidRosterInfo(i)
-			if (class == playerClass) then
-				tinsert(list, name)
-			end
-			if (subgroup > maxGroup) then
-				maxGroup = subgroup
-			end
-		end
-	end
-	sort(list)
-
-	local myIndex = 1
-	for i,name in ipairs(list) do
-		if (name == playerName) then
-			myIndex = i
-			break
-		end
-	end
-
-	local displayList = new()
-	if (maxGroup == 1 or count == 1) then
-		for i = 1,8 do
-			self.db.char.groups[i] = true
-		end
-		z:CheckForChange(self)
-		return
-	end
-
-	local anyChange
-	local each = maxGroup / count
-	local start = (myIndex - 1) * each + 1
-	for groupNo = 1,maxGroup do
-		local shouldBuff = groupNo >= start and groupNo < start + each
-		if (shouldBuff) then
-			tinsert(displayList, tostring(groupNo))
-		end
-		if (shouldBuff ~= self.db.char.groups[groupNo]) then
-			self.db.char.groups[groupNo] = shouldBuff
-			anyChange = true
-		end
-	end
-	if (not next(displayList)) then
-		for i = 1,8 do
-			self.db.char.groups[i] = true
-		end
-		z:CheckForChange(self)
-		return
-	end
-
-	if (anyChange) then
-		if (GetNumRaidMembers() > 0 and z.db.profile.info) then
-			self:Print(L["You are now responsible for Groups %s"], table.concat(displayList, ", ", 1, max(1, #displayList - 1))..((#displayList > 1 and L[" and "]..displayList[#displayList]) or ""))
-		end
-		z:CheckForChange(self)
-		z:SendCommMessage("GROUP", "AUTOGROUPASSIGNED", playerClass, displayList)
-	end
-
-	del(list)
-	del(displayList)
-end
-
--- CheckRoster
-function zg:CheckRoster()
-	if (self.db) then
-		self:AutoGroupAssignment()
-	end
-end
-
 -- ShowBuffBar
 function zg:ShowBuffBar(cell, name)
 	if (self.lookup) then
@@ -1897,10 +1671,8 @@ function zg:ShowBuffBar(cell, name)
 			else
 				local find = self.lookup[spell]
 				if (find) then
-					for i,search in ipairs(find.list) do
-						if (search == name) then
-							return true
-						end
+					if (find.spellname == name) then
+						return true
 					end
 				end
 			end
@@ -1932,32 +1704,9 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 		local found = self.lookup[s]
 		if (found) then
 			local _, colour = ColourSpellFromKey(found)
-			local index
-			if (spell == found.list[2]) then
-				index = 2
-			else
-				index = 1
-			end
-			local r = found.reagents and found.reagents[index]
+			local reagent = found.reagent
 			local reagentString
-			if (r) then
-				local reagent
-				if (type(r) == "table") then
-					if (type(rank) == "string") then
-						rank = strmatch(rank, "(%d+)")
-						if (rank) then
-							rank = rank + 0
-						end
-					end
-					if (r[rank]) then
-						reagent = r[rank]
-					else
-						reagent = r[#r]
-					end
-				else
-					reagent = r
-				end
-
+			if (reagent) then
 				local count = GetItemCount(reagent)
 				if (count > 0) then
 					local colourCount
@@ -1976,11 +1725,8 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 				reagentString = ""
 			end
 
-			if (found.group and spell == found.list[2] and (UnitInRaid(name) or UnitInParty(name))) then
-	      		self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), RAID, reagentString)
-			else
-				self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), z:ColourUnitByName(name), reagentString)
-			end
+			local whoNotice = found.group and ((GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY)) or z:ColourUnitByName(name)
+			self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), whoNotice, reagentString)
 		end
 	end
 end
@@ -2346,14 +2092,14 @@ do
 	-- icon.SetTrackerAttributes
 	local function iconSetTrackerAttributes(self, target, key)
 		local buff = zg.buffs[key]
-		local spell = buff.list[1]
+		local spell = buff.spellname
 		self.target = target
 		self.key = key
 		self.spell = spell
 		self.initialStacks = type(buff.stacks) == "function" and buff.stacks() or buff.stacks
 		self.count:Hide()
 		self.name:Hide()
-		local name, rank, tex = GetSpellInfo(buff.ids[1])
+		local name, rank, tex = GetSpellInfo(buff.id)
 		self.icon:SetTexture(tex)
 
 		local oldUnit = self:GetAttribute("unit")
@@ -2679,6 +2425,8 @@ function zg:SpellCastSucceeded(spell, rank, target, manual, listClick)
 
 					elseif (info.limited and (manual or listClick)) then
 						self:AddLimitedSpell(target, info.type)
+					else
+						self:ModifyTemplate(info.type, true)
 					end
 				end
 			end
@@ -2788,10 +2536,10 @@ end
 -- ValidateTemplate
 function zg:ValidateTemplate(template)
 	for key,info in pairs(self.buffs) do
-		if (not GetSpellInfo(info.list[1])) then
+		if (not GetSpellInfo(info.spellname)) then
 			if (template[key]) then
 				self:ModifyTemplate(key, nil)
-				if (z.icon and z.icon:GetAttribute("spell") == info.list[1]) then
+				if (z.icon and z.icon:GetAttribute("spell") == info.spellname) then
 					z:SetupForSpell()			-- Clear loaded icon
 				end
 			end
@@ -2833,7 +2581,7 @@ function zg:TooltipUpdate(cat)
 		local list = self:SortedBuffList()
 		for i,k in ipairs(list) do
 			local key = self.buffs[k]
-			if (GetSpellInfo(key.list[1])) then		-- GetSpellCooldown(key.list[1])) then
+			if (GetSpellInfo(key.spellname)) then		-- GetSpellCooldown(key.list[1])) then
 				local endis
 				if (template[key.type]) then
 					endis = "|cFF80FF80"..L["Enabled"].."|r"
@@ -2841,7 +2589,7 @@ function zg:TooltipUpdate(cat)
 					endis = "|cFFFF8080"..L["Disabled"].."|r"
 				end
 
-				local name, rank, tex = GetSpellInfo(key.ids[1])
+				local name, rank, tex = GetSpellInfo(key.id)
 				local checkIcon = tex
 
 				cat:AddLine(
@@ -2907,7 +2655,6 @@ function zg:OnModuleEnable()
 			zg.db.char.postracker = n
 
 			if (class == "PALADIN") then
-				n.SACREDSHIELD = pos[1]
 				n.BEACON = pos[2]
 				n.SACRIFICE = pos[3]
 				n.FREEDOM = pos[4]

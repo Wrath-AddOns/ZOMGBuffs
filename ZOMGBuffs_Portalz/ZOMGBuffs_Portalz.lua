@@ -706,6 +706,7 @@ function module:CreateItemButtons()
 			[51559] = true,				-- Runed Ring of the Kirin Tor
 			[51560] = true,				-- Runed Band of the Kirin Tor
 			[46874] = true,				-- Argent Crusader's Tabard
+			[52251] = false,			-- Jaina's Locket 
 		}
 
 		for id,equip in pairs(clickItems) do
