@@ -4,7 +4,6 @@ externals:
   libs/AceLibrary: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceLibrary
   libs/AceOO-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceOO-2.0
   libs/AceConsole-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceConsole-2.0
-  libs/AceComm-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceComm-2.0
   libs/AceEvent-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceEvent-2.0
   libs/AceAddon-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceAddon-2.0
   libs/AceDB-2.0: svn://svn.wowace.com/wow/ace2/mainline/trunk/AceDB-2.0
@@ -22,11 +21,7 @@ externals:
   libs/LibGroupTalents-1.0: svn://svn.wowace.com/wow/libgrouptalents-1-0/mainline/trunk
 
 move-folders:
-   ZOMGBuffs/ZOMGBuffs_Blessings: ZOMGBuffs_Blessings
-   ZOMGBuffs/ZOMGBuffs_BlessingsManager: ZOMGBuffs_BlessingsManager
-   ZOMGBuffs/ZOMGBuffs_BlessingsPP: ZOMGBuffs_BlessingsPP
    ZOMGBuffs/ZOMGBuffs_BuffTehRaid: ZOMGBuffs_BuffTehRaid
-   ZOMGBuffs/ZOMGBuffs_Log: ZOMGBuffs_Log
    ZOMGBuffs/ZOMGBuffs_SelfBuffs: ZOMGBuffs_SelfBuffs
    ZOMGBuffs/ZOMGBuffs_Portalz: ZOMGBuffs_Portalz
 
