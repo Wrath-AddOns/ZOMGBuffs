@@ -2172,6 +2172,7 @@ do
 end
 
 local invisibility = GetSpellInfo(32612)
+local shadowmeld = GetSpellInfo(58984)
 
 -- CheckMounted
 function z:CheckMounted()
@@ -2258,6 +2259,10 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 		lastCheckFail = L["INVIS"]
 		icon = "icon"
 		icontex = select(3, GetSpellInfo(32612))
+	elseif (UnitBuff("player", shadowmeld)) then
+		lastCheckFail = L["SHADOWMELD"]
+		icon = "icon"
+		icontex = select(3, GetSpellInfo(58984))
 	elseif (GetShapeshiftForm() > 0 and (playerClass == "DRUID" or playerClass == "SHAMAN") and p.notshifted) then
 		lastCheckFail = L["SHAPESHIFTED"]
 		icon = "icon"
