@@ -494,16 +494,6 @@ z.options = {
 					bigStep = 0.1,
 					order = 102,
 				},
-				waitforclass = {
-					type = 'toggle',
-					name = L["Wait for Class/Group"],
-					desc = L["Wait for all of a class or group to arrive before buffing them"],
-					hidden = notRebuffer,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "waitforclass",
-					order = 103,
-				},
 				ignoreabsent = {
 					type = 'toggle',
 					name = L["Ignore Absent"],
@@ -2368,7 +2358,7 @@ function z:SetStatusIcon(t, spellIcon)
 		status = spellIcon
 		spellIcon = nil
 		
-	elseif (z.waitingForRaid or z.waitingForClass) then
+	elseif (z.waitingForRaid) then
 		status = "Interface\\Addons\\ZOMGBuffs\\Textures\\Clock"
 	end
 
@@ -3481,7 +3471,7 @@ do
 				GameTooltip:AddLine(L["Suspended"], 1, 1, 1)
 			end
 			GameTooltip:AddLine(format(L["Not Refreshing because %s"], lastCheckFail), nil, nil, nil, 1)
-		elseif (z.waitingForRaid or z.waitingForClass) then
+		elseif (z.waitingForRaid) then
 	    	if (GameTooltip:IsShown()) then
 	    		GameTooltip:AddLine(" ")
 			else
@@ -3490,9 +3480,6 @@ do
 
 			if (z.waitingForRaid) then
 	    		GameTooltip:AddLine(format(L["Waiting for %d%% of raid to arrive before buffing commences (%d%% currently present)"], z.db.profile.waitforraid * 100, z.waitingForRaid), nil, nil, nil, 1)
-			end
-			if (z.waitingForClass) then
-	    		GameTooltip:AddLine(format(L["Waiting for these groups or classes to arrive: %s"], z.waitingForClass), nil, nil, nil, 1)
 			end
 		end
 
@@ -4281,10 +4268,6 @@ function z:OnTooltipUpdate()
 		cat:AddLine(
 			"text", "|cFFFF8080"..format(L["Waiting for %d%% of raid to arrive before buffing commences (%d%% currently present)"], z.db.profile.waitforraid * 100, self.waitingForRaid),
 			"wrap", true)
-	elseif (self.waitingForClass) then
-		cat:AddLine(
-			"text", "|cFFFF8080"..format(L["Waiting for these groups or classes to arrive: %s"], self.waitingForClass),
-			"wrap", true)
 	end
 
 	for name, module in self:IterateModulesWithMethod("TooltipUpdate") do
@@ -4560,7 +4543,6 @@ function z:OnInitialize()
 		enabled = true,
 		bartexture = "BantoBar",
 		waitforraid = 0,				-- Wait for % of raid
-		waitforclass = true,			-- Wait for class/group to arrive
 		ignoreabsent = true,			-- Ignore absent players (offline, afk, out of zone)
 		channel = "Raid",				-- Report channel
 		skippvp = true,					-- Don't directly buff PVP players

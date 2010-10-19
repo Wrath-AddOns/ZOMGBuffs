@@ -544,7 +544,7 @@ function zg:GetBuffedMembers()
 			local pvpBlock = (z.db.profile.skippvp and UnitIsPVP(unitid)) and not UnitIsPVP("player")
 			local present = UnitIsConnected(unitid) and UnitCanAssist("player", unitid) and not pvpBlock
 			local absent						-- They're not in zone, afk, or offline
-			if (not present and z.db.profile.ignoreabsent and z.db.profile.waitforclass) then
+			if (not present and z.db.profile.ignoreabsent) then
 				if (pvpBlock) then
 					absent = true
 				elseif (not UnitIsConnected(unitid)) then
@@ -774,13 +774,8 @@ function zg:CheckBuffs()
 	end
 	if (any) then
 		z.waitingForRaid = nil
-		z.waitingForClass = nil
 	else
-		if (z.waitingForClass) then
-			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, 5, self)
-		else
-			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, minTimeLeft or 60, self)
-		end
+		self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, minTimeLeft or 60, self)
 	end
 end
 
