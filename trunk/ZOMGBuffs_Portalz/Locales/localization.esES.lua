@@ -1,11 +1,9 @@
 ﻿local L = LibStub("AceLocale-2.2"):new("ZOMGPortalz")
 
 L:RegisterTranslations("esES", function() return
---[===[@debug@
+--@debug@
 {
 }
---@end-debug@]===]
-{
-}
-
+--@end-debug@
+--@localization(locale="esES", format="lua_table", namespace="ZOMGPortalz", handle-unlocalized="ignore")@
 end)

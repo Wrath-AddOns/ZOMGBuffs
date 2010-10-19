@@ -29,7 +29,7 @@ R:RegisterTranslations("enUS", function() return {
 } end)
 
 R:RegisterTranslations("deDE", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Arkanes Pulver",
@@ -57,7 +57,7 @@ R:RegisterTranslations("deDE", function() return
 	["Infernal Stone"]			= "Höllenstein",
 	["Corpse Dust"]				= "Leichenstaub",
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "Ankh",
 	["Arcane Powder"] = "Arkanes Pulver",
@@ -89,7 +89,7 @@ R:RegisterTranslations("deDE", function() return
 end)
 
 R:RegisterTranslations("frFR", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Poudre des arcanes",
@@ -117,7 +117,7 @@ R:RegisterTranslations("frFR", function() return
 	["Infernal Stone"]			= "Pierre infernale",
 	["Corpse Dust"]				= "Poussière de cadavre",
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "Ankh",
 	["Arcane Powder"] = "Poudre des arcanes",
@@ -149,7 +149,7 @@ R:RegisterTranslations("frFR", function() return
 end)
 
 R:RegisterTranslations("esES", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "Ankh",
 	["Arcane Powder"]			= "Partículas Arcanas",
@@ -177,7 +177,7 @@ R:RegisterTranslations("esES", function() return
 	["Infernal Stone"]			= "Piedra infernal",
 	["Corpse Dust"]				= "Polvo de cadáver",
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "Ankh",
 	["Arcane Powder"] = "Partículas Arcanas",
@@ -209,7 +209,7 @@ R:RegisterTranslations("esES", function() return
 end)
 
 R:RegisterTranslations("zhCN", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "十字章",
 	["Arcane Powder"]			= "魔粉",
@@ -237,7 +237,7 @@ R:RegisterTranslations("zhCN", function() return
 	["Infernal Stone"]			= "地狱火石",
 	["Corpse Dust"]				= true,
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "十字章",
 	["Arcane Powder"] = "魔粉",
@@ -269,7 +269,7 @@ R:RegisterTranslations("zhCN", function() return
 end)
 
 R:RegisterTranslations("zhTW", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "十字章",
 	["Arcane Powder"]			= "魔粉",
@@ -297,7 +297,7 @@ R:RegisterTranslations("zhTW", function() return
 	["Infernal Stone"]			= "地獄火石",
 --	["Corpse Dust"]				= true,
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "十字章",
 	["Arcane Powder"] = "魔粉",
@@ -329,7 +329,7 @@ R:RegisterTranslations("zhTW", function() return
 end)
 
 R:RegisterTranslations("koKR", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "십자가",
 	["Arcane Powder"]			= "불가사의한 가루",
@@ -357,7 +357,7 @@ R:RegisterTranslations("koKR", function() return
 	["Infernal Stone"]			= "지옥의 돌",
 --	["Corpse Dust"]				= true,
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "십자가",
 	["Arcane Powder"] = "불가사의한 가루",
@@ -389,7 +389,7 @@ R:RegisterTranslations("koKR", function() return
 end)
 
 R:RegisterTranslations("ruRU", function() return
---[===[@debug@
+--@debug@
 {
 	["Ankh"]					= "Крест",
 	["Arcane Powder"]			= "Порошок чар",
@@ -417,7 +417,7 @@ R:RegisterTranslations("ruRU", function() return
 	["Infernal Stone"]			= "Камень инфернала",
 	["Corpse Dust"]				= "Прах",
 }
---@end-debug@]===]
+--@end-debug@
 {
 	Ankh = "Крест",
 	["Arcane Powder"] = "Порошок чар",
@@ -449,10 +449,10 @@ R:RegisterTranslations("ruRU", function() return
 end)
 
 R:RegisterTranslations("esMX", function() return
---[===[@debug@
+--@debug@
 {
 }
---@end-debug@]===]
+--@end-debug@
 {
 	-- Ankh = "",
 	-- ["Arcane Powder"] = "",

@@ -86,7 +86,7 @@ local manaspring = GetSpellInfo(5677)		-- Mana Spring (totem buff)
 
 local new, del, copy, deepDel
 do
---[===[@debug@
+--@debug@
 	local errorTable = setmetatable({},{
 		__newindex = function(self) error("Attempt to assign to a recycled table (2)") end,
 		__index = function(self) return "bad table" end,
@@ -95,7 +95,7 @@ do
 		__newindex = function(self) error("Attempt to assign to a recycled table") end,
 		__index = function(self) return errorTable end,		--error("Attempt to access a recycled table") end,
 	}
---@end-debug@]===]
+--@end-debug@
 
 	local next, select, pairs, type = next, select, pairs, type
 	local list = setmetatable({},{__mode='k'})
@@ -104,10 +104,10 @@ do
 		local t = next(list)
 		if t then
 			list[t] = nil
---[===[@debug@
+--@debug@
 			setmetatable(t, nil)
 			assert(not next(t))
---@end-debug@]===]
+--@end-debug@
 			for i = 1, select('#', ...) do
 				t[i] = select(i, ...)
 			end
@@ -125,10 +125,10 @@ do
 			t[''] = true
 			t[''] = nil
 			list[t] = true
---[===[@debug@
+--@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@end-debug@]===]
+--@end-debug@
 		end
 	end
 	function deepDel(t)
@@ -144,10 +144,10 @@ do
 			t[''] = true
 			t[''] = nil
 			list[t] = true
---[===[@debug@
+--@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@end-debug@]===]
+--@end-debug@
 		end
 	end
 	function copy(old)
@@ -271,7 +271,7 @@ function z:CheckVersion(ver)
 	end
 end
 
---[===[@debug@
+--@debug@
 -- err
 local function err(self, message, ...)
 	if type(self) ~= "table" then
@@ -353,7 +353,7 @@ function z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 		end
 	end
 end
---@end-debug@]===]
+--@end-debug@
 
 local function getOption(v)
 	return z.db.profile[v]
