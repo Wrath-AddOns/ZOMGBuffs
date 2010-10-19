@@ -71,25 +71,22 @@ local specChangers = {
 
 -- ShortDesc
 local function ShortDesc(a)
-	if (a == "MARK") then		return L["Mark"]
+	if (a == "MARKINGS") then	return L["Mark/Kings"]
 	elseif (a == "STA") then	return L["Stamina"]
 	elseif (a == "INT") then	return L["Intellect"]
 	elseif (a == "SHADOWPROT") then return L["Shadow Protection"]
-	elseif (a == "SPIRIT") then	return L["Spirit"]
-	elseif (a == "BLESSINGS") then	return L["Blessings"]
+	elseif (a == "MIGHT") then	return L["Might"]
 	end
 end
 
-local kiru = GetSpellInfo(46302)			-- Counts as INT (Ignoring STA because talented is still better)
-local dalbless1 = GetSpellInfo(61024)		-- Dalaran Intellect
-local dalbless2 = GetSpellInfo(61316)		-- Dalaran Brilliance
-local felint = GetSpellInfo(57567)			-- Fel Intelligence
+local dalbless = GetSpellInfo(61316)		-- Dalaran Brilliance
+local felint = GetSpellInfo(54424)			-- Fel Intelligence
 local battleshout = GetSpellInfo(6673)		-- Battle Shout
-local manaspring = GetSpellInfo(58777)		-- Mana Spring (totem buff)
+local manaspring = GetSpellInfo(5677)		-- Mana Spring (totem buff)
 
 local new, del, copy, deepDel
 do
---@debug@
+--[===[@debug@
 	local errorTable = setmetatable({},{
 		__newindex = function(self) error("Attempt to assign to a recycled table (2)") end,
 		__index = function(self) return "bad table" end,
@@ -98,7 +95,7 @@ do
 		__newindex = function(self) error("Attempt to assign to a recycled table") end,
 		__index = function(self) return errorTable end,		--error("Attempt to access a recycled table") end,
 	}
---@end-debug@
+--@end-debug@]===]
 
 	local next, select, pairs, type = next, select, pairs, type
 	local list = setmetatable({},{__mode='k'})
@@ -107,10 +104,10 @@ do
 		local t = next(list)
 		if t then
 			list[t] = nil
---@debug@
+--[===[@debug@
 			setmetatable(t, nil)
 			assert(not next(t))
---@end-debug@
+--@end-debug@]===]
 			for i = 1, select('#', ...) do
 				t[i] = select(i, ...)
 			end
@@ -128,10 +125,10 @@ do
 			t[''] = true
 			t[''] = nil
 			list[t] = true
---@debug@
+--[===[@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@end-debug@
+--@end-debug@]===]
 		end
 	end
 	function deepDel(t)
@@ -147,10 +144,10 @@ do
 			t[''] = true
 			t[''] = nil
 			list[t] = true
---@debug@
+--[===[@debug@
 			assert(not next(t))
 			setmetatable(t, protect)
---@end-debug@
+--@end-debug@]===]
 		end
 	end
 	function copy(old)
@@ -170,7 +167,7 @@ do
 	end
 end
 
-ZOMGBuffs = LibStub("AceAddon-2.0"):new("AceConsole-2.0", "AceDB-2.0", "AceEvent-2.0", "AceModuleCore-2.0", "AceHook-2.1", "FuBarPlugin-2.0", "AceComm-2.0")
+ZOMGBuffs = LibStub("AceAddon-2.0"):new("AceConsole-2.0", "AceDB-2.0", "AceEvent-2.0", "AceModuleCore-2.0", "AceHook-2.1", "FuBarPlugin-2.0")
 ZOMGBuffs:SetModuleMixins("AceEvent-2.0", "AceHook-2.1")
 local z = ZOMGBuffs
 local btr
@@ -183,34 +180,36 @@ end
 z.new, z.del, z.deepDel, z.copy = new, del, deepDel, copy
 z.classOrder = classOrder
 z.classIndex = classIndex
-z.manaClasses = {HUNTER = true, DRUID = true, SHAMAN = true, PALADIN = true, PRIEST = true, MAGE = true, WARLOCK = true}
-if (select(4, GetBuildInfo()) >= 40000) then
-	z.manaClasses.HUNTER = nil
-end
+z.manaClasses = {DRUID = true, SHAMAN = true, PALADIN = true, PRIEST = true, MAGE = true, WARLOCK = true}
 
-z.blessingColour = {BOK = "|cFFFF80FF", BOM = "|cFFFF5050", BOL = "|cFF80FF80", BOS = "|cFFFFA0A0", BOW = "|cFF8080FF", SAC = "|cFFFF0000", SAN = "|cFF4040C0", BOF = "|cFFFFCC19", BOP = "|cFF00FF00"}
 do
 	local allBuffs = {
-		{opt = "mark",	ids = {26990, 26991},	class = "DRUID",	type = "MARK", runescroll = true},		-- Mark of the Wild, Gift of the Wild
-		{opt = "sta",	ids = {25389, 25392, 69377},	class = "PRIEST",	type = "STA", runescroll = true},	-- Power Word: Fortitude, Prayer of Fortitude, Fortitude
-		{opt = "int",	ids = {27126, 27127},	class = "MAGE",		type = "INT", manaOnly = true},	-- Arcane Intellect, Arcane Brilliance
-		{opt = "spirit",ids = {25312, 32999},	class = "PRIEST",	type = "SPIRIT", manaOnly = true},	-- Divine Spirit, Prayer of Spirit
-		{opt = "shadow",ids = {25433, 39374},	class = "PRIEST",	type = "SPIRIT"},	-- Shadow Protection, Prayer of Shadow Protection
+		{opt = "mark",	ids = {1126},	class = "DRUID",	type = "MARKINGS"},		-- Mark of the Wild
+		{opt = "sta",	ids = {21562, 69377},	class = "PRIEST",	type = "STA", runescroll = true},	-- Power Word: Fortitude
+		{opt = "int",	ids = {1459},	class = "MAGE",		type = "INT", manaOnly = true},	-- Arcane Brilliance
+		{opt = "shadow",ids = {27683},	class = "PRIEST",	type = "SHADOWPROT"},	-- Shadow Protection
+		{opt = "kings",ids = {20217},	class = "PALADIN",	type = "MARKINGS", runescroll = true},	-- Kings
+		{opt = "might",ids = {19740},	class = "PALADIN",	type = "MIGHT"},	-- Might
 		{opt = "food",	ids = {46899, 433},							type = "FOOD"},		-- Well Fed (Food = 433)
 		{opt = "flask",												type = "FLASK",		icon = "Interface\\Icons\\INV_Potion_1"},
 	}
 
 	z.buffsLookup = {}
 	z.allBuffs = {}
+	z.buffTypes = {}
 	for i,info in pairs(allBuffs) do
 		if (info.ids) then
 			local name, _, icon = GetSpellInfo(info.ids[1])
 			assert(name and icon)
 			info.icon = icon
 			info.list = {}
+			if not z.buffTypes[info.type] then
+				z.buffTypes[info.type] = {}
+			end
 			for j,id in ipairs(info.ids) do
 				local name = GetSpellInfo(id)
 				info.list[name] = true
+				z.buffTypes[info.type][name] = info
 				z.buffsLookup[name] = info
 			end
 			info.list[name] = true
@@ -218,17 +217,12 @@ do
 		tinsert(z.allBuffs, info)
 	end
 	z.buffs = {}
-	for i,info in pairs(z.allBuffs) do
-		z.buffs[i] = info
-	end
 
 	z.auras = {
 		DEVOTION		= {id = 465},		-- Devotion Aura
 		RETRIBUTION		= {id = 7294},		-- Retribution Aura
 		CONCENTRATION	= {id = 19746},		-- Concentration Aura
-		SHADOW			= {id = 19876},		-- Shadow Resistance Aura
-		FROST			= {id = 19888},		-- Frost Resistance Aura
-		FIRE			= {id = 19891},		-- Fire Resistance Aura
+		RESISTANCE		= {id = 19891},		-- Resistance Aura
 		CRUSADER		= {id = 32223},		-- Crusader Aura
 	}
 	for key,info in pairs(z.auras) do
@@ -236,51 +230,10 @@ do
 		info.name, _, info.icon = GetSpellInfo(info.id)
 		info.key = key
 	end
-	z.auraCycle = {"DEVOTION", "RETRIBUTION", "CONCENTRATION", "SHADOW", "FROST", "FIRE", "CRUSADER"}
+	z.auraCycle = {"DEVOTION", "RETRIBUTION", "CONCENTRATION", "RESISTANCE", "CRUSADER"}
 	z.auraIndex = {}
 	for i,name in ipairs(z.auraCycle) do
 		z.auraIndex[name] = i
-	end
-
-	local blessings	= {
-		{id = 27142, type = "BOW", dur = 5,					short = L["Wisdom"]},	-- Blessing of Wisdom
-		{id = 27143, type = "BOW", dur = 30,	class = true},						-- Greater Blessing of Wisdom
-		{id = 27140, type = "BOM", dur = 5,					short = L["Might"]},	-- Blessing of Might
-		{id = 27141, type = "BOM", dur = 30,	class = true},						-- Greater Blessing of Might
-		{id = 20217, type = "BOK", dur = 5,					short = L["Kings"]},	-- Blessing of Kings
-		{id = 25898, type = "BOK", dur = 30,	class = true},						-- Greater Blessing of Kings
-		{id = 20911, type = "SAN", dur = 5,					short = L["Sanctuary"]}, -- Blessing of Sanctuary
-		{id = 25899, type = "SAN", dur = 30,	class = true},						-- Greater Blessing of Sanctuary
-		{id = 10278, type = "BOP", dur = 0.2, noTemplate = true},					-- Hand of Protection
-	}
-
-	z.blessings = {}
-	for i,info in pairs(blessings) do
-		local name, _, icon = GetSpellInfo(info.id)
-		if (not name) then
-			error("No spell for ID "..info.id)
-		end
-
-		info.icon = icon
-		z.blessings[name] = info
-	end
-	
-	z.blessingsIndex = {}
-	for k,v in pairs(z.blessings) do
-		if (not z.blessingsIndex[v.type]) then
-			z.blessingsIndex[v.type] = {}
-		end
-		if (v.class) then
-			z.blessingsIndex[v.type].class = k
-		else
-			z.blessingsIndex[v.type].single = k
-		end
-		if (v.short) then
-			z.blessingsIndex[v.type].short = v.short
-		end
-		if (v.icon) then
-			z.blessingsIndex[v.type].icon = v.icon
-		end
 	end
 end
 
@@ -318,7 +271,7 @@ function z:CheckVersion(ver)
 	end
 end
 
---@debug@
+--[===[@debug@
 -- err
 local function err(self, message, ...)
 	if type(self) ~= "table" then
@@ -400,7 +353,7 @@ function z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 		end
 	end
 end
---@end-debug@
+--@end-debug@]===]
 
 local function getOption(v)
 	return z.db.profile[v]
@@ -618,16 +571,6 @@ z.options = {
 					passValue = "notshifted",
 					order = 116,
 				},
-				notWithSpiritTap = {
-					type = 'toggle',
-					name = L["Not with Spirit Tap"],
-					desc = L["Don't auto buff when you have Spirit Tap, so you can maximise your regeneration"],
-					get = getOption,
-					set = setOptionUpdate,
-					hidden = function() return playerClass ~= "PRIEST" end,
-					passValue = "notWithSpiritTap",
-					order = 119,
-				},
 				minmana = {
 					type = 'range',
 					name = L["Minimum Mana %"],
@@ -646,38 +589,6 @@ z.options = {
 					desc = " ",
 					order = 150,
 					hidden = notRebuffer,
-				},
-				singlesAlways = {
-					type = 'toggle',
-					name = L["Singles Always"],
-					desc = L["Only use single target buffs"],
-					hidden = notRebuffer,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "singlesAlways",
-					order = 160,
-				},
-				singlesInBG = {
-					type = 'toggle',
-					name = L["Singles in BGs"],
-					desc = L["Only use single target buffs in battlegrounds"],
-					hidden = notRebuffer,
-					disabled = function() return z.db.profile.singlesAlways end,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "singlesInBG",
-					order = 161,
-				},
-				singlesInArena = {
-					type = 'toggle',
-					name = L["Singles in Arena"],
-					desc = L["Only use single target buffs in arenas"],
-					hidden = notRebuffer,
-					disabled = function() return z.db.profile.singlesAlways end,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "singlesInArena",
-					order = 162,
 				},
 				pets = {
 					type = 'toggle',
@@ -795,16 +706,6 @@ z.options = {
 			desc = L["Display options"],
 			disabled = "IsDisabled",
 			args = {
-				manager = {
-					type = 'toggle',
-					name = L["Always Load Manager"],
-					desc = L["Always load the Blessings Manager, even when not eligable to modify blessings"],
-					get = getOption,
-					set = function(v,n) setOption(v,n) if (z.MaybeLoadManager) then z:MaybeLoadManager() end end,
-					hidden = function() return select(6,GetAddOnInfo("ZOMGBuffs_BlessingsManager")) == "MISSING" end,
-					passValue = "alwaysLoadManager",
-					order = 20,
-				},
 				portalz = {
 					type = 'toggle',
 					name = L["Always Load Portalz"],
@@ -836,6 +737,7 @@ z.options = {
 					type = 'header',
 					desc = " ",
 					order = 30,
+					hidden = function() return (select(2,UnitClass("player")) == "MAGE" or select(6,GetAddOnInfo("ZOMGBuffs_Portalz")) == "MISSING") and (not z.canloadraidbuffmodule) end
 				},
 				spellicons = {
 					type = 'toggle',
@@ -992,8 +894,8 @@ z.options = {
 							args = {
 								sta = {
 									type = 'toggle',
-									name = GetSpellInfo(36004),		-- Power Word: Fortitude
-									desc = GetSpellInfo(36004),		-- Power Word: Fortitude
+									name = GetSpellInfo(21562),		-- Power Word: Fortitude
+									desc = GetSpellInfo(21562),		-- Power Word: Fortitude
 									get = getTrackOption,
 									set = setTrackOption,
 									passValue = "sta",
@@ -1001,8 +903,8 @@ z.options = {
 								},
 								mark = {
 									type = 'toggle',
-									name = GetSpellInfo(39233),		-- Mark of the Wild
-									desc = GetSpellInfo(39233),		-- Mark of the Wild
+									name = GetSpellInfo(1126),		-- Mark of the Wild
+									desc = GetSpellInfo(1126),		-- Mark of the Wild
 									get = getTrackOption,
 									set = setTrackOption,
 									passValue = "mark",
@@ -1010,38 +912,38 @@ z.options = {
 								},
 								int = {
 									type = 'toggle',
-									name = GetSpellInfo(39235),		-- Arcane Intellect
-									desc = GetSpellInfo(39235),		-- Arcane Intellect
+									name = GetSpellInfo(1459),		-- Arcane Intellect
+									desc = GetSpellInfo(1459),		-- Arcane Intellect
 									get = getTrackOption,
 									set = setTrackOption,
 									passValue = "int",
 									order = 3,
 								},
-								spirit = {
+								kings = {
 									type = 'toggle',
-									name = GetSpellInfo(39234),		-- Divine Spirit
-									desc = GetSpellInfo(39234),		-- Divine Spirit
+									name = GetSpellInfo(20217),		-- Kings
+									desc = GetSpellInfo(20217),		-- Kings
 									get = getTrackOption,
 									set = setTrackOption,
-									passValue = "spirit",
+									passValue = "kings",
 									order = 4,
+								},
+								might = {
+									type = 'toggle',
+									name = GetSpellInfo(19740),		-- Might
+									desc = GetSpellInfo(19740),		-- Might
+									get = getTrackOption,
+									set = setTrackOption,
+									passValue = "might",
+									order = 5,
 								},
 								shadow = {
 									type = 'toggle',
-									name = GetSpellInfo(28537),		-- Shadow Protection
-									desc = GetSpellInfo(28537),		-- Shadow Protection
+									name = GetSpellInfo(27683),		-- Shadow Protection
+									desc = GetSpellInfo(27683),		-- Shadow Protection
 									get = getTrackOption,
 									set = setTrackOption,
 									passValue = "shadow",
-									order = 5,
-								},
-								blessings = {
-									type = 'toggle',
-									name = L["Blessings"],
-									desc = L["Blessings"],
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "blessings",
 									order = 6,
 								},
 								food = {
@@ -1674,14 +1576,6 @@ function z:GetActionClick(code)
 	end
 end
 
--- GetBlessingFromType
-function z:GetBlessingFromType(t)
-	local b = self.blessingsIndex[t]
-	if (b) then
-		return b.single, b.class, b.short
-	end
-end
-
 -- LinkSpellRaw
 function z:LinkSpellRaw(name, overrideName)
 	if (z.linkSpells) then
@@ -1722,17 +1616,6 @@ function z:LinkSpell(name, hexColor, icon, overrideName)
 	end
 
 	return format("%s%s|r", hexColor or "|cFFFFFF80", overrideName or name)
-end
-
--- ColourBlessing
-function z:ColourBlessing(Type, Class, short, icon)
-	if (Type and z.blessingColour[Type]) then
-		local singleName, greaterName, shortName = z:GetBlessingFromType(Type)
-		local buffName = Class and greaterName or singleName
-		return self:LinkSpell(buffName, z.blessingColour[Type], icon, short and shortName)
-	else
-		return "none"
-	end
 end
 
 -- HideMeLaterz
@@ -2084,11 +1967,9 @@ function z:Report(option)
 		local flags = new()
 		local groupCounts = new(0, 0, 0, 0, 0, 0, 0, 0)
 		local groupList = new(new(), new(), new(), new(), new(), new(), new(), new())
-		local blessingsMissing = new()
-		local blessingsGot = new()
 
 		for partyid, name, class, subgroup, index in self:IterateRoster() do
-			flags.STA, flags.MARK, flags.INT, flags.SPIRIT, flags.BLESSINGS = nil, nil, nil, nil, nil
+			flags.STA, flags.MARKINGS, flags.INT, flags.MIGHT = nil, nil, nil, nil, nil
 			if (UnitIsConnected(partyid) and not UnitIsDeadOrGhost(partyid)) then
 				groupCounts[subgroup] = groupCounts[subgroup] + 1
 				for i = 1,40 do
@@ -2107,11 +1988,6 @@ function z:Report(option)
 							flags[one.type] = true			-- Missing buff class, so flag it anyway
 						end
 					end
-
-					local b = z.blessings[name]
-					if (b) then
-						flags.BLESSINGS = (flags.BLESSINGS or 0) + 1
-					end
 				end
 
 				if (not flags.STA and self.classcount.PRIEST > 0) then
@@ -2121,12 +1997,19 @@ function z:Report(option)
 					tinsert(list.STA, name)
 					groupList[subgroup].STA = (groupList[subgroup].STA or 0) + 1
 				end
-				if (not flags.MARK and self.classcount.DRUID > 0) then
-					if (not list.MARK) then
-						list.MARK = new()
+				if (not flags.MARKINGS and (self.classcount.DRUID > 0 or self.classcount.PALADIN > 0)) then
+					if (not list.MARKINGS) then
+						list.MARKINGS = new()
 					end
-					tinsert(list.MARK, name)
-					groupList[subgroup].MARK = (groupList[subgroup].MARK or 0) + 1
+					tinsert(list.MARKINGS, name)
+					groupList[subgroup].MARKINGS = (groupList[subgroup].MARKINGS or 0) + 1
+				end
+				if (not flags.MIGHT and self.classcount.PALADIN > 0) then
+					if (not list.MIGHT) then
+						list.MIGHT = new()
+					end
+					tinsert(list.MIGHT, name)
+					groupList[subgroup].MIGHT = (groupList[subgroup].MIGHT or 0) + 1
 				end
 				if (self.manaClasses[class]) then
 					if (not flags.INT and self.classcount.MAGE > 0) then
@@ -2136,22 +2019,6 @@ function z:Report(option)
 						tinsert(list.INT, name)
 						groupList[subgroup].INT = (groupList[subgroup].INT or 0) + 1
 					end
-					if (not flags.SPIRIT) then
-						if (not list.SPIRIT) then
-							list.SPIRIT = new()
-						end
-						tinsert(list.SPIRIT, name)
-						groupList[subgroup].SPIRIT = (groupList[subgroup].SPIRIT or 0) + 1
-					end
-				end
-				if ((flags.BLESSINGS or 0) < self.classcount.PALADIN) then
-					if (not list.BLESSINGS) then
-						list.BLESSINGS = new()
-					end
-					tinsert(list.BLESSINGS, name)
-					blessingsMissing[class] = (blessingsMissing[class] or 0) + 1
-				else
-					blessingsGot[class] = (blessingsGot[class] or 0) + 1
 				end
 			end
 		end
@@ -2177,25 +2044,6 @@ function z:Report(option)
 			end
 		end
 		
-		for i,class in ipairs(classOrder) do
-			if ((blessingsMissing[class] or 0) > 0) then
-				if ((blessingsGot[class] or 0) == 0) then
-					tinsert(list.BLESSINGS, LOCALIZED_CLASS_NAMES_MALE[class] or class)
-
-					for unit, unitname, unitclass, subgroup, index in self:IterateRoster() do
-						if (class == unitclass) then
-							for j,name in ipairs(list.BLESSINGS) do
-								if (name == unitname) then
-									tremove(list.BLESSINGS, j)
-									break
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-
 		for k,v in pairs(list) do
 			sort(v)
 			SendChatMessage(format(L["<ZOMG> Missing %s: %s"], ShortDesc(k), table.concat(v, ", ")), strupper(self.db.profile.channel) or "RAID")
@@ -2205,8 +2053,6 @@ function z:Report(option)
 		deepDel(groupList)
 		del(groupCounts)
 		del(flags)
-		del(blessingsMissing)
-		del(blessingsGot)
 	end
 end
 
@@ -2441,19 +2287,14 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 			local name, nameSubtext, text, texture, startTime, endTime, isTradeSkill = UnitChannelInfo("player")
 			icon = "icon"
 			icontex = texture
-		elseif (playerClass == "PRIEST" and p.notWithSpiritTap) then
-			if (self:UnitHasBuff("player", 15271)) then		-- Spirit Tap
-				lastCheckFail = L["SPIRITTAP"]
-				icon = "spirittap"
-			end
 		elseif (self.db.char.minmana > 0) then
-			local mana, manamax = UnitMana("player"), UnitManaMax("player")
+			local mana, manamax = UnitPower("player", SPELL_POWER_MANA), UnitPowerMax("player", SPELL_POWER_MANA)
 			if (mana / manamax * 100 < self.db.char.minmana) then
 				lastCheckFail = L["MANA"]
 				icon = "mana"
 
-				if (not self:IsEventRegistered("UNIT_MANA")) then
-					self:RegisterEvent("UNIT_MANA")
+				if (not self:IsEventRegistered("UNIT_POWER")) then
+					self:RegisterEvent("UNIT_POWER")
 				end
 			end
 		end
@@ -2462,8 +2303,8 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	self:SetStatusIcon(icon, icontex)
 
 	if (not lastCheckFail) then
-		if (self:IsEventRegistered("UNIT_MANA")) then
-			self:UnregisterEvent("UNIT_MANA")
+		if (self:IsEventRegistered("UNIT_POWER")) then
+			self:UnregisterEvent("UNIT_POWER")
 		end
 	end
 
@@ -2508,9 +2349,6 @@ function z:SetStatusIcon(t, spellIcon)
 
 	elseif (t == "food") then
 		status = "Interface\\Icons\\INV_Drink_07"
-
-	elseif (t == "spirittap") then
-		status = select(3, GetSpellInfo(15338))			-- Spirit Tap
 
 	elseif (t == "remote") then
 		status = select(3, GetSpellInfo(45112))			-- Mind Control
@@ -2755,10 +2593,6 @@ end
 
 -- SetSort
 function z:SetSort(show)
-	if (show) then
-		self.menu:SetAttribute("state", 0)
-	end
-
 	if (z.db.char.sort == "CLASS") then
 		self.members:SetAttribute("sortMethod", "NAME")
 		self.members:SetAttribute("groupingOrder", table.concat(classOrder, ","))
@@ -2782,6 +2616,7 @@ function z:SetSort(show)
 
 	if (show) then
 		self:OptionsShowList()
+		z:DrawGroupNumbers()
 	end
 end
 
@@ -2960,30 +2795,39 @@ function z:OnStartup()
 			end
 		]]
 
-	members.initialConfigFunction = function(self)
-		-- This is the only place we're allowed to set attributes whilst in combat
+	members.InitialConfigFunction = function(self, frame)
+		if not frame then
+			frame = self[#self]
+		else
+			self[#self+1] = frame
+		end
+		-- This gets queued if in combat
+		z:SetTargetClick(frame)
+		z:InitCell(frame)
 
-		z:SetTargetClick(self, true)
-
-		self:SetAttribute("initial-width", z.totalListWidth or z.db.char.width)
-		self:SetAttribute("initial-height", z.db.char.height)
-
-		z:InitCell(self)
-
-		-- Get initial list item spell, even works in-combat! zomg
-		z.canChangeFlagsIC = true
-		z:UpdateOneCellSpells(self)
-		z.canChangeFlagsIC = nil
+		-- Get initial list item spell, doesn't work in combat :(
+		-- z.canChangeFlagsIC = true
+		z:UpdateOneCellSpells(frame)
+		-- z.canChangeFlagsIC = nil
 
 		if (not InCombatLockdown()) then
-			self.wrapped = true
-			SecureHandlerWrapScript(self, "OnEnter", members, "")
-			SecureHandlerWrapScript(self, "OnLeave", members, z.onLeaveFuncString)
+			frame.wrapped = true
+			SecureHandlerWrapScript(frame, "OnEnter", members, "")
+			SecureHandlerWrapScript(frame, "OnLeave", members, z.onLeaveFuncString)
 		end
 	end
 
+	members:SetAttribute("cellWidth", z.totalListWidth or z.db.char.width)
+	members:SetAttribute("cellHeight", z.db.char.height)
 	members:SetAttribute("template", "SecureUnitButtonTemplate")
 	members:SetAttribute("sortMethod", "NAME")
+	members:SetAttribute("initialConfigFunction",
+	[[
+	local header = self:GetParent()
+	header:CallMethod("InitialConfigFunction")
+	self:SetWidth(header:GetAttribute("cellWidth"))
+	self:SetHeight(header:GetAttribute("cellHeight"))
+	]])
 
 	WorldFrame:HookScript("OnMouseDown", function()
 		if (not InCombatLockdown()) then
@@ -2994,10 +2838,7 @@ function z:OnStartup()
 	self:SetAnchors()
 
 	if (not InCombatLockdown()) then
-		if (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0) then
-			self.members:Hide()
-			self.members:Show()
-		end
+		self.members:Show()
 		self.members:Hide()
 	end
 
@@ -3083,57 +2924,6 @@ function z:GetClassColour(class)
 	return (class and (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]) or defaultColour
 end
 
--- MakePalaIcon
-local function MakePalaIcons(self)
-	local prev
-	if (z.db.profile.track.blessings) then
-		if (self.palaIcon and #self.palaIcon > 0) then
-			prev = self.palaIcon[#self.palaIcon]
-		end
-
-		while (not self.palaIcon or #self.palaIcon < z.classcount.PALADIN) do
-			local b = self:CreateTexture(nil, "ARTWORK")
-			b:SetHeight(z.db.char.height)
-			b:SetWidth(z.db.char.height)
-			if (prev) then
-				b:SetPoint("TOPLEFT", prev, "TOPRIGHT", 0, 0)
-			end
-			tinsert(self.palaIcon, b)
-			prev = b
-		end
-	end
-
-	prev = self.buff[#z.buffs]
-	if (self.palaIcon[1]) then
-		self.palaIcon[1]:ClearAllPoints()
-		if (not prev) then
-			self.palaIcon[1]:SetPoint("TOPLEFT")
-		else
-			self.palaIcon[1]:SetPoint("TOPLEFT", prev, "TOPRIGHT", 0, 0)
-		end
-
-		for i = 1,#self.palaIcon do
-			self.palaIcon[i]:SetTexture(nil)
-		end
-
-		if (z.db.profile.track.blessings and z.classcount.PALADIN > 0) then
-			prev = self.palaIcon[z.classcount.PALADIN]
-		end
-	end
-
-	self.bar:ClearAllPoints()
-	if (prev) then
-		self.bar:SetPoint("TOPLEFT", prev, "TOPRIGHT")
-	else
-		self.bar:SetPoint("TOPLEFT")
-	end
-	self.bar:SetPoint("BOTTOMRIGHT")
-
-	if (btr) then
-		btr:CheckTickColumns(self)
-	end
-end
-
 -- z:SetAllBarSizes()
 function z:SetAllBarSizes()
 	self:UpdateListWidth()
@@ -3147,17 +2937,21 @@ function z:SetAllBarSizes()
 			v:SetHeight(h)
 			v:SetWidth(w)
 
-			MakePalaIcons(v)
-
-			for i,icon in pairs(v.palaIcon) do
-				icon:SetWidth(h)
-				icon:SetHeight(h)
+			if (btr) then
+				btr:CheckTickColumns(v)
 			end
 
 			for i,icon in pairs(v.buff) do
 				icon:SetWidth(h)
 				icon:SetHeight(h)
 			end
+			v.bar:ClearAllPoints()
+			if (#z.buffs == 0) then
+				v.bar:SetPoint("TOPLEFT")
+			else
+				v.bar:SetPoint("TOPLEFT", v.buff[#z.buffs], "TOPRIGHT")
+			end
+			v.bar:SetPoint("BOTTOMRIGHT")
 		end
 	end
 end
@@ -3204,8 +2998,6 @@ local function IsFlaskOrPot(name, icon)
 end
 
 -- DrawCell(self)
-local palaFlags = {false, false, false, false, false, false, false}
-local palaKeys = {BOK = 1, BOM = 2, BOS = 3, BOW = 4, BOL = 5, SAN = 6, SAC = 7}
 local function DrawCell(self)
 	local partyid = self:GetAttribute("unit")		-- self.partyid
 	if (not partyid or not UnitExists(partyid)) then
@@ -3243,7 +3035,7 @@ local function DrawCell(self)
 	for j,icon in ipairs(self.buff) do
 		icon.spellName = nil
 		local b = z.buffs[j]
-		if (not b or ((b.class and z.classcount[b.class] == 0) and (not b.runescroll or not z.db.profile.runescroll))) then
+		if (not b) then
 			icon:SetTexture(nil)
 		else
 			if (UnitIsDeadOrGhost(partyid) or not UnitIsConnected(partyid)) then
@@ -3274,16 +3066,13 @@ local function DrawCell(self)
 			end
 		end
 	end
-	for j = 1,7 do
-		palaFlags[j] = false
-	end
 
 	local myMax, myEnd
 
-	MakePalaIcons(self)
-	
-	local gotPalaBuffs = 0
-	local doBlessings = z.db.profile.track.blessings
+	if (btr) then
+		btr:CheckTickColumns(self)
+	end
+
 	if (not UnitIsDeadOrGhost(partyid) and UnitIsConnected(partyid)) then
 		for i = 1,40 do
 			local name, rank, tex, count, _, maxDuration, endTime, caster = UnitBuff(partyid, i)
@@ -3291,8 +3080,8 @@ local function DrawCell(self)
 				break
 			end
 
-			if (name == kiru or name == dalbless1 or name == dalbless2 or name == felint) then
-				name = GetSpellInfo(27126)
+			if (name == dalbless or name == felint) then
+				name = GetSpellInfo(1459)
 			end
 
 			if ((caster == "player" or z.overrideBuffBar) and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
@@ -3303,9 +3092,9 @@ local function DrawCell(self)
 
 			for j,icon in pairs(self.buff) do
 				local buff = z.buffs[j]
-				if (buff and ((not buff.class or z.classcount[buff.class] > 0) or (buff.runescroll and z.db.profile.runescroll))) then
+				if (buff) then
 					if (not buff.manaOnly or z.manaClasses[class]) then
-						if (buff.list and buff.list[name]) then
+						if (buff.list and buff.list[name]) or (z.buffTypes[buff.type] and z.buffTypes[buff.type][name]) then
 							icon:Show()
 							icon:SetAlpha(onAlpha)
 							icon:SetTexture(tex)			-- TEST
@@ -3325,162 +3114,6 @@ local function DrawCell(self)
 						end
 					end
 				end
-			end
-
-			if (doBlessings) then
-				local b
-				if (name == battleshout) then
-					b = z.blessings[GetSpellInfo(47436)]			-- Blessing of Might
-				elseif (name == manaspring) then
-					b = z.blessings[GetSpellInfo(27142)]			-- Blessing of Wisdom
-				else
-					b = z.blessings[name]
-				end
-				if (b) then
-					-- We use a flag system for the paladin buffs, so we can make them always display in the same order
-					local key = palaKeys[b.type]
-					if (key and key <= 7) then
-						palaFlags[key] = tex
-						gotPalaBuffs = gotPalaBuffs + 1
-
-						--if (caster == "player") then
-						--	if (maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
-						--		myMax, myEnd = maxDuration, endTime
-						--	end
-						--end
-					end
-				end
-			end
-		end
-
-		if (doBlessings) then
-			local palaIcon = 1
-			if (bm) then
-				-- If we have access to blessings manager, then we know what buffs each person
-				-- should have, and who should be buffing them, so we refine the display for this
-
-				local shouldHave = bm:GetShouldHaveBuffs(unitname, class)
-
-				for i,Type in ipairs(shouldHave) do
-					local b = self.palaIcon[palaIcon]
-					if (b) then
-						local tex
-						local single, class = z:GetBlessingFromType(Type[2])
-						if (single and class) then
-							b:Show()
-							if (Type[1] == 1) then
-								tex = z.blessings[single].icon
-								b.spellName = single
-							else
-								tex = z.blessings[class].icon
-								b.spellName = class
-							end
-							b:SetTexture(tex)
-
-							local flagIndex = palaKeys[Type[2]]
-							if (palaFlags[flagIndex]) then
-								--palaFlags[flagIndex] = nil - Removed so that palas with duplicate blessings when players are buffed won't show as unbuffed
-								b:SetAlpha(onAlpha)
-							else
-								b:SetAlpha(offAlpha)
-							end
-
-							if (Type == "BOW") then
-								if (z.manaClasses[class]) then
-									b:SetVertexColor(1, 1, 1)
-								else
-									b:SetVertexColor(1, 0.5, 0.5)
-								end
-							else
-								b:SetVertexColor(1, 1, 1)
-							end
-						else
-							b:SetTexture(nil)
-							b.spellName = nil
-						end
-						palaIcon = palaIcon + 1
-					end
-				end
-
-				deepDel(shouldHave)
-				z.buffRoster = nil
-
-			elseif (z.buffRoster) then
-				-- No Blessings Manager loaded, so we'll make a guess at
-				-- what they should have compared to what they did have
-
-				local lastFlags = z.buffRoster[unitname]
-				if (not lastFlags) then
-					lastFlags = {}
-					z.buffRoster[unitname] = lastFlags
-				end
-
-				if (gotPalaBuffs == z.classcount.PALADIN) then
-					-- If all paladin buffs received by someone, then remember which ones so we can say what's missing later
-					for i = 1,#palaKeys do
-						lastFlags[i] = palaFlags[i]
-					end
-				end
-
-				-- Strip out any extra ones (happens when ppl get exceptions)
-				local count = 0
-				for i = 1,#palaKeys do
-					if (lastFlags[i]) then
-						if (count >= z.classcount.PALADIN) then
-							lastFlags[i] = nil
-						end
-						count = count + 1
-					end
-				end
-
-				-- Show the ones they do have
-				for i = 1,7 do
-					local b = self.palaIcon[palaIcon]
-					if (b) then
-						local tex = palaFlags[i]
-						if (tex and palaIcon <= z.classcount.PALADIN) then
-							b:Show()
-							b:SetTexture(tex)
-							b:SetAlpha(onAlpha)
-							palaIcon = palaIcon + 1
-						else
-							b:SetTexture(nil)
-						end
-					end
-				end
-
-				-- Show the ones we think they should have
-				for i = 1,7 do
-					local b = self.palaIcon[palaIcon]
-					if (b) then
-						local tex = not palaFlags[i] and lastFlags[i]
-						if (tex and palaIcon <= z.classcount.PALADIN) then
-							b:Show()
-							b:SetTexture(tex)
-							b:SetAlpha(offAlpha)
-							palaIcon = palaIcon + 1
-						else
-							b:SetTexture(nil)
-						end
-					end
-					lastFlags[i] = lastFlags[i] or palaFlags[i]
-				end
-			end
-
-			-- Hide excess
-			while (palaIcon <= #self.palaIcon) do
-				self.palaIcon[palaIcon]:SetTexture(nil)
-				palaIcon = palaIcon + 1
-			end
-		else
-			lastFlags = nil
-			z.buffRoster = nil
-		end
-	else
-		-- Hide excess
-		if (self.palaIcon) then
-			for i = 1,#self.palaIcon do
-				self.palaIcon[i]:SetTexture(nil)
 			end
 		end
 	end
@@ -3524,12 +3157,12 @@ local function DrawCell(self)
 		if (select(2, IsInInstance()) == "party") then
 			-- No point getting it otherwise, as they can be wrong. Usually the values you had
 			-- from previous instance if you're running more than one with the same people
-			local isTank, isHealer, isDamage = UnitGroupRolesAssigned(partyid)
-			if (isTank) then
+			local role = UnitGroupRolesAssigned(partyid)
+			if (role == "TANK") then
 				icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
-			elseif (isHealer) then
+			elseif (role == "HEALER") then
 				icon = "|TInterface\\Addons\\ZOMGBuffs\\Textures\\RoleHealer:0|t"
-			elseif (isDamage) then
+			elseif (role == "DAMAGER") then
 				icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
 			end
 		else
@@ -3641,52 +3274,6 @@ function z:DrawGroupNumbers()
 			del(list)
 		end
 
-		if (self.palaNames) then
-			for i,name in pairs(self.palaNames) do
-				name:Hide()
-			end
-		end
-
-		if (self.db.profile.track.blessings) then
-			if (bm and bm.pala) then
-				-- Also draw the column headings for paladin names (two letters each)
-
-				local topChild = self.members:GetAttribute("child1")
-				if (topChild) then
-					local show = topChild:IsShown()
-
-					for name,pala in pairs(bm.pala) do
-						local row = pala.row
-
-						local relative = topChild.palaIcon and topChild.palaIcon[row]
-						if (relative) then
-							local fs
-							if (not self.palaNames) then
-								self.palaNames = {}
-							end
-							fs = self.palaNames[row]
-							if (not fs) then
-								fs = self.members:CreateFontString(nil, "BORDER", "NumberFontNormal")
-								self.palaNames[row] = fs
-								fs:SetFont("Fonts\\ARIALN.ttf", 10, "OUTLINE")
-								fs:SetJustifyH("LEFT")
-							end
-
-							fs:SetText(pala.initials)
-
-							fs:ClearAllPoints()
-							fs:SetPoint("BOTTOM", relative, "TOP", 0, (self.db.char.border and 3) or 1)
-							if show then
-								fs:Show()
-							else
-								fs:Hide()
-							end
-						end
-					end
-				end
-			end
-		end
-		
 		if (btr) then
 			btr:CheckTickTitles(self.members)
 		end
@@ -3942,16 +3529,6 @@ do
 						end
 					end
 				end
-			elseif (z.overrideBuffBar == "blessing") then
-				local palaIcon = cell.palaIcon and cell.palaIcon[z.overrideBuffBarIndex]
-				if (palaIcon) then
-					local showSpell = palaIcon.spellName
-					local blessing1 = showSpell and z.blessings[showSpell]
-					local blessing2 = spellName and z.blessings[spellName]
-					if (blessing1 and blessing2 and blessing1.type == blessing2.type) then
-						return true
-					end
-				end
 			end
 		else
 			for name, module in z:IterateModulesWithMethod("ShowBuffBar") do
@@ -3995,17 +3572,6 @@ do
 							-- One of the normal icons (raid buffs, food, pots)
 							z.overrideBuffBar = "buff"
 							z.overrideBuffBarIndex = index
-
-						elseif (self.palaIcon) then
-							-- One of the Paladin blessing icons
-							local pindex = index - #z.buffs
-							if (pindex <= #self.palaIcon) then
-								z.overrideBuffBar = "blessing"
-								z.overrideBuffBarIndex = pindex
-							else
-								z.overrideBuffBar = nil
-								z.overrideBuffBarIndex = nil
-							end
 						else
 							z.overrideBuffBar = nil
 							z.overrideBuffBarIndex = nil
@@ -4141,8 +3707,6 @@ function z:InitCell(cell)
 		prev = b
 	end
 
-	cell.palaIcon = {}
-
 	local tex = self:GetBarTexture()
 	
 	cell.bar = CreateFrame("StatusBar", nil, cell)
@@ -4150,10 +3714,10 @@ function z:InitCell(cell)
 	cell.bar:SetStatusBarColor(1, 1, 0.5, 0.5)
 	cell.bar:SetMinMaxValues(0, 1)
 	cell.bar:SetValue(0)
-	if (not prev) then
+	if (#self.buffs == 0) then
 		cell.bar:SetPoint("TOPLEFT")
 	else
-		cell.bar:SetPoint("TOPLEFT", prev, "TOPRIGHT")
+		cell.bar:SetPoint("TOPLEFT", cell.buff[#self.buffs], "TOPRIGHT")
 	end
 	cell.bar:SetPoint("BOTTOMRIGHT")
 	
@@ -4263,7 +3827,6 @@ function z:OnRaidRosterUpdate()
 			reqHistoryCap = {}
 			reqHistoryBT = {}
 			reqHistoryHello = {}
-			self:SendCommMessage("GROUP", "HELLO", self.version)
 			self.wasInGroup = true
 		end
 	end
@@ -4277,10 +3840,6 @@ function z:OnRaidRosterUpdate()
 		if (module:IsModuleActive()) then
 			module:OnRaidRosterUpdate()
 		end
-	end
-
-	if (self.MaybeLoadManager) then
-		self:MaybeLoadManager()
 	end
 
 	self.StartupDone = true
@@ -4298,12 +3857,13 @@ function z:UpdateListWidth()
 	-- Work out how wide the list will be in total. The width option now specifies the list of
 	-- the name part only, the actual width varies based on how many icons will be shown
 	if (not InCombatLockdown()) then
-		local icons = z.db.profile.track.blessings and z.classcount.PALADIN or 0
+		local icons = 0
 		icons = icons + #self.buffs
 
 		self.totalListWidth = self.db.char.width + icons * z.db.char.height
 		if (self.members) then
 			self.members:SetWidth(self.totalListWidth)
+			self.members:SetAttribute("cellWidth", self.totalListWidth)
 		end
 	else
 		self.updateListWidthOOC = true
@@ -4850,39 +4410,14 @@ function z:TRAINER_CLOSED()
 	self:RequestSpells()
 end
 
--- UNIT_MANA
+-- UNIT_POWER
 -- This is enabled when we failed a mana check in self:CanCheckBuffs()
-function z:UNIT_MANA(unit)
-	if (unit == "player") then
-		local mana, manamax = UnitMana("player"), UnitManaMax("player")
+function z:UNIT_POWER(unit, powtype)
+	if (unit == "player" and powtype == "MANA") then
+		local mana, manamax = UnitPower("player", SPELL_POWER_MANA), UnitPowerMax("player", SPELL_POWER_MANA)
 		if (mana / manamax * 100 >= self.db.char.minmana) then
-			self:UnregisterEvent("UNIT_MANA")
+			self:UnregisterEvent("UNIT_POWER")
 			self:RequestSpells()
-		end
-	end
-end
-
--- CHAT_MSG_ADDON
--- For PallyPower Load on Demand support
-local ppPrefix = "PLPWR"
-local ignoreMeList = {}
-local ignoreMeToo
-function z:CHAT_MSG_ADDON(prefix, message, distribution, sender)
-	if (prefix == "PLPWR") then
-		if (message == "ZOMG") then
-			ignoreMeList[sender] = true
-		elseif (not ignoreMeList[sender]) then
-			if (type(z.versionRoster[sender]) == "number") then
-				ignoreMeList[sender] = true
-			else
-				z.versionRoster[sender] = "PallyPower"
-				if (not ZOMGBlessingsPP) then
-					LoadAddOn("ZOMGBuffs_BlessingsPP")
-					if (ZOMGBlessingsPP) then
-						ZOMGBlessingsPP:CHAT_MSG_ADDON(prefix, message, distribution, sender)
-					end
-				end
-			end
 		end
 	end
 end
@@ -4976,116 +4511,25 @@ function z:MODIFIER_STATE_CHANGED()
 	self:DrawAllCells()
 end
 
-local reqHistorySpec = {}
-local reqHistoryCap = {}
-local reqHistoryBT = {}
-local reqHistoryHello = {}
--- OnCommReceive
-z.OnCommReceive = {
-	HELLO = function(self, prefix, sender, channel, version)
-		if (version) then
-			if (not reqHistoryHello[sender] or reqHistoryHello[sender] < GetTime() - 15) then
-				reqHistoryHello[sender] = GetTime()
-
-				if (type(version) == "string") then
-					version = 0		-- Flags as beta
-				end
-				z.versionRoster[sender] = version
-				if (version > z.maxVersionSeen) then
-					z.maxVersionSeen = version
-				end
-				z:SendComm(sender, "VERSION", z.version)
-				z:OnReceiveVersion(sender, version)
-			end
-		end
-	end,
-	VERSION = function(self, prefix, sender, channel, version)
-		if (version) then
-			if (type(version) == "string") then
-				version = 0		-- Flags as beta
-			end
-			z.versionRoster[sender] = version
-			if (version > z.maxVersionSeen) then
-				z.maxVersionSeen = version
-			end
-			z:OnReceiveVersion(sender, version)
-		end
-	end,
-	REQUESTCAPABILITY = function(self, prefix, sender, channel)
-		if (not reqHistoryCap[sender] or reqHistoryCap[sender] < GetTime() - 15) then
-			reqHistoryCap[sender] = GetTime()
-
-			if (playerClass == "PALADIN") then
-				local cap = {
-					canKings			= UnitLevel("player") >= 20,
-					canSanctuary		= LGT:UnitHasTalent("player", (GetSpellInfo(20911))),
-					impMight			= LGT:UnitHasTalent("player", (GetSpellInfo(20445))) or 0,
-					impWisdom			= LGT:UnitHasTalent("player", (GetSpellInfo(20245))) or 0,
-					improvedDevotion	= LGT:UnitHasTalent("player", (GetSpellInfo(20140))),
-					improvedConcentration = LGT:UnitHasTalent("player", (GetSpellInfo(20254))),
-					improvedRetribution = LGT:UnitHasTalent("player", (GetSpellInfo(31869)))
-				}
-
-				local _
-				_, cap[1], cap[2], cap[3] = LGT:GetUnitTalentSpec("player")
-				z:SendComm(sender, "CAPABILITY", cap)
-				del(cap)
-			end
-		end
-	end,
-	CAPABILITY = function(self, prefix, sender, channel, cap)
-		z:OnReceiveCapability(sender, cap)
-	end,
-	GIVETEMPLATEPART = function(self, prefix, sender, channel, name, class, buff)
-		z:OnReceiveTemplatePart(sender, name, class, buff)
-	end
-}
-
--- OnReceiveSpec
-function z:OnReceiveCapability(sender, cap)
-	if (cap) then
-		self:CallMethodOnAllModules("OnReceiveCapability", sender, cap)
-	end
-end
-
--- OnReceiveTemplatePart
-function z:OnReceiveTemplatePart(sender, name, class, buff)
-	self:CallMethodOnAllModules("OnReceiveTemplatePart", sender, name, class, buff)
-end
-
--- OnReceiveVersion
-function z:OnReceiveVersion(sender, version)
-	self:CallMethodOnAllModules("OnReceiveVersion", sender, version)
-end
-
 function z:DefaultClickBindings()
 	return {
 		target = "BUTTON1",
-		singleblessing = "ALT-BUTTON2",
-		greaterblessing = "BUTTON2",
-		stamina1 = "ALT-BUTTON2",
-		stamina2 = "BUTTON2",
-		spirit1 = "CTRL-ALT-BUTTON2",
-		spirit2 = "CTRL-BUTTON2",
-		shadowprot1 = "SHIFT-ALT-BUTTON2",
-		shadowprot2 = "SHIFT-BUTTON2",
+		stamina = "BUTTON2",
+		shadowprot = "SHIFT-BUTTON2",
 		fearward = "ALT-BUTTON1",
-		mark1 = "ALT-BUTTON2",
-		mark2 = "BUTTON2",
+		mark = "BUTTON2",
 		thorns = "CTRL-BUTTON2",
-		int1 = "ALT-BUTTON2",
-		int2 = "BUTTON2",
-		dampen = "CTRL-BUTTON2",
-		amplify = "SHIFT-BUTTON2",
+		int = "BUTTON2",
 		focusmagic = "CTRL-BUTTON1",
 		water = "ALT-BUTTON2",
 		earthshield = "BUTTON2",
 		seeinvis = "BUTTON2",
 		breath = "SHIFT-BUTTON2",
+		kings = "BUTTON2",
+		might = "SHIFT-BUTTON2",
 		freedom = "CTRL-BUTTON1",
 		sacrifice = "ALT-BUTTON1",
 		beacon = "SHIFT-BUTTON1",
-		sacredshield = "SHIFT-ALT-BUTTON1",
 	}
 end
 
@@ -5115,12 +4559,9 @@ function z:OnInitialize()
 		ignoreabsent = true,			-- Ignore absent players (offline, afk, out of zone)
 		channel = "Raid",				-- Report channel
 		skippvp = true,					-- Don't directly buff PVP players
-		singlesInBG = true,				-- Don't use greater blessings/class buffs in battlegrounds
-		singlesInArena = true,			-- Don't use greater blessings/class buffs in arenas
 		groupno = true,
 		alwaysLoadManager = true,
 		alwaysLoadPortalz = true,
-		notWithSpiritTap = true,
 		showSolo = true,
 		showParty = true,
 		showRaid = true,
@@ -5128,9 +4569,9 @@ function z:OnInitialize()
 			sta = true,
 			mark = true,
 			int = true,
-			spirit = true,
 			shadow = false,
-			blessings = true,
+			kings = true,
+			might = true,
 			food = true,
 			flask = true,
 		},
@@ -5170,28 +4611,6 @@ function z:OnInitialize()
 
 	self:SetKeyBindings()
 
-	self.commPrefix = "ZOMG"
-	self:SetCommPrefix(self.commPrefix)
-
-	local memo = {}
-	for k,v in pairs(classOrder) do tinsert(memo, v) end
-	for k,v in pairs({
-			"REQUESTCAPABILITY", "CAPABILITY",
-			"GIVETEMPLATE", "GIVETEMPLATEPART", "ACK",
-			"REQUESTTEMPLATE", "TEMPLATE",
-			"REQUESTSPEC", "SPEC",
-			"HELLO", "VERSION",
-			"default", "modified", "never", "solo", "party", "raid",
-			"BOM", "BOK", "BOW", "BOL", "BOS", "SAN",
-			"MODIFIEDTEMPLATE",
-			"canKings", "canSanctuary", "impMight", "impWisdom", "canSpirit", "mark",
-			"SPELLS_CHANGED", "GIVEMASTERTEMPLATE", "GIVESUBCLASSES", "SYMBOLCOUNT",
-			"bless", "change", "exception", "gen", "save", "select",
-			"AUTOGROUPASSIGNED", "SYNCGROUPS",
-		}) do tinsert(memo, v) end
-
-	self:RegisterMemoizations(memo)
-
 	self.globalCooldownEnd = 0
 	playerClass = playerClass or select(2, UnitClass("player"))
 
@@ -5229,61 +4648,6 @@ function z:GetGroupNumber(unit)
 	return 1
 end
 
--- SendComm
-function z:SendComm(fname, ...)
-	if (UnitExists(fname) and UnitIsConnected(fname)) then
-		if (UnitIsUnit("player", fname)) then
-			local func = z.OnCommReceive[...]
-			if (func) then
-				func(self, self.commPrefix, fname, "WHISPER", select(2, ...))
-			end
-		else
-			if (self:IsInBattlegrounds()) then
-				local name, server = UnitName(fname)
-				if (server and server ~= "") then
-					self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
-				else
-					self:SendCommMessage("WHISPER", name, ...)
-				end
-			else
-				self:SendCommMessage("WHISPER", fname, ...)
-			end
-		end
-	end
-end
-
--- SendAll
-function z:SendClass(class, ...)
-	for unit, unitname, unitclass, subgroup, index in self:IterateRoster() do
-		if (unitclass == class and UnitIsConnected(unit)) then
-			local name, server = UnitName(unit)
-			if (name ~= UNKNOWN) then
-				if (server and server ~= "") then
-					if (self:IsInBattlegrounds()) then
-						self:SendCommMessage("WHISPER", format("%s-%s", name, server), ...)
-					end
-				else
-					self:SendCommMessage("WHISPER", name, ...)
-				end
-			end
-		end
-	end
-end
-
--- MaybeLoadManager
-function z:MaybeLoadManager()
-	if (playerClass == "PALADIN" or IsRaidLeader() or IsRaidOfficer() or self.db.profile.alwaysLoadManager) then
-		if (not ZOMGBlessingsManager) then
-			LoadAddOn("ZOMGBuffs_BlessingsManager")
-			if (ZOMGBlessingsManager) then
-				self.options.args["ZOMGBlessingsManager"] = ZOMGBlessingsManager:GetModuleOptions()
-				bm = ZOMGBlessingsManager
-			end
-		end
-		self.MaybeLoadManager = nil
-	end
-end
-
 -- MaybeLoadPortalz
 function z:MaybeLoadPortalz()
 	if (ZOMGPortalz) then
@@ -5309,28 +4673,20 @@ end
 
 -- SetBuffsList
 function z:SetBuffsList()
+	if not self.members then return end
+	local havetypes = {}
+
 	del(self.buffs)
 	self.buffs = new()
 	for k,v in pairs(self.allBuffs) do
-		if (self.db.profile.track[v.opt] and (not v.class or self.classcount[v.class] > 0 or (v.runescroll and self.db.profile.runescroll))) then
+		if (self.db.profile.track[v.opt] and not havetypes[v.type] and (not v.class or self.classcount[v.class] > 0 or (v.runescroll and self.db.profile.runescroll))) then
 			tinsert(self.buffs, v)
+			havetypes[v.type] = true
 		end
 	end
+	self:SetAllBarSizes()
 	if (self.icon and self.members and self.members:IsShown()) then
 		self:DrawAllCells()
-	end
-end
-
--- Add
-function z:Log(module, who, ...)
-	if (GetNumPartyMembers() > 0 or GetNumRaidMembers() > 0) then
-		local event = new(module, time(), who or UnitName("player"), ...)
-		z:SendCommMessage("GROUP", "EVENT", event)
-		if (ZOMGLog and ZOMGLog:IsModuleActive()) then
-			ZOMGLog:ActualAdd(event)
-		else
-			del(event)
-		end
 	end
 end
 
@@ -5452,8 +4808,6 @@ end
 function z:ADDON_LOADED(addon)
 	if (addon == "ZOMGBuffs_BuffTehRaid") then
 		btr = ZOMGBuffTehRaid
-	elseif (addon == "ZOMGBuffs_BlessingsManager") then
-		bm = ZOMGBlessingsManager
 	end
 end
 
@@ -5484,7 +4838,7 @@ end
 
 -- PARTY_MEMBERS_CHANGED
 function z:PARTY_MEMBERS_CHANGED()
-	self:CheckStateChange()
+	self:RAID_ROSTER_UPDATE()
 end
 
 -- OnEnableOnce
@@ -5510,15 +4864,10 @@ function z:OnEnableOnce()
 		self:SetSinkStorage(self.db.profile.sinkopts)
 	end
 
-	self:SendCommMessage("GROUP", "HELLO", self.version)
-
 	-- Table to make sure we don't re-load the same module again if someone screws up
 	-- their installation and has a double set of folders in addons and in ZOMGBuffs proper
 	local matchList = {
-		ZOMGBuffs_BlessingsManager = ZOMGBlessingsManager,
-		ZOMGBuffs_Blessings = ZOMGBlessings,
 		ZOMGBuffs_SelfBuffs = ZOMGSelfBuffs,
-		ZOMGBuffs_Log = ZOMGLog,
 		ZOMGBuffs_BuffTehRaid = ZOMGBuffTehRaid,
 		ZOMGBuffs_Portalz = ZOMGPortalz,
 	}
@@ -5559,12 +4908,7 @@ function z:OnEnableOnce()
 	
 	btr = ZOMGBuffTehRaid
 
-	self:MaybeLoadManager()
 	self:MaybeLoadPortalz()
-
-	if (not ZOMGLog) then
-		LoadAddOn("ZOMGBuffs_Log")
-	end
 
 	for name, module in self:IterateModulesWithMethod("RebuffQuery") do
 		buffClass = true
@@ -5717,9 +5061,6 @@ function z:OnEnable()
 		self:OnEnableOnce()
 	end
 
-	self:RegisterComm(self.commPrefix, "WHISPER", "OnCommReceive")
-	self:RegisterComm(self.commPrefix, "GROUP", "OnCommReceive")
-
 	self:SetClickConfigMenu()
 	self:OnRaidRosterUpdate()
 
@@ -5745,7 +5086,6 @@ function z:OnEnable()
 	self:SetKeyBindings()
 
 	self:RegisterEvent("RAID_ROSTER_UPDATE")
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE")
 	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -5767,7 +5107,6 @@ function z:OnEnable()
 
 	self:RegisterEvent("PLAYER_CONTROL_LOST")
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
-	self:RegisterEvent("CHAT_MSG_ADDON")				-- For PallyPower Load on Demand support
 	self:RegisterEvent("CHAT_MSG_WHISPER")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 

@@ -9,7 +9,7 @@ local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
 local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
 local playerClass, playerName, playerGUID
-local template
+local template = {}
 
 local InCombatLockdown	= InCombatLockdown
 local IsUsableSpell		= IsUsableSpell
@@ -29,44 +29,58 @@ do
 	if (GetLocale() == "enUS") then
 		enchantMatching = {
 			[GetSpellInfo(5761)] = "Mind Numbing Poison",			-- Mind-numbing Poison
-			[GetSpellInfo(8232)] = "^Windfury (%d+)$",				-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Flametongue (%d+)$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Earthliving (%d+)$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Frostbrand (%d+)$",			-- Frostbrand Weapon
+			[GetSpellInfo(8232)] = "^Windfury$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Flametongue$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Earthliving$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^Rockbiter$",        -- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "deDE") then
 		enchantMatching = {
 			[GetSpellInfo(3408)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
-			[GetSpellInfo(8232)] = "^Windzorn (%d+)$",				-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Flammenzunge (%d+)$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Lebensgeister (%d+)$",		-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Frostbrand (%d+)$",			-- Frostbrand Weapon
+			[GetSpellInfo(8232)] = "^Windzorn$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Flammenzunge$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Lebensgeister$",		-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^Felsbeißer$",       -- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "esES") then
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^Viento Furioso (%d+)$",		-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Lengua de Fuego (%d+)$",		-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Vida terrestre (%d+)$",		-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Estigma de Escarcha (%d+)$",	-- Frostbrand Weapon
+			[GetSpellInfo(8232)] = "^Viento Furioso$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Lengua de Fuego$",		-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Vida terrestre$",		-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Estigma de Escarcha$",	-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^Muerdepiedras$",       -- Rockbiter Weapon          
 		}
 
 	elseif (GetLocale() == "frFR") then
 		enchantMatching = {
 			[GetSpellInfo(5761)] = "Poison de Distraction mentale",	-- Poison de distraction mentale (Mind-numbing Poison)
-			[GetSpellInfo(8232)] = "^Furie-des-vents (%d+)$",		-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Langue de feu (%d+)$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Viveterre (%d+)$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Arme de givre (%d+)$",			-- Frostbrand Weapon
+			[GetSpellInfo(8232)] = "^Furie-des-vents$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Langue de feu$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Viveterre$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Arme de givre$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^Croque-roc$",       -- Rockbiter Weapon       
 		}
 		
 	elseif (GetLocale() == "ruRU") then
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^Неистовство ветра (%d+)$",		-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Язык пламени (%d+)$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Жизнь Земли (%d+)$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Ледяное клеймо (%d+)$",		-- Frostbrand Weapon
+			[GetSpellInfo(8232)] = "^Неистовство ветра$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Язык пламени$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Жизнь Земли$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Ледяное клеймо$",		-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^камнедробителя$",      -- Rockbiter Weapon      
+		}
+
+	elseif (GetLocale() == "koKR") then
+		enchantMatching = {
+			[GetSpellInfo(8232)] = "^질풍의 무기$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^불꽃의 무기$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^대지의 생명$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^냉기의 무기$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^대지의 무기$",        -- Rockbiter Weapon
 		}
 	end
 end
@@ -308,23 +322,9 @@ function zs:CheckEnchant(slot, spellOrItem)
 					local enc, timeLeft = self:GetCurrentItemEnchant(slot)
 					if (enc) then
 						local temp = (lookFor or spellOrItem):gsub("%-", "%%-")
-						local found, pos, rank = strfind(enc, temp)
+						local found, pos = strfind(enc, temp)
 						if (not found) then
 							hasEnchant = nil
-						elseif (rank) then
-							local foundRank = tonumber(rank)
-							if (foundRank) then
-								local name2, rank2 = GetSpellInfo(spellOrItem)
-								if (name2 and rank2) then
-									rank2 = tonumber(strmatch(rank2, "(%d+)"))
-									if (rank2) then
-										if (foundRank ~= rank2) then
-											-- Available enchant is a higher rank than one on weapon
-											hasEnchant = nil
-										end
-									end
-								end
-							end
 						end
 					end
 				end
@@ -334,7 +334,7 @@ function zs:CheckEnchant(slot, spellOrItem)
 				if (InCombatLockdown() or self:SetupForItem(slot, spellOrItem)) then
 					local itemLink = GetInventoryItemLink("player", slot)
 					if (not itemLink) then
-						itemLink = (slot == 16 and L["Main Hand"]) or L["Off Hand"]
+						itemLink = (slot == 16 and L["Main Hand"]) or (slot == 17 and L["Off Hand"]) or (slot == 18 and L["Ranged"]) or L["Unknown"]
 					end
 					z:Notice(format(L["You need %s on |c00FFFF80%s|r"], z:LinkSpell(spellOrItem, nil, true), itemLink), "buffreminder")
 					return true
@@ -348,7 +348,7 @@ end
 
 -- CheckWeaponBuff
 function zs:CheckWeaponBuffs()
-	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand))
+	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand)) or self:CheckEnchant(18, template.ranged)
 end
 
 -- CheckBuffs
@@ -485,7 +485,7 @@ function zs:CheckBuffs()
 		end
 	end
 
-	if (not any and (template.mainhand or template.offhand)) then
+	if (not any and (template.mainhand or template.offhand or template.ranged)) then
 		if (self:CheckWeaponBuffs()) then
 			any = true
 		end
@@ -502,43 +502,26 @@ function zs:GetClassBuffs()
 	local classBuffs
 	if (playerClass == "DRUID") then
 		classBuffs = {
-			{id = 16864, o = 2, duration = 30, who = "self", c = "80A0FF", noauto = true}, -- Omen of Clarity
-			{id = 22812, o = 5, duration = 0.25, default = 5, who = "self", c = "A0A020", noauto = true, nocombatnotice = true}, -- Barkskin
-			{id = 27009, o = 6, duration = 0.75, default = 5, who = "self", c = "80FF80", noauto = true, skip = function() return IsIndoors() end}, -- Nature's Grasp
-			{id = 9846, o = 7, duration = 0.1, default = 1, who = "self", c = "FF8080", noauto = true}, -- Tiger's Fury
+			{id = 22812, o = 5, duration = 0.20, default = 5, who = "self", c = "A0A020", noauto = true, nocombatnotice = true}, -- Barkskin
+			{id = 16689, o = 6, duration = 0.75, default = 5, who = "self", c = "80FF80", noauto = true, skip = function() return IsIndoors() end}, -- Nature's Grasp
+			{id = 5217, o = 7, duration = 0.1, default = 1, who = "self", c = "FF8080", noauto = true}, -- Tiger's Fury
 		}
 		self.reagents = {
-			[GetItemInfo(17034) or R["Maple Seed"]]			= {20, 1, 50, minLevel = 20, maxLevel = 29},
-			[GetItemInfo(17035) or R["Stranglethorn Seed"]]	= {20, 1, 50, minLevel = 30, maxLevel = 39},
-			[GetItemInfo(17036) or R["Ashwood Seed"]]			= {20, 1, 50, minLevel = 40, maxLevel = 49},
-			[GetItemInfo(17037) or R["Hornbeam Seed"]]		= {20, 1, 50, minLevel = 50, maxLevel = 59},
-			[GetItemInfo(17038) or R["Ironwood Seed"]]		= {20, 1, 50, minLevel = 60, maxLevel = 68},
-			[GetItemInfo(22147) or R["Flintweed Seed"]]		= {20, 1, 50, minLevel = 69, maxLevel = 78},
-			[GetItemInfo(44614) or R["Starleaf Seed"]]		= {20, 1, 50, minLevel = 79, maxLevel = 88},
+			[GetItemInfo(17034) or R["Maple Seed"]]			= {20, 1, 50},
 		}
 		self.notifySpells = {
-			[GetSpellInfo(26994)] = {		-- Rebirth
+			[GetSpellInfo(20484)] = {		-- Rebirth
 				GetItemInfo(17034) or R["Maple Seed"],
-				GetItemInfo(17035) or R["Stranglethorn Seed"],
-				GetItemInfo(17036) or R["Ashwood Seed"],
-				GetItemInfo(17037) or R["Hornbeam Seed"],
-				GetItemInfo(17038) or R["Ironwood Seed"],
-				GetItemInfo(22147) or R["Flintweed Seed"],
-				GetItemInfo(44614) or R["Starleaf Seed"],
 			},
 		}
 
 	elseif (playerClass == "MAGE") then
 		classBuffs = {
-			{id = 7301,  o = 4,  duration = 30,  who = "self", c = "0000FF", exclude = function() return IsUsableSpell(GetSpellInfo(36881)) end},	-- Frost Armor
-			{id = 34913, o = 5,  duration = 30,  who = "self", dup = 2, c = "FF0000"},							-- Molten Armor
-			{id = 27124, o = 6,  duration = 30,  who = "self", dup = 2, c = "0050FF"},							-- Ice Armor
-			{id = 27125, o = 7,  duration = 30,  who = "self", dup = 2, c = "8080FF"},							-- Mage Armor
-			{id = 33405, o = 9,  duration = 1,   who = "self", default = 5, c = "B0B0FF", noauto = true, cancancel = true}, -- Ice Barrier
-			{id = 27128, o = 10, duration = 0.5, who = "self", default = 5, noauto = true, dup = 3, c = "FF5050", cancancel = true},	-- Fire Ward
-			{id = 32796, o = 11, duration = 0.5, who = "self", default = 5, noauto = true, dup = 3, c = "5050FF", cancancel = true},	-- Frost Ward
-			{id = 27131, o = 12, duration = 1,   who = "self", default = 5, noauto = true, c = "FFB0B0", cancancel = true},	-- Mana Shield
-			{id = 11129, o = 14, duration = -1,  who = "self", noauto = true, c = "F5BC0B"},									-- Combustion
+			{id = 7302,  o = 4,  duration = 30,  who = "self", c = "0000FF", exclude = function() return IsUsableSpell(GetSpellInfo(36881)) end},	-- Frost Armor
+			{id = 30482, o = 5,  duration = 30,  who = "self", dup = 2, c = "FF0000"},							-- Molten Armor
+			{id = 6117, o = 7,  duration = 30,  who = "self", dup = 2, c = "8080FF"},							-- Mage Armor
+			{id = 11426, o = 9,  duration = 1,   who = "self", default = 5, c = "B0B0FF", noauto = true, cancancel = true}, -- Ice Barrier
+			{id = 1463, o = 12, duration = 1,   who = "self", default = 5, noauto = true, c = "FFB0B0", cancancel = true},	-- Mana Shield
 		}
 		local singlePort = GetItemInfo(17031) or R["Rune of Teleportation"]
 		local groupPort = GetItemInfo(17032) or R["Rune of Portals"]
@@ -546,8 +529,8 @@ function zs:GetClassBuffs()
 			[groupPort]		= {20, 1, 100},
 			[singlePort]	= {20, 1, 100},
 		}
-		local singles = {3561, 3562, 3563, 3565, 3566, 3567, 32271, 32272, 33690}
-		local groups = {10059, 11416, 11417, 11418, 11419, 11420, 32266, 32267, 33691}
+		local singles = {3561, 3562, 3563, 3565, 3566, 3567, 32271, 32272, 33690, 35715, 53140 }
+		local groups = {10059, 11416, 11417, 11418, 11419, 11420, 32266, 32267, 33691, 35717, 53142 }
 		self.notifySpells = {}
 		for i,id in pairs(singles) do
 			self.notifySpells[(GetSpellInfo(id))] = singlePort
@@ -558,61 +541,27 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "PRIEST") then
 		classBuffs = {
-			{id = 25218, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
-			{id = 25431, o = 2, duration = 10, charges = 20, who = "self", c = "FFA080"},					-- Inner Fire
+			{id = 17, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
+			{id = 588, o = 2, duration = 30, who = "self", c = "FFA080"},					-- Inner Fire
 			{id = 15473, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
+			{id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"},
 		}
-		if (wowVersion > 10505) then		-- WoW 3.3 or better
-			tinsert(classBuffs, {id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"})				-- Vampiric Embrace (changed to a self buff with 3.3)
-		end
 
 	elseif (playerClass == "WARLOCK") then
 		classBuffs = {
-			{id = 27260, o = 1, duration = 30, who = "self", dup = 1, c = "FF80FF"},					-- Demon Armor
-			{id = 696,   o = 2, duration = 30, who = "self", dup = 1, c = "FF20FF", exclude = function() return IsUsableSpell(GetSpellInfo(27260)) end}, -- Demon Skin
-			{id = 44977, o = 3, duration = 30, who = "self", dup = 1, c = "FF8080"},					-- Fel Armor
-			{id = 28610, o = 6, duration = 0.5, default = 5, who = "self", noauto = true, c = "FF60FF"},				-- Shadow Ward
+			{id = 687, o = 1, duration = 30, who = "self", dup = 1, c = "FF80FF"},					-- Demon Armor
+			{id = 28176, o = 3, duration = 30, who = "self", dup = 1, c = "FF8080"},					-- Fel Armor
+			{id = 6229, o = 6, duration = 0.5, default = 5, who = "self", noauto = true, c = "FF60FF"},				-- Shadow Ward
 			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
 		}
-		self.reagents = {
-			[GetItemInfo(16583) or R["Demonic Figurine"]]	= {5, 1, 100},
-			[GetItemInfo(5565) or R["Infernal Stone"]]	= {5, 1, 100},
-		}
-		local shoulShard = R["Soul Shard"]
-		local warlockList = {
-			27250, -- Create Firestone
-			27238, -- Create Soulstone
-			28172, -- Create Spellstone
-			27230, -- Create Healthstone
-			11726, -- Enslave Demon
-			29893, -- Ritual of Souls
-			698,   -- Ritual of Summoning
-			30546, -- Shadowburn
-			30545, -- Soul Fire
-			29858, -- Soulshatter
-			30146, -- Summon Felguard
-			691,   -- Summon Felhunter
-			712,   -- Summon Succubus
-			697,   -- Summon Voidwalker
-		}
-		self.notifySpells = {}
-		for i,id in pairs(warlockList) do
-			self.notifySpells[(GetSpellInfo(id))] = soulShard
-		end
-		self.notifySpells[GetSpellInfo(24670)] = GetItemInfo(5565) or R["Infernal Stone"]		-- Inferno
-		self.notifySpells[GetSpellInfo(18540)] = GetItemInfo(16583) or R["Demonic Figurine"]	-- Ritual of Doom
 
 	elseif (playerClass == "HUNTER") then
 		classBuffs = {
 			{id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
-			{id = 34074, o = 3, duration = -1, who = "self", dup = 1, c = "B080FF"},		-- Aspect of the Viper
-			{id = 27044, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
-			{id = 61846, o = 5, duration = -1, who = "self", dup = 1, c = "808090"},		-- Aspect of the Dragonhawk
+			{id = 13165, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
 			{id = 5118, o = 6, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
 			{id = 13159, o = 7, duration = -1, who = "self", dup = 1, c = "B0B0B0"},		-- Aspect of the Pack
-			{id = 27045, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
-			{id = 13161, o = 9, duration = -1, who = "self", dup = 1, c = "FFA0FF"},		-- Aspect of the Beast
-			{id = 13163, o = 10, duration = -1, who = "self", dup = 1, c = "808020"},		-- Aspect of the Monkey
+			{id = 20043, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
 		}
 
 	elseif (playerClass == "SHAMAN") then
@@ -626,24 +575,14 @@ function zs:GetClassBuffs()
 			end
 		end
 
-		local function getWaterShieldCharges()
-			return LGT:UnitHasGlyph("player", (GetSpellInfo(58063))) and 4 or 3		-- Glyph of Water Shield
-		end
-
-		local function getLightningShieldCharges()
-			return 3 + (LGT:UnitHasTalent("player", (GetSpellInfo(51525))) or 0) * 2		-- Static Shock
-		end
-
 		classBuffs = {
-			{id = 49281, o = 1, dup = 2, charges = getLightningShieldCharges, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
-			{id = 33736, o = 2, dup = 2, charges = getWaterShieldCharges, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
-			{id = 8017,  o = 4, duration = 30, who = "weapon", c = "80FF80", dup = 1,				-- Rockbiter Weapon
-				exclude = function() return IsUsableSpell(GetSpellInfo(25505)) end, -- Only use Rockbiter until we can use Windfury
-			},
-			{id = 25505, o = 4, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
-			{id = 25489, o = 5, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
-			{id = 25500, o = 6, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
-			{id = 51993, o = 7, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
+			{id = 324, o = 1, dup = 2, charges = 3, duration = 10, who = "self", c = "8080FF", onEnable = onEnableShield},					-- Lightning Shield
+			{id = 52127, o = 2, dup = 2, charges = 3, duration = 10, who = "self", noauto = true, c = "4040FF", onEnable = onEnableShield},	-- Water Shield
+			{id = 8232, o = 4, duration = 30, who = "weapon", c = "FFFFFF", dup = 1},		-- Windfury Weapon
+			{id = 8024, o = 5, duration = 30, who = "weapon", c = "FF8080", dup = 1},		-- Flametongue Weapon
+			{id = 8033, o = 6, duration = 30, who = "weapon", c = "8080FF", dup = 1},		-- Frostbrand Weapon
+			{id = 51730, o = 7, duration = 30, who = "weapon", c = "FFFF80", dup = 1},		-- Earthliving Weapon
+			{id = 8017,  o = 8, duration = 30, who = "weapon", c = "80FF80", dup = 1},		-- Rockbiter Weapon
 		}
 		self.reagents = {
 			[GetItemInfo(17030) or R["Ankh"]] = {10, 1, 50, minLevel = 30},
@@ -654,53 +593,25 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "WARRIOR") then
 		classBuffs = {
-			{id = 2048, o = 1, duration = 2, dup = 1, who = "self", c = "FF4040", checkdups = true},		-- Battle Shout
+			{id = 6673, o = 1, duration = 2, dup = 1, who = "self", c = "FF4040", checkdups = true},		-- Battle Shout
 			{id = 469, o = 2, duration = 2, dup = 1, who = "self", c = "40FF40", checkdups = true},			-- Commanding Shout
 			{id = 18499, o = 4, duration = 0.165, who = "self", noauto = true, c = "FFFF40"},				-- Berserker Rage
-			{id = 29131, o = 5, duration = 0.165, who = "self", noauto = true, c = "FF0000"},				-- Bloodrage
 		}
 
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
-			{id = 41189, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Instant Poison
-			{id = 43581, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040", sequence = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX"}},	-- Deadly Poison
+			{id = 8679, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040"},	-- Instant Poison
+			{id = 2823, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040" },	-- Deadly Poison
 			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
 			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 43461, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040", sequence = {"", " II", " III", " IV", " V", " VI", " VII"}},					-- Wound Poison
-			{id = 57982, o = 6, dup = 1, duration = 60, who = "weapon", c = "209080", sequence = {"", " II"}},										-- Anesthetic Poison
+			{id = 13219, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040"},					-- Wound Poison
 		}
 		self.reagents = {
-			[6947] = {20, 1, 100, minLevel = 20, maxLevel = 27},			-- Instant Poison I
-			[6949] = {20, 1, 100, minLevel = 28, maxLevel = 35},			-- Instant Poison II
-			[6950] = {20, 1, 100, minLevel = 36, maxLevel = 43},			-- Instant Poison III
-			[8926] = {20, 1, 100, minLevel = 44, maxLevel = 51},			-- Instant Poison IV
-			[8927] = {20, 1, 100, minLevel = 52, maxLevel = 59},			-- Instant Poison V
-			[8928] = {20, 1, 100, minLevel = 60, maxLevel = 67},			-- Instant Poison VI
-			[21927]= {20, 1, 100, minLevel = 68, maxLevel = 72},			-- Instant Poison VII
-			[43230]= {20, 1, 100, minLevel = 73, maxLevel = 78},			-- Instant Poison VIII
-			[43231]= {20, 1, 100, minLevel = 79, maxLevel = 85},			-- Instant Poison IX
+			[6947] = {20, 1, 100, minLevel = 10},			-- Instant Poison
 
-			[2892] = {20, 1, 100, minLevel = 30, maxLevel = 37},			-- Deadly Poison I
-			[2893] = {20, 1, 100, minLevel = 38, maxLevel = 45},			-- Deadly Poison II
-			[8984] = {20, 1, 100, minLevel = 46, maxLevel = 53},			-- Deadly Poison III
-			[8985] = {20, 1, 100, minLevel = 54, maxLevel = 59},			-- Deadly Poison IV
-			[20844]= {20, 1, 100, minLevel = 60, maxLevel = 61},			-- Deadly Poison V
-			[22053]= {20, 1, 100, minLevel = 62, maxLevel = 69},			-- Deadly Poison VI
-			[22054]= {20, 1, 100, minLevel = 70, maxLevel = 75},			-- Deadly Poison VII
-			[43232]= {20, 1, 100, minLevel = 76, maxLevel = 79},			-- Deadly Poison VIII
-			[43233]= {20, 1, 100, minLevel = 80, maxLevel = 87},			-- Deadly Poison IX
+			[2892] = {20, 1, 100, minLevel = 30},			-- Deadly Poison
 
-			[10918]= {20, 1, 100, minLevel = 32, maxLevel = 39},			-- Wound Poison I
-			[10920]= {20, 1, 100, minLevel = 40, maxLevel = 47},			-- Wound Poison II
-			[10921]= {20, 1, 100, minLevel = 48, maxLevel = 55},			-- Wound Poison III
-			[10922]= {20, 1, 100, minLevel = 56, maxLevel = 63},			-- Wound Poison IV
-			[22055]= {20, 1, 100, minLevel = 64, maxLevel = 71},			-- Wound Poison V
-			[43234]= {20, 1, 100, minLevel = 72, maxLevel = 77},			-- Wound Poison VI
-			[43235]= {20, 1, 100, minLevel = 78, maxLevel = 85},			-- Wound Poison VII
-
-			[21835]= {20, 1, 100, minLevel = 68, maxLevel = 76},			-- Anesthetic Poison
-			[43237]= {20, 1, 100, minLevel = 77, maxLevel = 85},			-- Anesthetic Poison II
-
+			[10918]= {20, 1, 100, minLevel = 32},			-- Wound Poison
 			[3775] = {20, 1, 100, minLevel = 20},							-- Crippling Poison
 			[5237] = {20, 1, 100, minLevel = 20},							-- Mind-numbing Poison
 		}
@@ -711,54 +622,33 @@ function zs:GetClassBuffs()
 		end
 
 		classBuffs = {
-			{id = 21084, o = 1,  duration = 30, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
-			{id = 20375, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
-			{id = 20166, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "6070FF", rebuff = L["Seals"]},	-- Seal of Wisdom
-			{id = 20165, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Light
-			{id = 53736, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Corruption
-			{id = 31801, o = 6,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Vengeance
-			{id = 20164, o = 7,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
-			{id = 25780, o = 11, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
-			{id = 27179, o = 12, duration = 0.165, who = "self", c = "FFF0E0", noauto = true},								-- Holy Shield
-			{id = 27149, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
-			{id = 27150, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
+			{id = 20154, o = 1,  duration = 30, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
+			{id = 85126, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
+			{id = 20165, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Insight
+			{id = 31801, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Truth
+			{id = 20164, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
+			{id = 25780, o = 10, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
+			{id = 465, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
+			{id = 7294, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
 			{id = 19746, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
-			{id = 27151, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Shadow Resistance Aura
-			{id = 27152, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "2020FF", checkdups = true, skip = skipFunc},		-- Frost Resistance Aura
-			{id = 27153, o = 19, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Fire Resistance Aura
-			{id = 32223, o = 20, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
+			{id = 19891, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Resistance Aura
+			{id = 32223, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
 			{id = 54428, o = 22, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
 				skip = function()
 					local mana, maxmana = UnitMana("player"), UnitManaMax("player")
-					return (mana / maxmana) > 0.75					-- Skip if over 75% mana
+					return (mana / maxmana) > 0.9					-- Skip if over 90% mana
 				end
 			},
 		}
 
-		if (tonumber((select(2, GetBuildInfo()))) < 10000) then
-			tinsert(classBuffs, 8, {id = 31892, o = 8,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of Blood
-			tinsert(classBuffs, 9, {id = 53720, o = 9,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA0A0", rebuff = L["Seals"]})	-- Seal of the Martyr
-		end
-
-		self.notifySpells = {
-			[GetSpellInfo(19752)] = GetItemInfo(17033) or R["Symbol of Divinity"],		-- Divine Intervention
-		}
 	elseif (playerClass == "DEATHKNIGHT") then
 		local strOfEarth = GetSpellInfo(8076)										-- Strength of Earth
 		classBuffs = {
-			{id = 49222, o = 1, duration = 5, who = "self", c = "209020"},			-- Bone Armor
-			{id = 49142, o = 2, duration = 30, who = "weapon", c = "204090"},		-- Frozen Rune Weapon
-			{id = 57623, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
+			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
 				skip = function()
 					return UnitBuff("player", strOfEarth) ~= nil
 				end,
 			},
-		}
-		self.notifySpells = {
-			[GetSpellInfo(46584)] = GetItemInfo(37201) or R["Corpse Dust"],			-- Raise Dead
-		}
-		self.reagents = {
-			[GetItemInfo(37201) or R["Corpse Dust"]]	= {20, 1, 200},
 		}
 	end
 
@@ -1056,15 +946,15 @@ do
 					order = 5,
 					hidden = function() return not zs:IsModuleActive() end,
 					args = {
-						ap = {
+						agi = {
 							type = "toggle",
-							name = ATTACK_POWER_TOOLTIP,		-- Attack Power
-							desc = ATTACK_POWER_TOOLTIP,
+							name = SPELL_STAT2_NAME,		-- Agility
+							desc = SPELL_STAT2_NAME,
 							order = 10,
 							hidden = function() return casterClasses[playerClass] end,
 							get = getFlask,
 							set = setFlask,
-							passValue = "ap",
+							passValue = "agi",
 						},
 						str = {
 							type = "toggle",
@@ -1076,15 +966,15 @@ do
 							set = setFlask,
 							passValue = "str",
 						},
-						spell = {
+						int = {
 							type = "toggle",
-							name = ITEM_MOD_SPELL_POWER_SHORT,	-- Spell Power
-							desc = ITEM_MOD_SPELL_POWER_SHORT,
+							name = SPELL_STAT4_NAME,	-- Intellect
+							desc = SPELL_STAT4_NAME,
 							order = 30,
 							hidden = function() return UnitPowerMax("player", 0) == 0 end,
 							get = getFlask,
 							set = setFlask,
-							passValue = "spell",
+							passValue = "int",
 						},
 						spacer = {
 							type = 'header',
@@ -1131,6 +1021,8 @@ function zs:MakeItemOptions()
 			return b == template.mainhand
 		elseif (a == "offhand") then
 			return b == template.offhand
+		elseif (a == "ranged") then
+			return b == template.ranged
 		end
 	end
 	local function setFunc(k,v)
@@ -1141,6 +1033,9 @@ function zs:MakeItemOptions()
 
 	local function hideOHWeapon()
 		return GetInventoryItemLink("player", 17) == nil
+	end
+	local function hideRangedWeapon()
+		return playerClass ~= "ROGUE" or GetInventoryItemLink("player", 18) == nil
 	end
 
 	for k,v in pairs(self.classBuffs) do
@@ -1156,6 +1051,7 @@ function zs:MakeItemOptions()
 				e1 = "mainhand:"..k
 				e2 = "offhand:"..k
 				e3 = "both:"..k
+				e4 = "ranged:"..k
 
 				local spellIcon
 				if (item) then
@@ -1194,6 +1090,16 @@ function zs:MakeItemOptions()
 							set = setFunc,
 							passValue = e2,
 						},
+						ranged = {
+							type = "toggle",
+							name = L["Ranged"],
+							desc = L["Use this item or spell on the ranged weapon"],
+							order = 2,
+							hidden = hideRangedWeapon,
+							get = getFunc,
+							set = setFunc,
+							passValue = e4,
+						},
 					}
 				}
 			end
@@ -1206,6 +1112,7 @@ function zs:MakeItemOptions()
 			name = L["Learnable"],
 			desc = L["Learnable"],
 			order = 1000,
+			hidden = true,
 			get = function() return self.db.char.itemsLearnable end,
 			set = function(k,n) self.db.char.itemsLearnable = n end,
 		}
@@ -1234,7 +1141,7 @@ function zs:ValidateTemplate(template)
 		for key in pairs(template) do
 			local buff = self.classBuffs[key]
 			if (not buff) then
-				if (key ~= "modified" and key ~= "mainhand" and key ~= "offhand") then
+				if (key ~= "modified" and key ~= "mainhand" and key ~= "offhand" and key ~= "ranged") then
 					template[key] = nil
 				end
 			elseif (buff.who == "weapon") then
@@ -1273,21 +1180,6 @@ function zs:OnModifyTemplate(key, value)
 		local buff = self.classBuffs[key]
 		if (buff and buff.onEnable) then
 			buff.onEnable(key)
-		end
-	end
-
-	if (playerClass == "PALADIN") then
-		for key2,info in pairs(z.auras) do
-			if (info.name == key) then
-				-- New aura set, notify blessings manager
-				local aura = self:GetPaladinAuraKey()
-				local bm = ZOMGBlessingsManager
-				if (bm) then
-					bm:OnReceiveAura(playerName, aura)
-				end
-				z:SendCommMessage("GROUP", "AURA", aura)
-				break
-			end
 		end
 	end
 end
@@ -1352,21 +1244,6 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 	if (self.db.char.itemsLearnable) then
 		local ospell = spell
 		local buff = self.classBuffs[spell]
-		if (not buff and target == "") then
-			rank = tonumber(strmatch(rank, "(%d+)"))
-			if (rank) then
-				for name,info in pairs(self.classBuffs) do
-					local strrank = info.sequence and info.sequence[rank]
-					if (strrank) then
-						if (name .. strrank == spell) then
-							spell = name
-							buff = info
-							break
-						end
-					end
-				end
-			end
-		end
 		if (buff and buff.who == "weapon") then
 			if (z.icon.mod == self) then
 				z:SetupForSpell()
@@ -1445,8 +1322,8 @@ end
 do
 	-- Flask of the North tracking
 	local flaskTypes = {
-		[67016] = "spell",
-		[67017] = "ap",
+		[67016] = "int",
+		[67017] = "agi",
 		[67018] = "str",
 	}
 	local events = {}
@@ -1485,8 +1362,8 @@ function zs:TooltipOnClick(name)
 				local flask = new()
 				local current = 0
 				if (not casterClasses[playerClass]) then
-					tinsert(flask, "ap")
-					if (self.db.char.flask == "ap") then
+					tinsert(flask, "agi")
+					if (self.db.char.flask == "agi") then
 						current = #flask
 					end
 				end
@@ -1495,9 +1372,10 @@ function zs:TooltipOnClick(name)
 					if (self.db.char.flask == "str") then
 						current = #flask
 					end
-				elseif (UnitPowerMax("player", 0) > 0) then
-					tinsert(flask, "spell")
-					if (self.db.char.flask == "spell") then
+				end
+				if (UnitPowerMax("player", 0) > 0) then
+					tinsert(flask, "int")
+					if (self.db.char.flask == "int") then
 						current = #flask
 					end
 				end
@@ -1519,7 +1397,7 @@ function zs:TooltipOnClick(name)
 				self:ModifyTemplate(name, nil)
 			else
 				local b
-				if (name == "mainhand" or name == "offhand") then
+				if (name == "mainhand" or name == "offhand" or name =="ranged") then
 					b = self.classBuffs[template[name]]
 				else
 					b = self.classBuffs[name]
@@ -1544,7 +1422,7 @@ function zs:TooltipOnClick(name)
 				end
 
 				if (replaceTo or firstOne) then
-					if (name == "mainhand" or name == "offhand") then
+					if (name == "mainhand" or name == "offhand" or name == "ranged") then
 						self.activeEnchant = nil
 						self:ModifyTemplate(name, replaceTo or firstOne)
 					else
@@ -1626,6 +1504,9 @@ function zs:TooltipUpdate(cat)
 		if (template.offhand) then
 			self:AddItem(cat, "offhand", template.offhand)
 		end
+		if (template.ranged) then
+			self:AddItem(cat, "ranged", template.ranged)
+		end
 
 		local list = self:SortedBuffList()
 		for i,key in ipairs(list) do
@@ -1675,7 +1556,8 @@ function zs:OnModuleInitialize()
 	z:RegisterDefaults("SelfBuffs", "char", {
 		useauto = true,
 		itemsLearnable = true,
-		templates = {},
+		templates = { Default = { classBuffs = {} }, current = {} },
+		defaultTemplate = "Default",
 		reagents = {},
 		combatnotice = true,
 		rebuff = {
@@ -1689,13 +1571,8 @@ function zs:OnModuleInitialize()
 	self.OnMenuRequest = self.options
 	z.options.args.ZOMGSelfBuffs = self.options
 
-	template = self:GetTemplates().current
-	if (not template) then
-		template = {}
-		self:GetTemplates().current = template
-	end
-
 	z:RegisterBuffer(self, 1)
+	self:OnSpellsChanged()
 
 	self.OnModuleInitialize = nil
 end
@@ -1712,16 +1589,6 @@ function zs:OnModuleEnable()
 	playerName = UnitName("player")
 	playerClass = select(2, UnitClass("player"))
 	playerGUID = UnitGUID("player")
-
-	if (playerClass == "ROGUE") then
-		self.db.char.reagents.flashpowder = nil
-
-		if (not self.db.char.hfbdone) then
-			-- New default for Hunger for Blood
-			self.db.char.hfbdone = true
-			self.db.char.rebuff[GetSpellInfo(51662)] = 5
-		end
-	end
 
 	self:OnSpellsChanged()
 	z:MakeOptionsReagentList()

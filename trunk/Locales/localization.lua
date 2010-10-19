@@ -96,7 +96,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Report"]				= true,
 	["Report options"]		= true,
 	["<ZOMG> Missing %s: %s"] = true,
-	["Mark"]				= true,
+	["Mark/Kings"]				= true,
 	["Stamina"]				= true,
 	["Intellect"]			= true,
 	["Spirit"]				= true,

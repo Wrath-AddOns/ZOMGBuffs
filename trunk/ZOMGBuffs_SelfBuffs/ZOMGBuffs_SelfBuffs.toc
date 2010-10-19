@@ -1,4 +1,4 @@
-﻿## Interface: 30300
+﻿## Interface: 40000
 ## Title: |cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|cFEFFFFFFBuffs|r [|cFF80FF80Self Buffs|r] by |cFFFF8080Zek|r
 ## Notes: ZOMGBuffs, Self Buffing Module
 ## Author: Zek
@@ -7,11 +7,14 @@
 ## RequiredDeps: ZOMGBuffs
 ## OptionalDeps: Ace2
 ## X-ZOMGBuffs: yes
+## X-Curse-Packaged-Version: r196
+## X-Curse-Project-Name: ZOMGBuffs
+## X-Curse-Project-ID: zomgbuffs
+## X-Curse-Repository-ID: wow/zomgbuffs/cata
 
 ## X-Category: Buffs
 ## X-eMail: zeksie@googlemail.com
 ## X-License: GPL v2 or later
-## X-Donate: PayPal:pussicat AT ntlworld DOT com
 
 Locales\Locales.xml
 

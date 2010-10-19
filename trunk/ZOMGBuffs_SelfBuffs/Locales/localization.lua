@@ -13,6 +13,8 @@ L:RegisterTranslations("enUS", function() return {
 	["Use this item or spell on the main hand weapon"]		= true,
 	["Off Hand"]											= true,
 	["Use this item or spell on the off hand weapon"]		= true,
+	["Ranged"]											= true,
+	["Use this item or spell on the ranged weapon"]			= true,
 	["You need |cFFFFFF80%s|r"]								= true,
 	["You need %s"]											= true,
 	["You need |c0080FF80%s|r on |c00FFFF80%s|r"]			= true,
