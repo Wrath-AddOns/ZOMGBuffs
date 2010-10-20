@@ -407,6 +407,12 @@ function zs:CheckBuffs()
 			if (cb and (cb.who == "self" or cb.who == "single" or cb.who == "party")) then
 				if (not cb.skip or not cb.skip()) then
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
+					if not name and cb.aliasNames then
+						for ak,av in cb.aliasNames do
+							name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", ak)
+							if name then break end
+						end
+					end
 					local timeLeft = endTime and (endTime - GetTime())
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
 
@@ -517,7 +523,7 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "MAGE") then
 		classBuffs = {
-			{id = 7302,  o = 4,  duration = 30,  who = "self", c = "0000FF", exclude = function() return IsUsableSpell(GetSpellInfo(36881)) end},	-- Frost Armor
+			{id = 7302,  o = 4,  duration = 30,  who = "self", c = "0000FF"},	-- Frost Armor
 			{id = 30482, o = 5,  duration = 30,  who = "self", dup = 2, c = "FF0000"},							-- Molten Armor
 			{id = 6117, o = 7,  duration = 30,  who = "self", dup = 2, c = "8080FF"},							-- Mage Armor
 			{id = 11426, o = 9,  duration = 1,   who = "self", default = 5, c = "B0B0FF", noauto = true, cancancel = true}, -- Ice Barrier
@@ -543,8 +549,8 @@ function zs:GetClassBuffs()
 		classBuffs = {
 			{id = 17, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
 			{id = 588, o = 2, duration = 30, who = "self", c = "FFA080"},					-- Inner Fire
-			{id = 15473, o = 9, duration = -1, who = "self", c = "A020A0"},									-- Shadowform
-			{id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"},
+			{id = 15473, o = 9, duration = -1, who = "self", c = "A020A0"},					-- Shadowform
+			{id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"},					-- Vampiric Embrace
 		}
 
 	elseif (playerClass == "WARLOCK") then
@@ -596,8 +602,14 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "WARRIOR") then
 		classBuffs = {
-			{id = 6673, o = 1, duration = 2, dup = 1, who = "self", c = "FF4040", checkdups = true},		-- Battle Shout
-			{id = 469, o = 2, duration = 2, dup = 1, who = "self", c = "40FF40", checkdups = true},			-- Commanding Shout
+			{id = 6673, o = 1, duration = 2, dup = 1, who = "self", c = "FF4040", checkdups = true,		-- Battle Shout
+				aliases = { 8076, 57330 },
+				-- Strength of Earth, Horn of Winter
+			},
+			{id = 469, o = 2, duration = 2, dup = 1, who = "self", c = "40FF40", checkdups = true,		-- Commanding Shout
+				aliases = { 6307, 21562 },
+				-- Blood Pact, Power Word: Fortitude
+			},
 			{id = 18499, o = 4, duration = 0.165, who = "self", noauto = true, c = "FFFF40"},				-- Berserker Rage
 		}
 
@@ -645,14 +657,10 @@ function zs:GetClassBuffs()
 		}
 
 	elseif (playerClass == "DEATHKNIGHT") then
-		local strOfEarth = GetSpellInfo(8076)										-- Strength of Earth
-		local battleShout = GetSpellInfo(6673)
-						-- Battle Shout
 		classBuffs = {
 			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
-				skip = function()
-					return UnitBuff("player", strOfEarth) ~= nil or UnitBuff("player", battleShout) ~= nil
-				end,
+				aliases = { 6673, 8076 },
+				-- Battle Shout, Strength of Earth
 			},
 		}
 	end
@@ -664,6 +672,15 @@ function zs:GetClassBuffs()
 			if (data.id) then
 				local name, _, icon = GetSpellInfo(data.id)
 				if (name) then
+					if (data.aliases) then
+						data.aliasNames = {}
+						for _,v in ipairs(data.aliases) do
+							local name = GetSpellInfo(v)
+							if name then
+								data.aliasNames[name] = v
+							end
+						end
+					end
 					self.classBuffs[name] = data
 				else
 					-- Store the errors now till end, so the rest will still function even with unknown spells
