@@ -646,10 +646,12 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "DEATHKNIGHT") then
 		local strOfEarth = GetSpellInfo(8076)										-- Strength of Earth
+		local battleShout = GetSpellInfo(6673)
+						-- Battle Shout
 		classBuffs = {
 			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
 				skip = function()
-					return UnitBuff("player", strOfEarth) ~= nil
+					return UnitBuff("player", strOfEarth) ~= nil or UnitBuff("player", battleShout) ~= nil
 				end,
 			},
 		}

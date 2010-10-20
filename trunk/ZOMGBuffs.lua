@@ -79,11 +79,6 @@ local function ShortDesc(a)
 	end
 end
 
-local dalbless = GetSpellInfo(61316)		-- Dalaran Brilliance
-local felint = GetSpellInfo(54424)			-- Fel Intelligence
-local battleshout = GetSpellInfo(6673)		-- Battle Shout
-local manaspring = GetSpellInfo(5677)		-- Mana Spring (totem buff)
-
 local new, del, copy, deepDel
 do
 --@debug@
@@ -193,8 +188,13 @@ do
 		{opt = "food",	ids = {46899, 433},							type = "FOOD"},		-- Well Fed (Food = 433)
 		{opt = "flask",												type = "FLASK",		icon = "Interface\\Icons\\INV_Potion_1"},
 	}
+	local otherBuffs = {
+		[469] = "STA",		-- Commanding Shout
+		[6307] = "STA",		-- Blood Pact
+		[54424] = "INT",	-- Fel Intelligence
+		[61316] = "INT",	-- Dalaran Brilliance
+	}
 
-	z.buffsLookup = {}
 	z.allBuffs = {}
 	z.buffTypes = {}
 	for i,info in pairs(allBuffs) do
@@ -209,12 +209,18 @@ do
 			for j,id in ipairs(info.ids) do
 				local name = GetSpellInfo(id)
 				info.list[name] = true
-				z.buffTypes[info.type][name] = info
-				z.buffsLookup[name] = info
+				z.buffTypes[info.type][name] = true
 			end
 			info.list[name] = true
 		end
 		tinsert(z.allBuffs, info)
+	end
+	for id,type in pairs(otherBuffs) do
+		local name = GetSpellInfo(id)
+		if not z.buffTypes[type] then
+			z.buffTypes[type] = {}
+		end
+		z.buffTypes[type][name] = true
 	end
 	z.buffs = {}
 
@@ -3075,10 +3081,6 @@ local function DrawCell(self)
 				break
 			end
 
-			if (name == dalbless or name == felint) then
-				name = GetSpellInfo(1459)
-			end
-
 			if ((caster == "player" or z.overrideBuffBar) and maxDuration and maxDuration > 0 and (not myMax or myMax > maxDuration)) then
 				if (z:ShowBuffBar(self, name, tex)) then
 					myMax, myEnd, mySource = maxDuration, endTime, caster
@@ -3516,7 +3518,7 @@ do
 							return true
 						end
 					else
-						if (z.buffsLookup[spellName] == buff) then
+						if (z.buffTypes[buff.type] and z.buffTypes[buff.type][spellName]) then
 							return true
 						end
 					end
