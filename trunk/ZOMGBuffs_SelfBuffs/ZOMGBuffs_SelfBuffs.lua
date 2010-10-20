@@ -408,7 +408,7 @@ function zs:CheckBuffs()
 				if (not cb.skip or not cb.skip()) then
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", k)
 					if not name and cb.aliasNames then
-						for ak,av in cb.aliasNames do
+						for ak,av in pairs(cb.aliasNames) do
 							name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", ak)
 							if name then break end
 						end
