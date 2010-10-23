@@ -49,4 +49,5 @@ ZOMGModulePrototype.lua
 
 #@do-not-package@
 modules.xml
+
 #@end-do-not-package@
