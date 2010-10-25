@@ -531,13 +531,20 @@ function zs:GetClassBuffs()
 		}
 		local singlePort = GetItemInfo(17031) or R["Rune of Teleportation"]
 		local groupPort = GetItemInfo(17032) or R["Rune of Portals"]
+		local arcanePowder = GetItemInfo(17020) or R["Arcane Powder"]
 		self.reagents = {
-			[groupPort]		= {20, 1, 100},
+			[groupPort]	= {20, 1, 100},
 			[singlePort]	= {20, 1, 100},
+			[arcanePowder]	= {20, 1, 500, minLevel = 70},
 		}
 		local singles = {3561, 3562, 3563, 3565, 3566, 3567, 32271, 32272, 33690, 35715, 53140 }
 		local groups = {10059, 11416, 11417, 11418, 11419, 11420, 32266, 32267, 33691, 35717, 53142 }
-		self.notifySpells = {}
+		self.notifySpells = {
+			[GetSpellInfo(43987)] = {	-- Ritual of Refreshment
+				arcanePowder,
+			},
+
+		}
 		for i,id in pairs(singles) do
 			self.notifySpells[(GetSpellInfo(id))] = singlePort
 		end
