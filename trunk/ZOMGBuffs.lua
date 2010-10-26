@@ -4308,13 +4308,10 @@ function z:GetMerchantBuyItemList()
 		if (module.reagents and module.db and module.db.char and module.db.char.reagents) then
 			for item,info in pairs(module.reagents) do
 				local itemname = item
-				if (type(item) == "number") then
-					itemname = GetItemInfo(item)
-				end
 				if (itemname and (not info.maxLevel or level <= info.maxLevel) and (not info.minLevel or level >= info.minLevel)) then
 					local num = module.db.char.reagents[item]
 					if (num and num > 0) then
-						list[itemname] = num
+						list[item] = num
 					end
 				end
 			end
@@ -4343,35 +4340,67 @@ function z:MERCHANT_SHOW()
 
 		for i = 1,numMerchantItems do
 			local name, texture, price, quantity, numAvailable, isUsable, extendedCost = GetMerchantItemInfo(i)
-			local required = list[name]
-			if (required and not doneItems[name]) then
-				doneItems[name] = true
-				local bought = 0
-				local got = GetItemCount(name)
-				local get = quantity					-- Stacked vendor items come in this amount always
-				if (got < required) then
-					local stackSize = select(8, GetItemInfo(name))
-					if (not stackSize) then
-						-- Item is not in local cache
-						stackSize = 5
-					end
+			local itemLink = GetMerchantItemLink(i)
+			local itemId = tonumber(strmatch(itemLink or "", "|Hitem:(%d+):"))
+			if (itemId) then
+				local required = list[name] or list[itemId]
+				if (required and not doneItems[name]) then
+					doneItems[name] = true
+					local bought = 0
+					local got = GetItemCount(itemId)
+					local splitStacks
 
-					while (got + quantity <= required) do
-						if (quantity > 1) then
-							BuyMerchantItem(i)		-- Buying stacked items (Symbol of Kings for example in 20s)
-						else
-							get = min(required - got, stackSize)
-							BuyMerchantItem(i, get)		-- None stacked vendor can be bought to max of stackSize at a time
+					if (list[itemId]) then
+						-- If we're searching for specific ItemIDs (rogue poisons) we need to check if we
+						-- have any of the old poisons in bags. They've all been renamed and all cast the
+						-- same spell, but GetItemCount() only looks at the first one. So if you have a
+						-- single old one for example, ZOMG will hapily keep buying stacks of new ones for
+						-- your enjoyment - Ugly fix, but it works
+						for modname, module in z:IterateModules() do
+							if (module.reagents and module.db and module.db.char and module.db.char.reagents) then
+								for RitemID,Rinfo in pairs(module.reagents) do
+									if (RitemID == itemId) then
+										if (Rinfo.alternateCount) then
+											local items = new(strsplit(",", Rinfo.alternateCount))
+											for i,id in ipairs(items) do
+												splitStacks = true
+												got = got + GetItemCount(id)
+											end
+											del(items)
+										end
+									end
+								end
+							end
 						end
-						got = got + get
-						bought = bought + get
 					end
-				end
 
-				if (bought > 0) then
-					local _, link = GetItemInfo(name)
-					self:Print(L["Bought |cFF80FF80%d|cFFFFFF80 %s|r from vendor, you now have |cFF80FF80%d|r"], bought, link or name, got)
-					-- TODO - Put newly bought stacks into same bag as matching reagents
+					local get = quantity					-- Stacked vendor items come in this amount always
+					if (got < required) then
+						local stackSize = select(8, GetItemInfo(itemId))
+						if (not stackSize) then
+							-- Item is not in local cache
+							stackSize = 5
+						end
+
+						while (got + quantity <= required) do
+							if (quantity > 1) then
+								BuyMerchantItem(i)		-- Buying stacked items (Symbol of Kings for example in 20s)
+							else
+								get = min(required - got, stackSize)
+								BuyMerchantItem(i, get)		-- None stacked vendor can be bought to max of stackSize at a time
+							end
+							got = got + get
+							bought = bought + get
+						end
+					end
+
+					if (bought > 0) then
+						self:Print(L["Bought |cFF80FF80%d|cFFFFFF80 %s|r from vendor, you now have |cFF80FF80%d|r"], bought, itemLink or name, got)
+						if (splitStacks) then
+							self:Print("NOTE: |cFFFFFF80%s|r is using more bag slots because of new item ID mismatches from WoW 4.0 reagents", itemLink or name)
+						end
+						-- TODO - Put newly bought stacks into same bag as matching reagents
+					end
 				end
 			end
 		end
