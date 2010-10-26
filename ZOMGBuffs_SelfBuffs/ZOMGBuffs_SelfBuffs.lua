@@ -418,14 +418,19 @@ function zs:CheckBuffs()
 
 					local c = charges and charges[k]
 					if (c) then
-						local cdef = cb.charges
-						if (type(cdef) == "function") then
-							cdef = cdef()
-						end
-						if (c > cdef) then
-							if (LGT:GetUnitTalents("player")) then
-								c = cdef
-								charges[k] = cdef
+						if (not cb.charges) then
+							-- Spell type changed from a charges one to not (Inner Fire for 4.0)
+							charges[k] = nil
+						else
+							local cdef = cb.charges
+							if (type(cdef) == "function") then
+								cdef = cdef()
+							end
+							if (c > cdef) then
+								if (LGT:GetUnitTalents("player")) then
+									c = cdef
+									charges[k] = cdef
+								end
 							end
 						end
 					end
@@ -629,13 +634,11 @@ function zs:GetClassBuffs()
 			{id = 13219, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040"},					-- Wound Poison
 		}
 		self.reagents = {
-			[6947] = {20, 1, 100, minLevel = 10},			-- Instant Poison
-
-			[2892] = {20, 1, 100, minLevel = 30},			-- Deadly Poison
-
-			[10918]= {20, 1, 100, minLevel = 32},			-- Wound Poison
-			[3775] = {20, 1, 100, minLevel = 20},							-- Crippling Poison
-			[5237] = {20, 1, 100, minLevel = 20},							-- Mind-numbing Poison
+			[6947] = {20, 1, 100, minLevel = 10, alternateCount = "6949,6950,8926,8927,8928,21927,43230,43231"},		-- Instant Poison
+			[2892] = {20, 1, 100, minLevel = 30, alternateCount = "2893,8984,8985,20844,22053,22054,43232,43233"},		-- Deadly Poison
+			[10918]= {20, 1, 100, minLevel = 32, alternateCount = "10920,10921,10922,22055,43234,43235"},				-- Wound Poison
+			[3775] = {20, 1, 100, minLevel = 20},														-- Crippling Poison
+			[5237] = {20, 1, 100, minLevel = 20},														-- Mind-numbing Poison
 		}
 
 	elseif (playerClass == "PALADIN") then
@@ -668,7 +671,7 @@ function zs:GetClassBuffs()
 			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
 				aliases = { 6673, 8076 },
 				-- Battle Shout, Strength of Earth
-			},
+                                                       			},
 		}
 	end
 
