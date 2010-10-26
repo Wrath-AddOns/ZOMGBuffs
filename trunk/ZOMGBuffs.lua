@@ -5038,7 +5038,7 @@ function z:SetMainIcon(icon)
 		self.ldbSource.icon = self.mainIcon
 	end
 
-	if (self.db.profile.showFubar) then
+	if (self.db.profile and self.db.profile.showFubar) then
 		self.cannotAttachToMinimap = nil
 		self.hasIcon = true
 		self.hasNoText = nil

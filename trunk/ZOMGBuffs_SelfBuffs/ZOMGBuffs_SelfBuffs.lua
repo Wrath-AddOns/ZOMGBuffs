@@ -119,6 +119,31 @@ zs.options = {
 	handler = zs,
 	disabled = function() return z:IsDisabled() end,
 	args = {
+		flaskOfNorth = {
+			type = "group",
+			name = L["Flask of the North"],
+			desc = L["Special handling for Flask of the North"],
+			order = 5,
+			hidden = function() return not zs:IsModuleActive() end,
+			isChecked = function(k) return zs.db.char.flask end,
+			onClick = function(k) zs.db.char.flask = not zs.db.char.flask end,
+			args = {
+				rebuff = {
+					type = "range",
+					name = L["Expiry Prelude"],
+					desc = L["Expiry prelude for flasks"],
+					func = timeFunc,
+					order = 60,
+					get = getPrelude,
+					set = setPrelude,
+					passValue = "flask",
+					min = 0,
+					max = 15 * 60,
+					step = 5,
+					bigStep = 60,
+				},
+			}
+		},
 		template = {
 			type = "group",
 			name = L["Templates"],
@@ -483,11 +508,7 @@ function zs:CheckBuffs()
 				if (not skip) then
 					local requiredTimeLeft = self.db.char.rebuff.flask or self.db.char.rebuff.default
 					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", (GetSpellInfo(67016)))
-					if (not name) then
-						self.db.char.activeFlaskOfTheNorth = nil
-					end
-
-					if (self.db.char.flask ~= self.db.char.activeFlaskOfTheNorth or not name or endTime - GetTime() < requiredTimeLeft) then
+					if (not name or endTime - GetTime() < requiredTimeLeft) then
 						z:SetupForItem(nil, (GetItemInfo(47499)), self)
 						any = true
 					end
@@ -954,90 +975,6 @@ do
 		end
 
 		del(list)
-
-		local alc = GetSpellInfo(51304)
-		if (GetSpellInfo(alc) and GetItemCount(47499, true) > 0) then
-			-- Flask of the North tracking
-			self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-
-			local m = zs.options.args.flaskOfNorth
-			if (not m) then
-				local function getFlask(v)
-					return zs.db.char.flask == v
-				end
-				local function setFlask(v, val)
-					zs.db.char.flask = val and v or nil
-					z:SetupForSpell()
-					zs:CheckBuffs()
-				end
-
-				m = {
-					type = "group",
-					name = L["Flask of the North"],
-					desc = L["Special handling for Flask of the North"],
-					order = 5,
-					hidden = function() return not zs:IsModuleActive() end,
-					args = {
-						agi = {
-							type = "toggle",
-							name = SPELL_STAT2_NAME,		-- Agility
-							desc = SPELL_STAT2_NAME,
-							order = 10,
-							hidden = function() return casterClasses[playerClass] end,
-							get = getFlask,
-							set = setFlask,
-							passValue = "agi",
-						},
-						str = {
-							type = "toggle",
-							name = SPELL_STAT1_NAME,			-- Strength
-							desc = SPELL_STAT1_NAME,
-							order = 20,
-							hidden = function() return not strClasses[playerClass] end,
-							get = getFlask,
-							set = setFlask,
-							passValue = "str",
-						},
-						int = {
-							type = "toggle",
-							name = SPELL_STAT4_NAME,	-- Intellect
-							desc = SPELL_STAT4_NAME,
-							order = 30,
-							hidden = function() return UnitPowerMax("player", 0) == 0 end,
-							get = getFlask,
-							set = setFlask,
-							passValue = "int",
-						},
-						spacer = {
-							type = 'header',
-							name = " ",
-							order = 50,
-						},
-						rebuff = {
-							type = "range",
-							name = L["Expiry Prelude"],
-							desc = L["Expiry prelude for flasks"],
-							func = timeFunc,
-							order = 60,
-							get = getPrelude,
-							set = setPrelude,
-							passValue = "flask",
-							min = 0,
-							max = 15 * 60,
-							step = 5,
-							bigStep = 60,
-						},
-					}
-				}
-				self.options.args.flaskOfNorth = m
-			end
-		else
-			if (self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
-				self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-			end
-			self.options.args.flaskOfNorth = nil
-			self.db.char.activeFlaskOfTheNorth = nil
-		end
 	end
 end
 
@@ -1351,78 +1288,12 @@ function zs:SetPaladinAuraKey(key)
 	end
 end
 
-do
-	-- Flask of the North tracking
-	local flaskTypes = {
-		[67016] = "int",
-		[67017] = "agi",
-		[67018] = "str",
-	}
-	local events = {}
-
-	function events:SPELL_AURA_APPLIED(spellId)
-		local t = flaskTypes[spellId]
-		if (t) then
-			self.db.char.activeFlaskOfTheNorth = t
-		end
-	end
-
-	function events:SPELL_AURA_REMOVED(spellId)
-		if (flaskTypes[spellId]) then
-			self.db.char.activeFlaskOfTheNorth = nil
-		end
-	end
-
-	-- COMBAT_LOG_EVENT_UNFILTERED
-	function zs:COMBAT_LOG_EVENT_UNFILTERED(timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags, ...)
-		if (sourceGUID == playerGUID) then
-			local f = events[event]
-			if (f) then
-				f(self, ...)
-			end
-		end
-	end
-end
-
 -- TooltipOnClick
 function zs:TooltipOnClick(name)
 	if (name) then
 		if (name == "flask") then
 			if (IsShiftKeyDown()) then
 				self.db.char.flask = nil
-			else
-				local flask = new()
-				local current = 0
-				if (not casterClasses[playerClass]) then
-					tinsert(flask, "agi")
-					if (self.db.char.flask == "agi") then
-						current = #flask
-					end
-				end
-				if (strClasses[playerClass]) then
-					tinsert(flask, "str")
-					if (self.db.char.flask == "str") then
-						current = #flask
-					end
-				end
-				if (UnitPowerMax("player", 0) > 0) then
-					tinsert(flask, "int")
-					if (self.db.char.flask == "int") then
-						current = #flask
-					end
-				end
-
-				current = current + 1
-				if (current > #flask) then
-					current = 0
-				end
-
-				self.db.char.flask = flask[current]
-
-				z:SetupForSpell()
-				zs:CheckBuffs()
-
-				del(flask)
 			end
 		else
 			if (IsShiftKeyDown()) then
@@ -1515,12 +1386,6 @@ function zs:SortedBuffList()
 	return list
 end
 
-local flaskTypes = {
-	ap = ATTACK_POWER_TOOLTIP,			-- Attack Power
-	str = SPELL_STAT1_NAME,				-- Strength
-	spell = ITEM_MOD_SPELL_POWER_SHORT,	-- Spell Power
-}
-
 -- TooltipUpdate
 function zs:TooltipUpdate(cat)
 	if (template and self.classBuffs) then
@@ -1567,10 +1432,6 @@ function zs:TooltipUpdate(cat)
 				"textR", 0,
 				"textG", 0.44,
 				"textB", 0.87,
-				"text2", flaskTypes[self.db.char.flask] or NONE,
-				"text2R", 1,
-				"text2G", 1,
-				"text2B", 1,
 				"func", "TooltipOnClick",
 				"arg1", self,
 				"arg2", "flask",
@@ -1629,12 +1490,6 @@ function zs:OnModuleEnable()
 	z:CheckForChange(self)
 
 	self:ValidateTemplate(template)
-
-	local alc = GetSpellInfo(51304)
-	if (GetSpellInfo(alc) and GetItemCount(47499, true) > 0) then
-		-- Flask of the North tracking
-		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	end
 end
 
 -- OnModuleDisable
