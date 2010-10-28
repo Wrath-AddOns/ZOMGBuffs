@@ -124,7 +124,15 @@ zs.options = {
 			name = L["Flask of the North"],
 			desc = L["Special handling for Flask of the North"],
 			order = 5,
-			hidden = function() return not zs:IsModuleActive() end,
+			hidden = function()
+				if (zs:IsModuleActive()) then
+					local alc = GetSpellInfo(51304)
+					if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
+						return false
+					end
+				end
+				return true
+			end,
 			isChecked = function(k) return zs.db.char.flask end,
 			onClick = function(k) zs.db.char.flask = not zs.db.char.flask end,
 			args = {
