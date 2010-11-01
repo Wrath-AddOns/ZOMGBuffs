@@ -133,6 +133,7 @@ L:RegisterTranslations("enUS", function() return {
 	["REMOTECONTROL"]		= "You don't feel like yourself",
 	["NOCONTROL"]			= "You are not in your right mind",
 	["STEALTHED"]			= "You are stealthed and the |cFFFFFF80Not When Stealthed|r option is enabled",
+	["SHADOWMELD"]			= "you are shadowmelded",
 	["SHAPESHIFTED"]		= "You are shapeshifted and the |cFFFFFF80Not When Shapeshifted|r option is enabled",
 	["INVIS"]				= "You are invisible",
 
