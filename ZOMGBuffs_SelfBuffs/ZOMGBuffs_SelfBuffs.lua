@@ -697,6 +697,7 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "DEATHKNIGHT") then
 		classBuffs = {
+			{id = 49222, o = 1, duration = 5, charges = 3, who = "self", c = "209020"},		-- Bone Shield
 			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
 				aliases = { 6673, 8076 },
 				-- Battle Shout, Strength of Earth
