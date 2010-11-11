@@ -1430,7 +1430,6 @@ function zs:TooltipUpdate(tooltip)
 		local alc = GetSpellInfo(51304)
 		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
 			local checkIcon = select(3, GetSpellInfo(67016))
-			local checkIcon = buff.id and select(3, GetSpellInfo(buff.id))
 			checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
 			local line = tooltip:AddLine(checkIcon..GetSpellInfo(67016))
