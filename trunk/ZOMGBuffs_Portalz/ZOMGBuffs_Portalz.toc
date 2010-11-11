@@ -12,6 +12,6 @@
 ## X-eMail: zeksie@googlemail.com
 ## X-License: GPL v2 or later
 
-Locales\Locales.xml
+Locales\localization.lua
 
 ZOMGBuffs_Portalz.lua

@@ -1,14 +1,14 @@
-local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
+local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffs", false)
 local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
+assert(AceGUIWidgetLSMlists, "ZOMGBuffs requires AceGUI-3.0-SharedMediaWidgets")
 
 local wowVersion = tonumber((select(2, GetBuildInfo())))
 
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
 BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
-local tablet = LibStub("Tablet-2.0")
-local dewdrop = LibStub("Dewdrop-2.0")
+local qtip = LibStub("LibQTip-1.0")
 local LGT = LibStub("LibGroupTalents-1.0")
 local FrameArray = {}
 local AllFrameArray = {}
@@ -162,11 +162,11 @@ do
 	end
 end
 
-ZOMGBuffs = LibStub("AceAddon-2.0"):new("AceConsole-2.0", "AceDB-2.0", "AceEvent-2.0", "AceModuleCore-2.0", "AceHook-2.1", "FuBarPlugin-2.0")
-ZOMGBuffs:SetModuleMixins("AceEvent-2.0", "AceHook-2.1")
+
+_G.ZOMGBuffs = LibStub("AceAddon-3.0"):NewAddon("ZOMGBuffs", "AceConsole-3.0", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local z = ZOMGBuffs
+z:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0", "AceTimer-3.0")
 local btr
-local bm
 
 if (Sink) then
 	Sink:Embed(z)
@@ -248,14 +248,38 @@ z.versionCompat = 65478 - 82090				-- 65478 is the compat version check
 z.title = L["TITLE"]
 z.titleColour = L["TITLECOLOUR"]
 z.mainIcon = "Interface\\AddOns\\ZOMGBuffs\\Textures\\Icon"
-z.defaultMinimapPosition = 330
-z.cannotDetachTooltip = true
-z.clickableTooltip = true
-z.hasIcon = nil
-z.hasNoText = true						-- Reset later should we have Fubar icon enabled
-z.cannotAttachToMinimap = true
 z.versionRoster = {}
 z.zoneFlag = GetTime()
+
+local LDB = LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("ZOMGBuffs", {
+	type = "launcher",
+	label = L["TITLECOLOUR"],
+	icon = "Interface\\Addons\\ZOMGBuffs\\Textures\\Icon",
+})
+local LDBIcon
+
+LDB.OnClick = function(self, button)
+	if (not IsModifierKeyDown()) then
+		if (button == "LeftButton") then
+			z:OnClick()
+		elseif (button == "RightButton") then
+			z:OpenConfig()
+		end
+	end
+end
+
+LDB.OnEnter = function(self)
+	z:OnTooltipUpdate(self)
+end
+
+LDB.OnLeave = function(self)
+	if (z.qTooltip) then
+		if (not z.qTooltip:IsMouseOver()) then
+			z.qTooltip:Release()
+			z.qTooltip = nil
+		end
+	end
+end
 
 -- propercase
 local function propercase(str)
@@ -361,358 +385,315 @@ function z.argCheck(self, arg, num, kind, kind2, kind3, kind4, kind5)
 end
 --@end-debug@
 
-local function getOption(v)
-	return z.db.profile[v]
+local function getTrackOption(info)
+	return z.db.profile.track[info[#info]]
 end
-local function getPCOption(v)
-	return z.db.char[v]
-end
-local function setOption(v, n)
-	z.db.profile[v] = n
-end
-local function setOptionUpdate(v, n)
-	z.db.profile[v] = n
-	z:SetupForSpell()
-	z:RequestSpells()
-end
-local function setPCOption(v, n, s)
-	z.db.char[v] = n
-	if (s) then
-		z:SetupForSpell()
-		z:RequestSpells()
-	end
-end
-
-local function getTrackOption(p)
-	return z.db.profile.track[p]
-end
-local function setTrackOption(p,v)
-	z.db.profile.track[p] = v
+local function setTrackOption(info, value)
+	z.db.profile.track[info[#info]] = value
 	z:SetBuffsList()
 	z:OptionsShowList()
 end
 
 do
-	local points = {"TOPLEFT", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT"}
 	local outlines = {[""] = L["None"], ["OUTLINE"] = L["Outline"], ["THICKOUTLINE"] = L["Thick Outline"]}
+	local points = {TOPLEFT = L["Top Left"], TOP = L["Top"], TOPRIGHT = L["Top Right"], RIGHT = L["Right"], BOTTOMRIGHT = L["Bottom Right"], BOTTOM = L["Bottom"], BOTTOMLEFT = L["Bottom Left"], LEFT = L["Left"]}
+	local getOption = function(info) return z.db.profile[info[#info]] end
+	local setOption = function(info, value) z.db.profile[info[#info]] = value end
+	local setOptionUpdate =
+		function(info, value)
+			z.db.profile[info[#info]] = value			
+			z:SetupForSpell()
+			z:RequestSpells()
+		end
+
+	local getPCOption = function(info) return z.db.char[info[#info]] end
+	local setPCOption =
+		function(info, value)
+			z.db.char[info[#info]] = value
+		 	if (s) then
+				z:SetupForSpell()
+				z:RequestSpells()
+			end
+		end
 	local function notRebuffer()
 		return not z:IsRebuffer()
 	end
 	local function hideReagentOpts()
-		return z.hideReagentOptions
+		return not z:AnyReagentOptions()
 	end
 	local function noNoticeOptions()
 		return not z.db.profile.notice
 	end
+
 z.options = {
-	handler = z,
 	type = 'group',
+	order = 1,
+	name = L["TITLECOLOUR"],
+	desc = L["Configuration"],
+	handler = z,
+	get = getOption,
+	set = setOption,
 	args = {
-		space = {
-			type = 'header',
-			desc = " ",
-			order = 200,
-		},
-		behaviour = {
+		General = {
 			type = 'group',
-			name = L["Behaviour"],
-			desc = L["General buffing behaviour"],
-			order = 220,
-			disabled = "IsDisabled",
+			name = L["Configuration"],
+			desc = L["Configuration"],
+			order = 1,
+			guiInline = true,
 			args = {
-				reagentautobuy = {
-					type = 'toggle',
-					name = L["Auto Buy Reagents"],
-					desc = L["Automatically purchase required reagents from Reagents Vendor"],
-					get = getPCOption,
-					set = function(v,n) setPCOption(v,n) end,
-					hidden = hideReagentOpts,
-					passValue = "autobuyreagents",
-					order = 1,
-					args = {
-					}
-				},
-				reagentlevels = {
+				behaviour = {
 					type = 'group',
-					name = L["Reagents Levels"],
-					desc = L["Purchase levels for reagents"],
-					disabled = function() return not z.db.char.autobuyreagents end,
-					hidden = hideReagentOpts,
-					order = 2,
+					name = L["Behaviour"],
+					desc = L["General buffing behaviour"],
+					order = 220,
+					guiInline = true,
 					args = {
-					}
+						ignoreabsent = {
+							type = 'toggle',
+							name = L["Ignore Absent"],
+							desc = L["If players are offline, AFK or in another instance, count them as being present and buff everyone else"],
+							hidden = notRebuffer,
+							set = setOptionUpdate,
+							order = 105,
+						},
+						skippvp = {
+							type = 'toggle',
+							name = L["Skip PVP Players"],
+							desc = L["Don't directly buff PVP flagged players, unless you're already flagged for PVP"],
+							hidden = notRebuffer,
+							set = setOptionUpdate,
+							order = 108,
+						},
+						notresting = {
+							type = 'toggle',
+							name = L["Not When Resting"],
+							desc = L["Don't auto buff when Resting"],
+							set = setOptionUpdate,
+							order = 112,
+						},
+						restingpvp = {
+							type = 'toggle',
+							name = L["...unless PvP"],
+							desc = L["Allow auto buffing when resting when your PvP is enabled"],
+							set = setOptionUpdate,
+							order = 113,
+						},
+						notmounted = {
+							type = 'toggle',
+							name = L["Not When Mounted"],
+							desc = L["Don't auto buff when Mounted"],
+							set = setOptionUpdate,
+							order = 114,
+						},
+						notstealthed = {
+							type = 'toggle',
+							name = L["Not When Stealthed"],
+							desc = L["Don't auto buff when Stealthed"],
+							set = setOptionUpdate,
+							hidden = function() return playerClass ~= "DRUID" and playerClass ~= "ROGUE" end,
+							order = 115,
+						},
+						notshifted = {
+							type = 'toggle',
+							name = L["Not When Shapeshifted"],
+							desc = L["Don't auto buff when Shapeshifted"],
+							set = setOptionUpdate,
+							hidden = function() return playerClass ~= "DRUID" and playerClass ~= "SHAMAN" end,
+							order = 116,
+						},
+						buffpets = {
+							type = 'toggle',
+							name = L["Buff Pets"],
+							desc = L["Perform extra checks for pets in case any missed the group buffs when they were done"],
+							get = getPCOption,
+							set = setPCOption,
+							hidden = notRebuffer,
+							order = 200,
+						},
+						minmana = {
+							type = 'range',
+							name = L["Minimum Mana %"],
+							desc = L["How much mana should you have before considering auto buffing"],
+							get = getPCOption,
+							set = setPCOption,
+							min = 0,
+							max = 100,
+							step = 1,
+							bigStep = 5,
+							order = 390,
+						},
+						waitforraid = {
+							type = 'range',
+							name = L["Wait for Raid"],
+							desc = L["Wait for certain amount of the raid to arrive before group and class buffing commences. Zero to always buff."],
+							hidden = notRebuffer,
+							set = setOptionUpdate,
+							isPercent = true,
+							min = 0,
+							max = 1,
+							step = 0.01,
+							bigStep = 0.1,
+							order = 400,
+						},
+					},
 				},
-				space2 = {
-					type = 'header',
-					desc = " ",
-					order = 30,
+				learn = {
+					order = 250,
+					type = 'group',
+					name = L["Learning"],
+					desc = L["Setup spell learning behaviour"],
+					guiInline = true,
+					args = {
+						learnooc = {
+							type = 'toggle',
+							name = L["Out of Combat"],
+							desc = L["Learn buff changes out of combat"],
+							get = getPCOption,
+							set = setPCOption,
+							order = 1,
+						},
+						learncombat = {
+							type = 'toggle',
+							name = L["In-Combat"],
+							desc = L["Learn buff changes in combat"],
+							get = getPCOption,
+							set = setPCOption,
+							order = 2,
+						},
+					},
+				},
+				reminder = {
+					order = 280,
+					type = 'group',
+					name = L["Reminders"],
+					desc = L["Options to help you notice when things need doing"],
+					guiInline = true,
+					args = {
+						buffreminder = {
+							type = 'select',
+							dialogControl = "LSM30_Sound",
+							name = L["Rebuff Sound"],
+							desc = L["Give audible feedback when someone needs rebuffing"],
+							get = getOption,
+							set = function(k,v)
+								setOption(k,v)
+								PlaySoundFile(SM:Fetch("sound", v))
+							end,
+							values = AceGUIWidgetLSMlists.sound,
+							hidden = function() return not SM end,
+							order = 1,
+						},
+						notice = {
+							type = 'toggle',
+							name = L["Notice"],
+							desc = L["Show notice on screen for buff needs"],
+							order = 5,
+						},
+						movenotice = {
+							type = 'execute',
+							name = L["Notice Anchor"],
+							desc = L["Show the Notice area anchor"],
+							func = "MovableNoticeWindow",
+							disabled = noNoticeOptions,
+							order = 6,
+						},
+						usesink = {
+							type = 'toggle',
+							name = L["Sink Output"],
+							desc = L["Route notification messages through SinkLib"],
+							hidden = function() return not Sink end,
+							disabled = noNoticeOptions,
+							order = 7,
+						},
+						info = {
+							type = 'toggle',
+							name = L["Information"],
+							desc = L["Give feedback about events"],
+							order = 15,
+						},
+					},
+				},
+				reagents = {
+					type = 'group',
+					name = L["Reagents"],
+					desc = L["Reagent buying options"],
+					order = 990,
+					guiInline = true,
 					hidden = hideReagentOpts,
+					args = {
+						autobuyreagents = {
+							type = 'toggle',
+							name = L["Auto Buy Reagents"],
+							desc = L["Automatically purchase required reagents from Reagents Vendor"],
+							get = getPCOption,
+							set = setPCOption,
+							order = 1,
+						},
+						reagentlevels = {
+							type = 'group',
+							name = L["Reagents Levels"],
+							desc = L["Purchase levels for reagents"],
+							disabled = function() return not z.db.char.autobuyreagents end,
+							order = 2,
+							guiInline = true,
+							args = {
+							}
+						},
+					},
 				},
-				mousewheel = {
-					type = 'toggle',
-					name = L["Mousewheel Buff"],
-					desc = L["Use mousewheel to trigger auto buffing"],
-					get = getOption,
-					set = function(v,n)
-						setOption(v,n)
-						z.db.profile.keybinding = nil
-						z:SetKeyBindings()
-					end,
-					passValue = "mousewheel",
-					order = 50,
-				},
-				keybinding = {
-					type = 'text',
-					name = L["Key-Binding"],
-					desc = L["Define the key used for auto buffing"],
-					validate = "keybinding",
-					get = getOption,
-					set = function(v,n)
-						if (n == "MOUSEWHEELUP" or n == "MOUSEWHEELDOWN") then
-							z.db.profile.mousewheel = true
-							z.db.profile.keybinding = nil
-						else
-							setOption(v,n)
-						end
-						z:SetKeyBindings()
-					end,
-					passValue = "keybinding",
-					disabled = function() return z.db.profile.mousewheel end,
-					order = 51,
-				},
-				space4 = {
-					type = 'header',
-					desc = " ",
-					order = 100,
-				},
-				waitforraid = {
-					type = 'range',
-					name = L["Wait for Raid"],
-					desc = L["Wait for certain amount of the raid to arrive before group and class buffing commences. Zero to always buff."],
-					hidden = notRebuffer,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "waitforraid",
-					isPercent = true,
-					min = 0,
-					max = 1,
-					step = 0.01,
-					bigStep = 0.1,
-					order = 102,
-				},
-				ignoreabsent = {
-					type = 'toggle',
-					name = L["Ignore Absent"],
-					desc = L["If players are offline, AFK or in another instance, count them as being present and buff everyone else"],
-					hidden = notRebuffer,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "ignoreabsent",
-					order = 105,
-				},
-				skippvp = {
-					type = 'toggle',
-					name = L["Skip PVP Players"],
-					desc = L["Don't directly buff PVP flagged players, unless you're already flagged for PVP"],
-					hidden = notRebuffer,
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "skippvp",
-					order = 108,
-				},
-				notresting = {
-					type = 'toggle',
-					name = L["Not When Resting"],
-					desc = L["Don't auto buff when Resting"],
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "notresting",
-					order = 112,
-				},
-				restingpvp = {
-					type = 'toggle',
-					name = L["...unless PvP"],
-					desc = L["Allow auto buffing when resting when your PvP is enabled"],
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "restingpvp",
-					order = 113,
-				},
-				notmounted = {
-					type = 'toggle',
-					name = L["Not When Mounted"],
-					desc = L["Don't auto buff when Mounted"],
-					get = getOption,
-					set = setOptionUpdate,
-					passValue = "notmounted",
-					order = 114,
-				},
-				notstealthed = {
-					type = 'toggle',
-					name = L["Not When Stealthed"],
-					desc = L["Don't auto buff when Stealthed"],
-					get = getOption,
-					set = setOptionUpdate,
-					hidden = function() return playerClass ~= "DRUID" and playerClass ~= "ROGUE" end,
-					passValue = "notstealthed",
-					order = 115,
-				},
-				notshifted = {
-					type = 'toggle',
-					name = L["Not When Shapeshifted"],
-					desc = L["Don't auto buff when Shapeshifted"],
-					get = getOption,
-					set = setOptionUpdate,
-					hidden = function() return playerClass ~= "DRUID" and playerClass ~= "SHAMAN" end,
-					passValue = "notshifted",
-					order = 116,
-				},
-				minmana = {
-					type = 'range',
-					name = L["Minimum Mana %"],
-					desc = L["How much mana should you have before considering auto buffing"],
-					get = getPCOption,
-					set = setPCOption,
-					passValue = "minmana",
-					min = 0,
-					max = 100,
-					step = 1,
-					bigStep = 5,
-					order = 120,
-				},
-				space3 = {
-					type = 'header',
-					desc = " ",
-					order = 150,
-					hidden = notRebuffer,
-				},
-				pets = {
-					type = 'toggle',
-					name = L["Buff Pets"],
-					desc = L["Perform extra checks for pets in case any missed the group buffs when they were done"],
-					get = getPCOption,
-					set = setPCOption,
-					passValue = "buffpets",
-					hidden = notRebuffer,
-					order = 200,
-				},
-			},
-		},
-		learn = {
-			order = 250,
-			type = 'group',
-			name = L["Learning"],
-			desc = L["Setup spell learning behaviour"],
-			disabled = "IsDisabled",
-			args = {
-				ooc = {
-					type = 'toggle',
-					name = L["Out of Combat"],
-					desc = L["Learn buff changes out of combat"],
-					get = getPCOption,
-					set = setPCOption,
-					passValue = "learnooc",
-					order = 1,
-				},
-				combat = {
-					type = 'toggle',
-					name = L["In-Combat"],
-					desc = L["Learn buff changes in combat"],
-					get = getPCOption,
-					set = setPCOption,
-					passValue = "learncombat",
-					order = 2,
-				},
-			},
-		},
-		reminder = {
-			order = 280,
-			type = 'group',
-			name = L["Reminders"],
-			desc = L["Options to help you notice when things need doing"],
-			disabled = "IsDisabled",
-			args = {
-				sound = {
-					type = 'text',
-					name = L["Rebuff Sound"],
-					desc = L["Give audible feedback when someone needs rebuffing"],
-					get = getOption,
-					set = function(k,v)
-						setOption(k,v)
-						PlaySoundFile(SM:Fetch("sound", v))
-					end,
-					validate = SM:List("sound"),
-					hidden = function() return not SM end,
-					passValue = "buffreminder",
-					order = 1,
-				},
-				spacer = {
-					type = 'header',
-					name = " ",
-					order = 2,
-				},
-				notice = {
-					type = 'toggle',
-					name = L["Notice"],
-					desc = L["Show notice on screen for buff needs"],
-					get = getOption,
-					set = setOption,
-					passValue = "notice",
-					order = 5,
-				},
-				movenotice = {
-					type = 'execute',
-					name = L["Notice Anchor"],
-					desc = L["Show the Notice area anchor"],
-					func = "MovableNoticeWindow",
-					disabled = noNoticeOptions,
-					order = 6,
-				},
-				sink = {
-					type = 'toggle',
-					name = L["Sink Output"],
-					desc = L["Route notification messages through SinkLib"],
-					get = getOption,
-					set = setOption,
-					hidden = function() return not Sink end,
-					disabled = noNoticeOptions,
-					passValue = "usesink",
-					order = 7,
-				},
-				spacer2 = {
-					type = 'header',
-					name = " ",
-					order = 14,
-				},
-				info = {
-					type = 'toggle',
-					name = L["Information"],
-					desc = L["Give feedback about events"],
-					get = getOption,
-					set = setOption,
-					passValue = "info",
-					order = 15,
+				keys = {
+					type = 'group',
+					name = L["Hot-Key Setup"],
+					desc = L["Hot-Key Setup"],
+					order = 995,
+					guiInline = true,
+					args = {
+						mousewheel = {
+							type = 'toggle',
+							name = L["Mousewheel Buff"],
+							desc = L["Use mousewheel to trigger auto buffing"],
+							set = function(v,n)
+								setOption(v,n)
+								z.db.profile.keybinding = nil
+								z:SetKeyBindings()
+							end,
+							order = 50,
+						},
+						keybinding = {
+							type = "keybinding",
+							name = L["Key-Binding"],
+							desc = L["Define the key used for auto buffing"],
+							set = function(v,n)
+								if (n == "MOUSEWHEELUP" or n == "MOUSEWHEELDOWN") then
+									z.db.profile.mousewheel = true
+									z.db.profile.keybinding = nil
+								else
+									setOption(v,n)
+								end
+								z:SetKeyBindings()
+							end,
+							disabled = function() return z.db.profile.mousewheel end,
+							order = 51,
+						},
+					},
 				},
 			},
 		},
 		display = {
-			order = 302,
 			type = 'group',
 			name = L["Display"],
 			desc = L["Display options"],
-			disabled = "IsDisabled",
+			order = 20,
 			args = {
-				portalz = {
+				alwaysLoadPortalz = {
 					type = 'toggle',
 					name = L["Always Load Portalz"],
 					desc = L["Always load the Portalz module, even when not a Mage"],
-					get = getOption,
 					set = function(v,n) setOption(v,n) if (z.MaybeLoadPortalz) then z:MaybeLoadPortalz() end end,
 					hidden = function() return select(2,UnitClass("player")) == "MAGE" or select(6,GetAddOnInfo("ZOMGBuffs_Portalz")) == "MISSING" end,
-					passValue = "alwaysLoadPortalz",
 					order = 21,
 				},
-				raidmod = {
+				loadraidbuffmodule = {
 					type = 'toggle',
 					name = L["Load Raid Module"],
 					desc = L["Load the Raid Buff module. Usually for Mages, Druids & Priests, this module can also track single target spells such as Earth Shield & Blessing of Sacrifice, and allow raid buffing of Undending Breath and so on"],
@@ -726,108 +707,78 @@ z.options = {
 						end
 					end,
 					hidden = function() return not z.canloadraidbuffmodule end,
-					passValue = "loadraidbuffmodule",
 					order = 25,
 				},
-				space = {
-					type = 'header',
-					desc = " ",
-					order = 30,
-					hidden = function() return (select(2,UnitClass("player")) == "MAGE" or select(6,GetAddOnInfo("ZOMGBuffs_Portalz")) == "MISSING") and (not z.canloadraidbuffmodule) end
-				},
-				spellicons = {
+				spellIcons = {
 					type = 'toggle',
 					name = L["Spell Icons"],
 					desc = L["Show spell icons with spell names in messages"],
-					get = getOption,
-					set = setOption,
-					passValue = "spellIcons",
 					order = 35,
 				},
 				short = {
 					type = 'toggle',
 					name = L["Short Names"],
 					desc = L["Use short spell names where appropriate"],
-					get = getOption,
-					set = setOption,
-					passValue = "short",
 					order = 40,
-				},
-				space2 = {
-					type = 'header',
-					desc = " ",
-					order = 100,
 				},
 				icon = {
 					type = 'group',
 					name = L["Icon"],
 					desc = L["Settings for the mouseover icon used by the popup player buff list"],
 					order = 101,
+					guiInline = true,
 					args = {
-						enable = {
+						showicon = {
 							type = 'toggle',
 							name = L["Enable"],
 							desc = L["Display the mouseover icon used by the popup player buff list"],
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
 							disabled = InCombatLockdown,
-							passValue = "showicon",
 							order = 1,
 						},
-						lock = {
+						iconlocked = {
 							type = 'toggle',
 							name = L["Lock"],
 							desc = L["Lock floating icon position"],
 							get = getPCOption,
 							set = setPCOption,
-							passValue = "iconlocked",
 							order = 2,
 						},
-						class = {
+						classIcon = {
 							type = 'toggle',
 							name = L["Class Icon"],
 							desc = L["Uses your main ZOMGBuffs spell for the floating icon, instead of the ZOMGBuffs default"],
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetIconSize() z:CanCheckBuffs() end,
-							passValue = "classIcon",
 							order = 5,
 						},
-						name = {
+						iconname = {
 							type = 'toggle',
 							name = L["Name"],
 							desc = L["Display the ZOMGBuffs logo on icon"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:SetIconSize() end,
-							passValue = "iconname",
 							order = 8,
 						},
-						swirl = {
+						iconswirl = {
 							type = 'toggle',
 							name = L["Swirl"],
 							desc = L["Display the spell ready swirl when an autocast spell is loaded on the main icon"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) end,
-							passValue = "iconswirl",
 							order = 8,
 						},
-						size = {
+						iconsize = {
 							type = 'range',
 							name = L["Icon Size"],
 							desc = L["Size of main icon"],
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
 							disabled = function() return InCombatLockdown() or not z.db.char.showicon end,
-							passValue = "iconsize",
 							min = 20,
 							max = 64,
 							step = 1,
 							bigStep = 5,
 							order = 10,
-						},
-						space = {
-							type = 'header',
-							desc = " ",
-							order = 300,
 						},
 						reset = {
 							type = 'execute',
@@ -844,23 +795,20 @@ z.options = {
 					name = L["List"],
 					desc = L["Settings for the popup buff list"],
 					order = 102,
+					guiInline = true,
 					args = {
-						timer = {
+						bufftimer = {
 							type = 'toggle',
 							name = L["Buff Timer"],
 							desc = L["Show buff time remaining with bar"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:DrawAllCells() z:OptionsShowList() end,
-							passValue = "bufftimer",
 							order = 10,
 						},
-						size = {
+						bufftimersize = {
 							type = 'range',
 							name = L["Timer Size"],
 							desc = L["Adjust the size of the timer text"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:DrawAllCells() z:OptionsShowList() end,
-							passValue = "bufftimersize",
 							min = 0.3,
 							max = 2,
 							step = 0.05,
@@ -887,83 +835,57 @@ z.options = {
 							name = L["Columns"],
 							desc = L["Columns to show in buff list"],
 							order = 50,
+							guiInline = true,
+							get = getTrackOption,
+							set = setTrackOption,
 							args = {
 								sta = {
 									type = 'toggle',
 									name = GetSpellInfo(21562),		-- Power Word: Fortitude
 									desc = GetSpellInfo(21562),		-- Power Word: Fortitude
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "sta",
 									order = 1,
 								},
 								mark = {
 									type = 'toggle',
 									name = GetSpellInfo(1126),		-- Mark of the Wild
 									desc = GetSpellInfo(1126),		-- Mark of the Wild
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "mark",
 									order = 2,
 								},
 								int = {
 									type = 'toggle',
 									name = GetSpellInfo(1459),		-- Arcane Intellect
 									desc = GetSpellInfo(1459),		-- Arcane Intellect
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "int",
 									order = 3,
 								},
 								kings = {
 									type = 'toggle',
 									name = GetSpellInfo(20217),		-- Kings
 									desc = GetSpellInfo(20217),		-- Kings
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "kings",
 									order = 4,
 								},
 								might = {
 									type = 'toggle',
 									name = GetSpellInfo(19740),		-- Might
 									desc = GetSpellInfo(19740),		-- Might
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "might",
 									order = 5,
 								},
 								shadow = {
 									type = 'toggle',
 									name = GetSpellInfo(27683),		-- Shadow Protection
 									desc = GetSpellInfo(27683),		-- Shadow Protection
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "shadow",
 									order = 6,
 								},
 								food = {
 									type = 'toggle',
 									name = GetSpellInfo(46899),		-- Well Fed
 									desc = GetSpellInfo(46899),		-- Well Fed
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "food",
 									order = 7,
 								},
 								flask = {
 									type = 'toggle',
 									name = L["Flask"],
 									desc = L["Is player flasked or potted"],
-									get = getTrackOption,
-									set = setTrackOption,
-									passValue = "flask",
 									order = 8,
-								},
-								spacer = {
-									type = 'header',
-									name = " ",
-									order = 10,
 								},
 								runescroll = {
 									type = 'toggle',
@@ -971,7 +893,6 @@ z.options = {
 									desc = L["Always show Stamina and Mark of the Wild Columns"],
 									get = getOption,
 									set = function(p,v) z.db.profile[p] = v z:SetBuffsList() z:OptionsShowList() end,
-									passValue = "runescroll",
 									order = 20,
 								},
 							},
@@ -980,29 +901,24 @@ z.options = {
 							type = 'toggle',
 							name = L["Invert"],
 							desc = L["Invert the need/got alpha values"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:OptionsShowList() z:PLAYER_ENTERING_WORLD() end,
-							passValue = "invert",
 							order = 110,
 						},
 						sort = {
-							type = 'text',
+							type = 'select',
 							name = L["Sort Order"],
 							desc = L["Select sorting order for buff overview (can't be changed during combat)"],
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetSort(true) end,
-							validate = {ALPHA = L["Alphabetical"], CLASS = L["Class"], GROUP = L["Group"], INDEX = L["Unsorted"]},
+							values = {ALPHA = L["Alphabetical"], CLASS = L["Class"], GROUP = L["Group"], INDEX = L["Unsorted"]},
 							disabled = InCombatLockdown,
-							passValue = "sort",
 							order = 111,
 						},
 						groupno = {
 							type = 'toggle',
 							name = L["Group Number"],
 							desc = L["Show the group number next to list"],
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:DrawGroupNumbers() end,
-							passValue = "groupno",
 							order = 112,
 							hidden = function() return z.db.char.sort ~= "GROUP" end,
 						},
@@ -1011,34 +927,30 @@ z.options = {
 							name = L["Show"],
 							desc = L["Visiblity options"],
 							order = 120,
+							guiInline = true,
+							disabled = InCombatLockdown,
 							args = {
-								solo = {
+								showSolo = {
 									type = 'toggle',
 									name = L["Solo"],
 									desc = L["Show the popup raid list when you are not in a raid or party"],
-									get = getOption,
 									set = function(k,v) setOption(k,v) z:SetVisibilityOption() z:DrawGroupNumbers() end,
-									passValue = "showSolo",
 									disabled = InCombatLockdown,
 									order = 1,
 								},
-								party = {
+								showParty = {
 									type = 'toggle',
 									name = L["Party"],
 									desc = L["Show the popup raid list when you are in a party"],
-									get = getOption,
 									set = function(k,v) setOption(k,v) z:SetVisibilityOption() z:DrawGroupNumbers() end,
-									passValue = "showParty",
 									disabled = InCombatLockdown,
 									order = 2,
 								},
-								raid = {
+								showRaid = {
 									type = 'toggle',
 									name = L["Raid"],
 									desc = L["Show the popup raid list when you in a raid"],
-									get = getOption,
 									set = function(k,v) setOption(k,v) z:SetVisibilityOption() z:DrawGroupNumbers() end,
-									passValue = "showRaid",
 									disabled = InCombatLockdown,
 									order = 3,
 								},
@@ -1048,15 +960,7 @@ z.options = {
 							type = 'toggle',
 							name = L["Show Roles"],
 							desc = L["Show player role icons"],
-							get = getOption,
-							set = setOption,
-							passValue = "showroles",
 							order = 125,
-						},
-						space2 = {
-							type = 'header',
-							desc = " ",
-							order = 150,
 						},
 						border = {
 							type = 'toggle',
@@ -1064,19 +968,16 @@ z.options = {
 							desc = L["Enable border on the list"],
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:DrawGroupNumbers() end,
-							passValue = "border",
 							order = 200,
 						},
 						bartexture = {
-							type = 'text',
+							type = 'select',
+							dialogControl = "LSM30_Statusbar",
 							name = L["Bar Texture"],
 							desc = L["Set the texture for the buff timer bars"],
-							validate = SM and SM:List("statusbar") or {},
+							values = AceGUIWidgetLSMlists.statusbar,
 							order = 201,
-							hidden = function() return not SM end,
-							get = getOption,
 							set = function(k,v) setOption(k,v) z:SetAllBarTextures() z:OptionsShowList() end,
-							passValue = "bartexture",
 						},
 						width = {
 							type = 'range',
@@ -1085,7 +986,6 @@ z.options = {
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetAllBarSizes() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
-							passValue = "width",
 							min = 100,
 							max = 300,
 							step = 1,
@@ -1099,7 +999,6 @@ z.options = {
 							get = getPCOption,
 							set = function(k,v) setPCOption(k,v) z:SetAllBarSizes() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
-							passValue = "height",
 							min = 10,
 							max = 30,
 							step = 1,
@@ -1110,17 +1009,19 @@ z.options = {
 							name = L["Font"],
 							desc = L["Font"],
 							order = 204,
+							guiInline = true,
 							args = {
-								font = {
-									type = 'text',
+								fontface = {
+									type = "select",
+									dialogControl = "LSM30_Font",
 									name = L["Font"],
 									desc = L["Font"],
+									values = AceGUIWidgetLSMlists.font,
 									get = getPCOption,
 									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
-									validate = SM and SM:List("font") or {},
-									passValue = "fontface",
+									order = 1,
 								},
-								size = {
+								fontsize = {
 									type = 'range',
 									name = L["Size"],
 									desc = L["Size"],
@@ -1129,104 +1030,69 @@ z.options = {
 									step = 1,
 									get = getPCOption,
 									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
-									passValue = "fontsize",
+									order = 2,
 								},
-								outlining = {
-									type = 'text',
+								fontoutline = {
+									type = 'select',
 									name = L["Outlining"],
 									desc = L["Outlining"],
 									get = getPCOption,
 									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
-									validate = outlines,
-									passValue = "fontoutline",
+									values = outlines,
+									order = 3,
 								},
 							},
 						},
 						anchor = {
-							type = 'text',
+							type = 'select',
 							name = L["Anchor"],
 							desc = L["Choose the anchor to use for the player list"],
-							validate = points,
+							values = points,
 							order = 220,
 							get = getPCOption,
 							set = function(k,v) z.db.char.anchor = v z:SetAnchors() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
-							passValue = "anchor",
 						},
 						relpoint = {
-							type = 'text',
+							type = 'select',
 							name = L["Relative Point"],
 							desc = L["Choose the relative point for the anchor"],
-							validate = points,
+							values = points,
 							order = 221,
 							get = getPCOption,
 							set = function(k,v) z.db.char.relpoint = v z:SetAnchors() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
-							passValue = "relpoint",
 						},
 					},
 				},
 			},
 		},
-		report = {
-			order = 400,
-			type = 'group',
-			name = L["Report"],
-			desc = L["Report options"],
-			hidden = function() return not IsRaidOfficer() or not IsRaidLeader() end,
-			disabled = "IsDisabled",
-			args = {
-				missing = {
-					type = 'execute',
-					name = L["Report Missing"],
-					desc = L["Report raid buffs currently missing"],
-					func = "Report",
-					passValue = "missing",
-					order = 1,
-				},
-				space = {
-					type = 'header',
-					desc = " ",
-					order = 500,
-				},
-				channel = {
-					type = 'text',
-					name = L["Channel"],
-					desc = L["Output channel selection"],
-					validate = {"Raid", "Party", "Guild", "Officer", "Say"},
-					get = getOption,
-					set = setOption,
-					passValue = "channel",
-					order = 501,
-				},
-			},
-		},
-		fubar = {
-			type = "toggle",
-			name = "Fubar Icon",
-			desc = "Show on Fubar/Minimap",
-			get = function() return z.db.profile.showFubar end,
-			set = function(v) z.db.profile.showFubar = v z:SetMainIcon() end,
-			hidden = function() return not z.ldbSource end,
-			order = -5000,
-		}
 	},
 }
-	if (Sink and (SinkVersion >= 62534 or SinkVersion < 10000)) then
-		-- Move the Sink options menu
-		local temp = z:GetSinkAce2OptionsDataTable().output
-		z.options.args.reminder.args.output = temp
-		temp.order = 8
-		temp.disabled = function() return not z.db.profile.usesink or not z.db.profile.notice end
+
+	LDBIcon = LibStub("LibDBIcon-1.0", true)
+	if (LDBIcon) then
+		z.options.args.display.args.ShowMinimap = {
+			type = "toggle",
+			order = 1,
+			name = L["Minimap"],
+			desc = L["Show minimap icon"],
+			get = function(info) return not z.db.profile.ldbIcon.hide end,
+			set = function(info,v)
+				z.db.profile.ldbIcon.hide = not v
+				LDBIcon[z.db.profile.ldbIcon.hide and "Hide" or "Show"](LDBIcon, "ZOMGBuffs")
+			end,
+			width = "half",
+		}
 	end
 end
 
-z.OnMenuRequest = z.options
-
 -- IsRebuffer
 function z:IsRebuffer()
-	for name, module in self:IterateModulesWithMethod("RebuffQuery") do
-		return true
+	for name, module in self:IterateModules() do
+		if (module.RebuffQuery) then
+			return true
+		end
 	end
 end
 
@@ -1427,16 +1293,18 @@ function z:GetAllActions()
 		self.actions = {
 			{name = L["Target"], desc = L["Targetting"], type = "target"},
 		}
-		for name, mod in self:IterateModulesWithMethod("GetActions") do
-			if (mod:IsModuleActive()) then
-				if (mod.ResetActions) then
-					mod:ResetActions()
-				end
-				local moreActions = mod:GetActions()
-				if (moreActions) then
-					for i,action in ipairs(moreActions) do
-						action.mod = mod
-						tinsert(self.actions, action)
+		for name, mod in self:IterateModules() do
+			if (mod.GetActions) then
+				if (mod:IsModuleActive()) then
+					if (mod.ResetActions) then
+						mod:ResetActions()
+					end
+					local moreActions = mod:GetActions()
+					if (moreActions) then
+						for i,action in ipairs(moreActions) do
+							action.mod = mod
+							tinsert(self.actions, action)
+						end
 					end
 				end
 			end
@@ -1481,6 +1349,7 @@ end
 
 -- SetClickConfigMenu
 function z:SetClickConfigMenu()
+--[[         TODO
 	if (self:IsRebuffer()) then
 		z.options.args.click = {
 			type = 'group',
@@ -1548,6 +1417,7 @@ function z:SetClickConfigMenu()
 			self:CheckDupKeybindsForMenu()
 		end
 	end
+]]
 end
 
 -- GetActionClick
@@ -1616,6 +1486,7 @@ end
 
 -- HideMeLaterz
 local function HideMeLaterz()
+	z.timerHideMeLaterz = nil
 	if (not InCombatLockdown()) then
 		z.members:Hide()
 	end
@@ -1625,12 +1496,23 @@ end
 function z:OptionsShowList()
 	if (not InCombatLockdown()) then
 		self.members:Show()
-		self:ScheduleEvent("ZOMGBuffs_HideMeLaterz", HideMeLaterz, 5)
+		self:CancelTimer(self.timerHideMeLaterz, true)
+		self.timerHideMeLaterz = self:ScheduleTimer(HideMeLaterz, 5)
+	end
+end
+
+-- AnyReagentOptions
+function z:AnyReagentOptions()
+	for name, module in z:IterateModules() do
+		if (type(module.reagents) == "table" and next(module.reagents)) then
+			return true
+		end
 	end
 end
 
 -- OptionsReagentList
 function z:MakeOptionsReagentList()
+--[[
 	local place = z.options.args.behaviour.args.reagentlevels
 	place.args = {}
 	for name, module in z:IterateModules() do
@@ -1638,6 +1520,7 @@ function z:MakeOptionsReagentList()
 			module:MakeReagentsOptions(place.args)
 		end
 	end
+]]
 end
 
 -- UnitHasBuff
@@ -1782,7 +1665,7 @@ function z:ReagentExpired(reagent)
 			reagent = format("|cFFFF8080%s|r", reagent)
 		end
 		if (reagent) then
-			self:Print(L["You have run out of %s, now using single target buffs"], reagent)
+			self:Printf(L["You have run out of %s, now using single target buffs"], reagent)
 		end
 	end
 end
@@ -2149,12 +2032,12 @@ end
 
 -- GlobalCDSchedule
 function z:GlobalCDSchedule()
-	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
+	self:CancelTimer(self.timerGCD, true)
 	local when = self.globalCooldownEnd - GetTime() + 0.1
 	if (when <= 0) then
 		when = 0.1
 	end
-	self:ScheduleEvent("ZOMGBuffs_GlobalCooldownEnd", self.GlobalCooldownEnd, when, self)
+	self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, when, self)
 end
 
 local HasIllusionBuff
@@ -2174,7 +2057,8 @@ local shadowmeld = GetSpellInfo(58984)
 function z:CheckMounted()
 	if (self.checkMountedCounter and self.checkMountedCounter > 0) then
 		self.checkMountedCounter = self.checkMountedCounter - 1
-		self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+		self:CancelTimer(self.timerMount, true)
+		self.timerMount = self:ScheduleTimer(self.CheckMounted, 0.2, self)
 	end
 
 	if (not InCombatLockdown()) then
@@ -2196,14 +2080,15 @@ end
 -- StartCheckMounted
 function z:StartCheckMounted()
 	if (not InCombatLockdown()) then
-		-- self:Print("UNIT_AURA - z.mounted = "..tostring(z.mounted)..", IsMounted() = "..tostring(IsMounted()))
-		self:CancelScheduledEvent("ZOMGBuffs_CheckMounted")
+		-- self:Printf("UNIT_AURA - z.mounted = "..tostring(z.mounted)..", IsMounted() = "..tostring(IsMounted()))
+		self:CancelTimer(self.timerMount, true)
+		self.timerMount = nil
 		if (not IsMounted()) then
 			-- Nasty hack, because IsMounted() does not work immediately after
 			-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
 			-- Currently, there are no events fired when IsMounted() is toggled on
 			-- Might have to do an OnUpdate check
-			self:ScheduleEvent("ZOMGBuffs_CheckMounted", self.CheckMounted, 0.2, self)
+			self.timerMount = self:ScheduleTimer(self.CheckMounted, 0.2, self)
 			self.checkMountedCounter = 4
 		end
 		self:CheckMounted()
@@ -2294,9 +2179,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 				lastCheckFail = L["MANA"]
 				icon = "mana"
 
-				if (not self:IsEventRegistered("UNIT_POWER")) then
-					self:RegisterEvent("UNIT_POWER")
-				end
+				self:RegisterEvent("UNIT_POWER")
 			end
 		end
 	end
@@ -2304,9 +2187,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	self:SetStatusIcon(icon, icontex)
 
 	if (not lastCheckFail) then
-		if (self:IsEventRegistered("UNIT_POWER")) then
-			self:UnregisterEvent("UNIT_POWER")
-		end
+		self:UnregisterEvent("UNIT_POWER")
 	end
 
 	return not lastCheckFail, lastCheckFail
@@ -2962,13 +2843,15 @@ function z:PeriodicListCheck()
 	local any
 	for unitid,frame in pairs(FrameArray) do
 		local highlight, rebuffer
-		for name, module in self:IterateModulesWithMethod("RebuffQuery") do
-			rebuffer = true
-			if (module:IsModuleActive()) then
-				if (module:RebuffQuery(unitid)) then
-					highlight = true
-					any = true
-					break
+		for name, module in self:IterateModules() do
+			if (module.RebuffQuery) then
+				rebuffer = true
+				if (module:IsModuleActive()) then
+					if (module:RebuffQuery(unitid)) then
+						highlight = true
+						any = true
+						break
+					end
 				end
 			end
 		end
@@ -3137,12 +3020,14 @@ local function DrawCell(self)
 	end
 
 	local highlight, rebuffer
-	for modname, module in z:IterateModulesWithMethod("RebuffQuery") do
-		rebuffer = true
-		if (module:IsModuleActive()) then
-			if (module:RebuffQuery(partyid)) then
-				highlight = true
-				break
+	for modname, module in z:IterateModules() do
+		if (module.RebuffQuery) then
+			rebuffer = true
+			if (module:IsModuleActive()) then
+				if (module:RebuffQuery(partyid)) then
+					highlight = true
+					break
+				end
 			end
 		end
 	end
@@ -3357,10 +3242,12 @@ end
 -- GetSpellColour
 function z:GetSpellColour(spellName)
 	local colour
-	for name, module in self:IterateModulesWithMethod("GetSpellColour") do
-		colour = module:GetSpellColour(spellName)
-		if (colour) then
-			return colour
+	for name, module in self:IterateModules() do
+		if (module.GetSpellColour) then
+			colour = module:GetSpellColour(spellName)
+			if (colour) then
+				return colour
+			end
 		end
 	end
 end
@@ -3525,8 +3412,8 @@ do
 				end
 			end
 		else
-			for name, module in z:IterateModulesWithMethod("ShowBuffBar") do
-				if (module:ShowBuffBar(cell, spellName, tex)) then
+			for name, module in z:IterateModules() do
+				if (module.ShowBuffBar and module:ShowBuffBar(cell, spellName, tex)) then
 					return true
 				end
 			end
@@ -3767,9 +3654,7 @@ dummy:SetScript("OnUpdate",
 -- RAID_ROSTER_UPDATE
 function z:RAID_ROSTER_UPDATE()
 	self.unknownUnits = del(self.unknownUnits)
-	if (self:IsEventRegistered("UNIT_NAME_UPDATE")) then
-		self:UnregisterEvent("UNIT_NAME_UPDATE")
-	end
+	self:UnregisterEvent("UNIT_NAME_UPDATE")
 
 	self:DrawGroupNumbers()
 	self.rosterInvalid = true
@@ -3830,8 +3715,8 @@ function z:OnRaidRosterUpdate()
 		self:RequestSpells()
 	end
 
-	for name, module in self:IterateModulesWithMethod("OnRaidRosterUpdate") do
-		if (module:IsModuleActive()) then
+	for name, module in self:IterateModules() do
+		if (module.OnRaidRosterUpdate and module:IsModuleActive()) then
 			module:OnRaidRosterUpdate()
 		end
 	end
@@ -3931,7 +3816,7 @@ function z:Blacklist(name)
 
 	self.blackList[name] = GetTime() + 10			-- Flag player as un-castable for 10 seconds
 	if (z.db.profile.info) then
-		self:Print(format(L["%s blacklisted for 10 seconds"], z:ColourUnitByName(name)))
+		self:Printf(L["%s blacklisted for 10 seconds"], z:ColourUnitByName(name))
 		self.globalCooldownEnd = GetTime() + (self.castTimeToGCD or 1.5)
 		self:GlobalCDSchedule()
 	end
@@ -3944,11 +3829,12 @@ end
 
 -- GlobalCooldownEnd()
 function z:GlobalCooldownEnd()
+	self.timerGCD = nil
 	self:RequestSpells()
 end
 
 -- UNIT_AURA
-function z:UNIT_AURA(unit)
+function z:UNIT_AURA(e, unit)
 	local u = FrameArray[unit]
 	if (u) then
 		u:DrawCell()
@@ -3964,7 +3850,7 @@ function z:UNIT_AURA(unit)
 end
 
 -- UNIT_SPELLCAST_SENT
-function z:UNIT_SPELLCAST_SENT(player, spell, rank, targetName)
+function z:UNIT_SPELLCAST_SENT(e, player, spell, rank, targetName)
 	if (player == "player") then
 		local start, dur = GetSpellCooldown(spell)
 		if (start and dur <= 1.5) then
@@ -3987,7 +3873,7 @@ function z:UNIT_SPELLCAST_SENT(player, spell, rank, targetName)
 end
 
 -- UNIT_SPELLCAST_SUCCEEDED
-function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
+function z:UNIT_SPELLCAST_SUCCEEDED(e, player, spell, rank)
 	if (player == "player") then
 		if (self.clickCast) then
 			z:SayWhatWeDid(spell, self.lastCastN, rank)
@@ -4002,8 +3888,8 @@ function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
 		end
 
 		if (spell == self.lastCastS and rank == self.lastCastR) then
-			for name, module in self:IterateModulesWithMethod("SpellCastSucceeded") do
-				if (module:IsModuleActive()) then
+			for name, module in self:IterateModules() do
+				if (module.SpellCastSucceeded and module:IsModuleActive()) then
 					module:SpellCastSucceeded(self.lastCastS, self.lastCastR, self.lastCastN, not self.clickCast, self.clickList)
 				end
 			end
@@ -4024,7 +3910,7 @@ function z:UNIT_SPELLCAST_SUCCEEDED(player, spell, rank)
 end
 
 -- UNIT_SPELLCAST_FAILED
-function z:UNIT_SPELLCAST_FAILED(player)
+function z:UNIT_SPELLCAST_FAILED(e, player)
 	if (player == "player") then
 		self:CallMethodOnAllModules("SpellCastFailed", self.lastCastS, self.lastCastN, not self.clickCast)
 
@@ -4032,13 +3918,13 @@ function z:UNIT_SPELLCAST_FAILED(player)
 		self.clickCast = nil
 		self.clickList = nil
 
-		self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
-		self:ScheduleEvent("ZOMGBuffs_GlobalCooldownEnd", self.GlobalCooldownEnd, 0.5, self)
+		self:CancelTimer(self.timerGCD, true)
+		self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, 0.5, self)
 	end
 end
 
 -- UNIT_SPELLCAST_STOP
-function z:UNIT_SPELLCAST_STOP(player, spell, rank)
+function z:UNIT_SPELLCAST_STOP(e, player, spell, rank)
 	if (player == "player") then
 		self.clickCast = nil
 		self.clickList = nil
@@ -4075,13 +3961,13 @@ function z:PLAYER_REGEN_ENABLED()
 		secureCalls[k] = nil
 	end
 	if (buffClass) then
-		self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
+		self:CancelTimer(self.timerListCheck)
 		self.icon.auto:Hide()
 	end
 	self:RequestSpells()
 
-	for name, module in self:IterateModulesWithMethod("OnRegenEnabled") do
-		if (module:IsModuleActive()) then
+	for name, module in self:IterateModules() do
+		if (module.OnRegenEnabled and module:IsModuleActive()) then
 			module:OnRegenEnabled()
 		end
 	end
@@ -4091,28 +3977,25 @@ function z:PLAYER_REGEN_ENABLED()
 		self:UpdateListWidth()
 	end
 
-	if (not self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
-		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	end
+	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 end
 
 -- PLAYER_REGEN_DISABLED
 function z:PLAYER_REGEN_DISABLED()
-	self:CancelScheduledEvent("ZOMGBuffs_HideMeLaterz")
+	self:CancelTimer(self.timerHideMeLaterz)
+	self.timerHideMeLaterz = nil
 	self:SetupForSpell()
 	if (buffClass) then
-		self:ScheduleRepeatingEvent("ZOMGBuffs_PeriodicListCheck", self.PeriodicListCheck, 10, self)
+		self.timerListCheck = self:ScheduleRepeatingTimer(self.PeriodicListCheck, 10, self)
 	end
 
-	for name, module in self:IterateModulesWithMethod("OnRegenDisabled") do
-		if (module:IsModuleActive()) then
+	for name, module in self:IterateModules() do
+		if (module.OnRegenDisabled and module:IsModuleActive()) then
 			module:OnRegenDisabled()
 		end
 	end
 
-	if (self:IsEventRegistered("COMBAT_LOG_EVENT_UNFILTERED")) then
-		self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	end
+	self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 end
 
 -- PLAYER_CONTROL_LOST
@@ -4129,7 +4012,7 @@ function z:PLAYER_CONTROL_GAINED()
 end
 
 -- UNIT_SPELLCAST_CHANNEL_START
-function z:UNIT_SPELLCAST_CHANNEL_START(player, spell, rank)
+function z:UNIT_SPELLCAST_CHANNEL_START(e, player, spell, rank)
 	if (UnitIsUnit(player, "player")) then
 		self:SetupForSpell()
 	end
@@ -4138,7 +4021,7 @@ end
 -- UNIT_PET
 -- When a pet is activated, trigger a check for them.
 -- Everyone else might be buffed and nothing scheduled for checking for a long time
-function z:UNIT_PET(ownerid)
+function z:UNIT_PET(e, ownerid)
 	if (self.icon and not self.icon:GetAttribute("*type*")) then
 		local petid
 
@@ -4153,8 +4036,8 @@ function z:UNIT_PET(ownerid)
 		end
 
 		if (petid and UnitExists(petid) and UnitCanAssist("player", petid)) then
-			for name, module in self:IterateModulesWithMethod("RebuffQuery") do
-				if (module:IsModuleActive()) then
+			for name, module in self:IterateModules() do
+				if (module.RebuffQuery and module:IsModuleActive()) then
 					if (module:RebuffQuery(petid)) then
 						module:CheckBuffs()
 					end
@@ -4167,22 +4050,20 @@ end
 -- PLAYER_LEAVING_WORLD
 function z:PLAYER_LEAVING_WORLD()
 	self.zoneFlag = GetTime()
-	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
-	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
+	self:CancelTimer(self.timerListCheck, true)
+	self:CancelTimer(self.timerGCD, true)
 	self:SetupForSpell()
 end
 
 -- PLAYER_ENTERING_WORLD
 function z:PLAYER_ENTERING_WORLD()
-	if (self.minimapFrame) then
-		self.minimapFrame:Hide()
-	end
 	self:SetMainIcon()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
-	self:CancelScheduledEvent("ZOMGBuffs_PeriodicListCheck")
-	self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
-	self:ScheduleEvent("FinishedZoning", self.FinishedZoning, 5, self)
+	self:CancelTimer(self.timerListCheck, true)
+	self:CancelTimer(self.timerGCD, true)
+	self:ScheduleTimer(self.FinishedZoning, 5, self)
+
 	-- Buff timers aren't available immediately upon zoning
 	self:CheckStateChange()
 	self:StartCheckMounted()
@@ -4228,76 +4109,62 @@ end
 
 -- OnClick
 function z:OnClick()
-	if (self:IsDisabled()) then
-		return
-	end
-
-	if (IsAltKeyDown()) then
-		if (bm) then
-			bm:ToggleFrame()
-		end
-	else
+	if (not IsAltKeyDown()) then
 		self.db.profile.enabled = not self.db.profile.enabled
 		if (self.db.profile.enabled) then
 			self:RequestSpells()
 		else
 			self.atTrainer, self.atVendor = nil
 			self:SetupForSpell()
-			self:CancelScheduledEvent("ZOMGBuffs_GlobalCooldownEnd")
+			self:CancelTimer(self.timerGCD, true)
+			self.timerGCD = nil
 		end
 		if (not self.icon:GetAttribute("spell") and not self.icon:GetAttribute("item")) then
 			self:SetStatusIcon()
 		end
 
-		self:Print(L["Auto-casting %s"], (self.db.profile.enabled and L["|cFF80FF80Enabled"]) or L["|cFFFF8080Disabled"])
+		self:Printf(L["Auto-casting %s"], (self.db.profile.enabled and L["|cFF80FF80Enabled"]) or L["|cFFFF8080Disabled"])
 	end
 end
 
 -- OnTooltipUpdate
-function z:OnTooltipUpdate()
+function z:OnTooltipUpdate(parent)
 	self.linkSpells = nil
+	parent = parent or self.lastTooltipParent
+	self.lastTooltipParent = parent
 
-	tablet:SetTitle(format("%s |cFF808080r%s|r", z.titleColour, tostring(z.version)))
-	if (bm) then
-		tablet:SetHint(L["HINTBM"])
-	else
-		tablet:SetHint(L["HINT"])
-	end
-
-	local cat = tablet:AddCategory('columns', 2)
+	local tooltip = qtip:Acquire('ZOMGBuffsTooltip', 1)
+	tooltip:Clear()
+	tooltip:SetHeaderFont(GameFontNormalLarge)
+	tooltip:AddHeader(format("%s |cFF808080r%s|r", z.titleColour, tostring(z.version)))
+	tooltip:SetScript("OnHide", function(self)
+		tooltip:Release(self)
+		z.qTooltip = nil
+	end)
+	self.qTooltip = tooltip
+	tooltip:SmartAnchorTo(parent)
+	tooltip:SetAutoHideDelay(0.2, parent)
+	tooltip:Show()
+	tooltip:EnableMouse()
 
 	if (self.waitingForRaid) then
-		cat:AddLine(
-			"text", "|cFFFF8080"..format(L["Waiting for %d%% of raid to arrive before buffing commences (%d%% currently present)"], z.db.profile.waitforraid * 100, self.waitingForRaid),
-			"wrap", true)
+		tooltip:AddLine("|cFFFF8080"..format(L["Waiting for %d%% of raid to arrive before buffing commences (%d%% currently present)"], z.db.profile.waitforraid * 100, self.waitingForRaid))
 	end
 
-	for name, module in self:IterateModulesWithMethod("TooltipUpdate") do
-		if (module:IsModuleActive()) then
-			module:TooltipUpdate(cat)
+	tooltip:SetColumnLayout(2, "LEFT", "RIGHT")
+	for name, module in self:IterateModules() do
+		if (module.TooltipUpdate and module:IsModuleActive()) then
+			module:TooltipUpdate(tooltip)
 		end
 	end
 
-	--UpdateAddOnMemoryUsage()
-	--local total = GetAddOnMemoryUsage("ZOMGBuffs")
-	--for name, module in self:IterateModules() do
-	--	total = total + GetAddOnMemoryUsage(name)
-	--end
-	--cat:AddLine('text', " ")
-	--cat:AddLine("text", "|cFF808080Memory Usage", "text2", format("|cFF808080%.2dK", total))
+	--tooltip:SetColumnLayout(1, "LEFT")
+	tooltip:AddSeparator(1, 0.5, 0.5, 0.5)
+	local line = tooltip:AddLine(" ")
+	tooltip:SetCell(line, 1, L["HINT"], nil, "LEFT", 2, nil, nil, nil, 250)
+	--tooltip:SetCellColor(line, 1, 0.2, 1, 0.2)
 
 	self.linkSpells = true
-end
-
--- OnTextUpdate
-function z:OnTextUpdate()
-	if (not self.hasNoText) then
-		if (self:IsTextColored()) then
-			self:SetText(z.titleColour)
-		else
-			self:SetText(z.title)
-  		end
-  	end
 end
 
 -- GetMerchantBuyItemList
@@ -4395,9 +4262,9 @@ function z:MERCHANT_SHOW()
 					end
 
 					if (bought > 0) then
-						self:Print(L["Bought |cFF80FF80%d|cFFFFFF80 %s|r from vendor, you now have |cFF80FF80%d|r"], bought, itemLink or name, got)
+						self:Printf(L["Bought |cFF80FF80%d|cFFFFFF80 %s|r from vendor, you now have |cFF80FF80%d|r"], bought, itemLink or name, got)
 						if (splitStacks) then
-							self:Print("NOTE: |cFFFFFF80%s|r is using more bag slots because of new item ID mismatches from WoW 4.0 reagents", itemLink or name)
+							self:Printf("NOTE: |cFFFFFF80%s|r is using more bag slots because of new item ID mismatches from WoW 4.0 reagents", itemLink or name)
 						end
 						-- TODO - Put newly bought stacks into same bag as matching reagents
 					end
@@ -4431,7 +4298,7 @@ end
 
 -- UNIT_POWER
 -- This is enabled when we failed a mana check in self:CanCheckBuffs()
-function z:UNIT_POWER(unit, powtype)
+function z:UNIT_POWER(e, unit, powtype)
 	if (unit == "player" and powtype == "MANA") then
 		local mana, manamax = UnitPower("player", SPELL_POWER_MANA), UnitPowerMax("player", SPELL_POWER_MANA)
 		if (mana / manamax * 100 >= self.db.char.minmana) then
@@ -4441,79 +4308,9 @@ function z:UNIT_POWER(unit, powtype)
 	end
 end
 
--- CHAT_MSG_WHISPER
-function z:CHAT_MSG_WHISPER(msg, sender, language, d, e, status)
-	if (self.chatMatch) then
-	 	local got
-		for match in pairs(self.chatMatch) do
-			if (strsub(msg, 1, strlen(match)) == match) then
-				msg = strsub(msg, strlen(match) + 1)
-				while (strsub(msg, 1, 1) == " ") do
-					msg = strsub(msg, 2)
-				end
-				got = true
-				break
-			end
-		end
-		if (not got) then
-			return
-		end
-
-		for name, module in self:IterateModulesWithMethod("BuffResponse") do
-			if (module:IsModuleActive()) then
-				module:BuffResponse(sender, msg)
-			end
-		end
-	end
-end
-
-do
-	local function chatFilter(self, event, ...)
-		local msg, sender = ...
-		for match in pairs(z.chatMatch) do
-			if (strsub(msg, 1, strlen(match)) == match) then
-				return true
-			end
-		end
-		return false
-	end
-
-	local function chatFilterInform(self, event, ...)
-		local msg, sender = ...
-		if (strsub(msg, 1, strlen(z.chatAnswer)) == z.chatAnswer) then
-			return true
-		end
-		return false
-	end
-
-	-- MatchChat
-	function z:MatchChat(event, msg)
-		if (not msg or msg == "" or not self:IsActive()) then
-			return
-		end
-		if (event == "CHAT_MSG_WHISPER") then
-			return chatFilter(msg)
-		elseif (event == "CHAT_MSG_WHISPER_INFORM") then
-			return chatFilterInform(msg)
-		end
-	end
-
-	-- HookChat
-	function z:HookChat()
-		ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", chatFilter)
-		ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM", chatFilterInform)
-	end
-
-	-- z:UnhookChat
-	function z:UnhookChat()
-		ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER", chatFilter)
-		ChatFrame_RemoveMessageEventFilter("CHAT_MSG_WHISPER_INFORM", chatFilterInform)
-	end
-end
-
 -- COMBAT_LOG_EVENT_UNFILTERED
 local mask = COMBATLOG_OBJECT_AFFILIATION_PARTY + COMBATLOG_OBJECT_AFFILIATION_RAID
-function z:COMBAT_LOG_EVENT_UNFILTERED(ev, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+function z:COMBAT_LOG_EVENT_UNFILTERED(e, ev, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
 	if (event == "UNIT_DIES") then
 		if (self.icon and band(srcFlags, mask)) then
 			local loadedUnit = self.icon:GetAttribute("unit")
@@ -4552,91 +4349,134 @@ function z:DefaultClickBindings()
 	}
 end
 
+function z:OnProfileChanged(event, database, newProfileKey)
+	self:SetIconSize()
+	self:RestorePosition(self.icon, self.db.char.pos)
+	self:SetKeyBindings()
+	self:SetAllBarSizes()
+	z:CallMethodOnAllModules("SetupDB")
+	z:CallMethodOnAllModules("OnResetDB")
+end
+
 -- OnInitialize
 function z:OnInitialize()
 	self.maxVersionSeen = 0
-	self:RegisterDB("ZOMGBuffsDB", "ZOMGBuffsPerCharDB")
-	self:RegisterDefaults("profile", {
-		showMinimapButton = true,
-		bufftimer = true,
-		bufftimersize = 0.6,
-		bufftimerthreshold = 10 * 60,
-		invert = true,
-		notice = true,
-		usesink = false,
-		sinkopts = {},
-		info = true,
-		mousewheel = true,
-		notresting = true,
-		notmounted = true,
-		notstealthed = true,
-		notshifted = true,
-		enabled = true,
-		bartexture = "BantoBar",
-		waitforraid = 0,				-- Wait for % of raid
-		ignoreabsent = true,			-- Ignore absent players (offline, afk, out of zone)
-		channel = "Raid",				-- Report channel
-		skippvp = true,					-- Don't directly buff PVP players
-		groupno = true,
-		alwaysLoadManager = true,
-		alwaysLoadPortalz = true,
-		showSolo = true,
-		showParty = true,
-		showRaid = true,
-		track = {
-			sta = true,
-			mark = true,
-			int = true,
-			shadow = false,
-			kings = true,
-			might = true,
-			food = true,
-			flask = true,
+
+	self.db = LibStub("AceDB-3.0"):New("ZOMGBuffsNewDB", nil, "Default")
+	self.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
+	self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
+	self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
+
+	self.db:RegisterDefaults({
+		profile = {
+			showMinimapButton = true,
+			bufftimer = true,
+			bufftimersize = 0.6,
+			bufftimerthreshold = 10 * 60,
+			invert = true,
+			notice = true,
+			usesink = false,
+			sinkopts = {},
+			info = true,
+			mousewheel = true,
+			notresting = true,
+			notmounted = true,
+			notstealthed = true,
+			notshifted = true,
+			enabled = true,
+			bartexture = "BantoBar",
+			waitforraid = 0,				-- Wait for % of raid
+			ignoreabsent = true,			-- Ignore absent players (offline, afk, out of zone)
+			channel = "Raid",				-- Report channel
+			skippvp = true,					-- Don't directly buff PVP players
+			groupno = true,
+			alwaysLoadPortalz = true,
+			showSolo = true,
+			showParty = true,
+			showRaid = true,
+			track = {
+				sta = true,
+				mark = true,
+				int = true,
+				shadow = false,
+				kings = true,
+				might = true,
+				food = true,
+				flask = true,
+			},
+			click = z:DefaultClickBindings(),
+			buffreminder = "None",
+			spellIcons = true,
+			showroles = true,
+			iconswirl = true,
+			showFubar = true,
 		},
-		click = z:DefaultClickBindings(),
-		buffreminder = "None",
-		spellIcons = true,
-		showroles = true,
-		iconname = true,
-		iconswirl = true,
-		showFubar = true,
-	} )
-	self:RegisterDefaults("char", {
-		firstStartup = true,
-		showicon = true,
-		iconlocked = false,
-		iconsize = 36,
-		classIcon = false,
-		anchor = "BOTTOMRIGHT",
-		relpoint = "TOPRIGHT",
-		sort = "GROUP",
-		--iconborder = true,
-		border = false,
-		autobuyreagents = false,
-		minmana = 0,
-		width = 150,
-		height = 14,
-		fontface = "Arial Narrow",
-		fontsize = 12,
-		fontoutline = "",
-		buffpets = true,
-		learnooc = true,
-		learncombat = true,
-		loadraidbuffmodule = true,
+		char = {
+			firstStartup = true,
+			showicon = true,
+			iconlocked = false,
+			iconsize = 36,
+			classIcon = false,
+			anchor = "BOTTOMRIGHT",
+			relpoint = "TOPRIGHT",
+			sort = "GROUP",
+			border = false,
+			autobuyreagents = false,
+			minmana = 0,
+			width = 150,
+			height = 14,
+			fontface = "Arial Narrow",
+			fontsize = 12,
+			fontoutline = "",
+			buffpets = true,
+			learnooc = true,
+			learncombat = true,
+			loadraidbuffmodule = true,
+		}
 	})
 
-	self:RegisterChatCommand("/zomg", self.options, "ZOMGBUFFS")
+	--self:RegisterChatCommand("zomg", self.options, "ZOMGBUFFS")
 
 	self:SetKeyBindings()
 
 	self.globalCooldownEnd = 0
 	playerClass = playerClass or select(2, UnitClass("player"))
 
-	if (self.minimapFrame) then
-		self.minimapFrame:Hide()
-	end
+	self:SetupOptions()
 
 	self.OnInitialize = nil
+end
+
+-- SetupOptions
+function z:SetupOptions()
+	self.optionsFrames = {}
+
+	-- setup options table
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("ZOMGBuffs", self.options)
+	local ACD3 = LibStub("AceConfigDialog-3.0")
+
+	self.optionsFrames.General = ACD3:AddToBlizOptions("ZOMGBuffs", nil, nil, "General")
+	self.optionsFrames.Display = ACD3:AddToBlizOptions("ZOMGBuffs", L["Display"], "ZOMGBuffs", "display")
+	--self.optionsFrames.Icons = ACD3:AddToBlizOptions("ZOMGBuffs", L["Icons"], "ZOMGBuffs", "icons")
+	--self.optionsFrames.ShowWhen = ACD3:AddToBlizOptions("ZOMGBuffs", L["Show When"], "ZOMGBuffs", "show")
+	self:RegisterChatCommand("zomg", "OpenConfig")
+
+	self:RegisterModuleOptions("Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db), L["Profiles"])
+	-- Add ordering data to the option table generated by AceDBOptions-3.0
+	self.options.args.Profiles.order = -2
+
+	self.SetupOptions = nil
+end
+
+-- RegisterModuleOptions
+function z:RegisterModuleOptions(name, optionTbl, displayName)
+	self.options.args[name] = (type(optionTbl) == "function") and optionTbl() or optionTbl
+	self.optionsFrames[name] = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("ZOMGBuffs", displayName, "ZOMGBuffs", name)
+end
+
+-- ToggleOptions
+function z:OpenConfig()
+	InterfaceOptionsFrame_OpenToCategory(self.optionsFrames.General)
 end
 
 -- IsInBattlegrounds
@@ -4675,9 +4515,9 @@ function z:MaybeLoadPortalz()
 
 	if (self.db.profile.alwaysLoadPortalz) then
 		LoadAddOn("ZOMGBuffs_Portalz")
-		if (ZOMGPortalz) then
-			self.options.args["ZOMGPortalz"] = ZOMGPortalz:GetModuleOptions()
-		end
+		--if (ZOMGPortalz) then
+		--	self.options.args["ZOMGPortalz"] = ZOMGPortalz:GetModuleOptions()
+		--end
 		self.MaybeLoadPortalz = nil
 	end
 end
@@ -4724,7 +4564,7 @@ function z:CreateHelpFrame()
 	helpFrame:SetBackdropColor(0,0,0,1)
 	helpFrame:EnableMouse(true)
 	helpFrame:RegisterForDrag("LeftButton")
-	helpFrame:SetScript("OnDragStart", function(self) dewdrop:Close() self:StartMoving() end)
+	helpFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
 	helpFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
 	helpFrame:SetScale(0.9)
 	helpFrame:SetMovable(true)
@@ -4854,6 +4694,15 @@ function z:CheckStateChange()
 	end
 end
 
+-- CallMethodOnAllModules
+function z:CallMethodOnAllModules(func, ...)
+	for name, module in self:IterateModules() do
+		if (module[func] and module:IsModuleActive()) then
+			module[func](module, ...)
+		end
+	end
+end
+
 -- PARTY_MEMBERS_CHANGED
 function z:PARTY_MEMBERS_CHANGED()
 	self:RAID_ROSTER_UPDATE()
@@ -4928,10 +4777,7 @@ function z:OnEnableOnce()
 
 	self:MaybeLoadPortalz()
 
-	for name, module in self:IterateModulesWithMethod("RebuffQuery") do
-		buffClass = true
-		break
-	end
+	buffClass = self:IsRebuffer()
 
 	self.actions = nil
 	self:SetClickConfigMenu()
@@ -4946,36 +4792,14 @@ function z:OnEnableOnce()
 		SetBinding("MOUSEWHEELDOWN", "CAMERAZOOMOUT")
 	end
 
-	local ldb = LibStub:GetLibrary("LibDataBroker-1.1", true)
-	if (ldb) then
-		self.ldbSource = ldb:NewDataObject("ZOMGBuffs", {
-			type = "launcher",
-			label = L["TITLECOLOUR"],
-			icon = "Interface\\Addons\\ZOMGBuffs\\Textures\\Icon",
-		})
-	end
-
-	if (self.ldbSource) then
-		self.ldbSource.OnClick = function(self, button)
-			if (button == "LeftButton") then
-				z:OnClick(button)
-			else
-				dewdrop:Open(self,
-					"children", function()
-						dewdrop:FeedAceOptionsTable(z.options)
-					end
-				)
-			end
-		end
-		self.ldbSource.OnEnter = function(self) z:UpdateTablet(self) end
-	else
-		self.db.profile.showFubar = true
-	end
-
 	self.mounted = IsMounted()
 
 	self.linkSpells = true
 	self.OnEnableOnce = nil
+end
+
+function z:GetTitle()
+	return L["TITLECOLOUR"]
 end
 
 -- RegisterTablet
@@ -4989,7 +4813,7 @@ function z:RegisterTablet(ldbParent)
 			'children', function()
 				tablet:SetTitle(self:GetTitle())
 				if type(self.OnTooltipUpdate) == "function" then
-					if not self:IsDisabled() then
+					if self:IsEnabled() then
 						self:OnTooltipUpdate()
 					end
 				end
@@ -5020,46 +4844,13 @@ function z:RegisterTablet(ldbParent)
 	end
 end
 
--- UpdateTablet
-function z:UpdateTablet(ldbParent)
-	if (not ldbParent) then
-		return
-	end
-
-	self:RegisterTablet(ldbParent)
-	tablet:Refresh(ldbParent)
-end
-
 -- SetMainIcon
 function z:SetMainIcon(icon)
 	self.mainIcon = icon or self.mainIcon
-
-	if (self.ldbSource) then
-		self.ldbSource.icon = self.mainIcon
-	end
-
-	if (self.db.profile and self.db.profile.showFubar) then
-		self.cannotAttachToMinimap = nil
-		self.hasIcon = true
-		self.hasNoText = nil
-		self:SetIcon(self.mainIcon)
-		self:Show()
-	else
-		self.cannotAttachToMinimap = true
-		self.hasIcon = nil
-		self.hasNoText = true
-		self.hideWithoutStandby = true
-		self:Hide()
-		self.hideWithoutStandby = nil
-	end
+	LDB.icon = self.mainIcon
 end
 function z:GetMainIcon()
-	return self.mainIcon
-end
-
-do	-- Brute force attack on FuBar minimap icon to hide it should it be disabled:
-	local oneFrameOnly = CreateFrame("Frame")
-	oneFrameOnly:SetScript("OnUpdate", function(self) self:SetScript("OnUpdate", nil) z:SetMainIcon() self:Hide() end)
+	return LDB.icon
 end
 
 -- OnEnable
@@ -5073,6 +4864,11 @@ function z:OnEnable()
 	z.maxVersionSeen = max(z.maxVersionSeen or 0, self.version)
 	btr = ZOMGBuffTehRaid
 
+	if LDBIcon then
+		self.db.profile.ldbIcon = self.db.profile.ldbIcon or {}
+		LDBIcon:Register("ZOMGBuffs", LDB, self.db.profile.ldbIcon)
+	end
+
 	self.groupColours = {{1, 1, 0.5}, {1, 0.5, 1}, {0.5, 1, 1}, {1, 0.5, 0.5}, {0.5, 1, 0.5}, {0.5, 0.5, 1}, {0.5, 0.5, 0.5}, {1, 1, 0}, {1, 0, 1}, {0, 1, 1}}	
 
 	if (self.OnEnableOnce) then
@@ -5084,7 +4880,7 @@ function z:OnEnable()
 
 	if (z.db.char.firstStartup) then
 		z.db.char.firstStartup = false
-		z.db.char.sort = (playerClass == "PALADIN" and "CLASS") or "GROUP"
+		z.db.char.sort = "GROUP"
 	end
 
 	if (not self.icon) then
@@ -5125,28 +4921,9 @@ function z:OnEnable()
 
 	self:RegisterEvent("PLAYER_CONTROL_LOST")
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
-	self:RegisterEvent("CHAT_MSG_WHISPER")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
-	self.chatMatch = {}
-	local i = 1
-	while (true) do
-		if (L:HasTranslation("CHATMATCH"..i)) then
-			z.chatMatch[L["CHATMATCH"..i]] = true
-		else
-			break
-		end
-		i = i + 1
-	end
-	self.chatAnswer = L["CHATANSWER"]
-
-	self:HookChat()
-
 	self.icon:Show()
-
-	if (self.minimapFrame) then
-		self.minimapFrame:Hide()
-	end
 end
 
 -- OnDisable
@@ -5164,9 +4941,6 @@ function z:OnDisable()
 	self.members:UnregisterAllEvents()
 	self.buffRoster = nil
 	self.blackList = nil
-	self.chatMatch = nil
-	self.chatAnswer = nil
 	self.groupColours = nil
 	self:UnhookAll()
-	self:UnhookChat()
 end

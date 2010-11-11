@@ -4,8 +4,8 @@ if (ZOMGPortalz) then
 end
 
 --local ANIM = true	-- Swirly testing changes
-local L = LibStub("AceLocale-2.2"):new("ZOMGPortalz")
-local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
+local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGPortalz")
+local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
 local SM = LibStub("LibSharedMedia-3.0")
 local playerClass
 
@@ -36,54 +36,47 @@ local UnitInRaid		= UnitInRaid
 local UnitIsUnit		= UnitIsUnit
 local UnitPowerType		= UnitPowerType
 
-local function getOption(k)
-	return module.db.char[k]
+local function getOption(info)
+	return module.db.char[info[#info]]
 end
-local function setOption(k, v)
-	module.db.char[k] = v
+local function setOption(info, value)
+	module.db.char[info[#info]] = value
 end
 
 do
-	module.consoleCmd = "ZOMGPortalz"
 	module.options = {
 		type = 'group',
 		order = 15,
 		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rPortalz",
 		desc = L["Portal Configuration"],
 		handler = module,
-		disabled = function() return z:IsDisabled() end,
+		get = getOption,
+		set = setOption,
 		args = {
 			showall = {
 				type = 'toggle',
 				name = L["Show All"],
 				desc = L["Show all portal spells, even if you have not learnt them yet."],
-				get = function() return module.db.char.showall end,
-				set = function(n) module.db.char.showall = n end,
 				order = 1,
 			},
-			items = {
+			useitems = {
 				type = 'toggle',
 				name = L["Items"],
 				desc = format(L["Include appropriate items as castable portals (eg: %s or %s)"], select(2,GetItemInfo(6948)) or "Hearthstone", select(2,GetItemInfo(32757)) or "Blessed Medallion of Karobor"),
-				get = function() return module.db.char.useitems end,
-				set = function(n) module.db.char.useitems = n end,
 				order = 3,
 			},
-			anchor = {
+			locked = {
 				type = 'toggle',
 				name = L["Locked"],
 				desc = L["Unlocked, the portals can be dragged using the |cFF00FF00Right Mouse Button|r"],
-				get = function() return module.db.char.locked end,
-				set = function(n) module.db.char.locked = n end,
 				order = 5,
 			},
 			pattern = {
-				type = 'text',
+				type = 'select',
 				name = L["Pattern"],
 				desc = L["Select the arrangement layout for the portals"],
-				validate = {circle = L["Circle"], horz = L["Horizontal"], vert = L["Vertical"], arc = L["Arc"]},
-				get = function() return module.db.char.pattern end,
-				set = function(n) module.db.char.pattern = n module:SetPoints() module:Draw() end,
+				values = {circle = L["Circle"], horz = L["Horizontal"], vert = L["Vertical"], arc = L["Arc"]},
+				set = function(info,n) setOption(info,n) module:SetPoints() module:Draw() end,
 				order = 10,
 			},
 			scale = {
@@ -91,7 +84,6 @@ do
 				name = L["Scale"],
 				desc = L["Adjust the scale of the portals"],
 				func = timeFunc,
-				get = function() return module.db.char.scale end,
 				set = function(n)
 					module.db.char.scale = n
 					if (module.frame) then
@@ -107,27 +99,21 @@ do
 				bigStep = 0.05,
 				order = 20,
 			},
-			spacer = {
-				type = 'header',
-				name = " ",
-				order = 99,
-			},
 			keybinding = {
-				type = 'text',
+				type = 'keybinding',
 				name = L["Key-Binding"],
 				desc = L["Define the key used for portal popup"],
-				validate = "keybinding",
-				get = function()
+				get = function(info)
 					return GetBindingKey("ZOMGBUFFS_PORTAL")
 				end,
-				set = function(n)
+				set = function(info, n)
 					local old = GetBindingAction(n)
 					if (old and old ~= "") then
-						module:Print(KEY_UNBOUND_ERROR, old)
+						module:Printf(L["%s is already bound to %s"], n, old)
+					else
+						SetBinding(n, "ZOMGBUFFS_PORTAL")
+						SaveBindings(GetCurrentBindingSet())
 					end
-
-					SetBinding(n, "ZOMGBUFFS_PORTAL")
-					SaveBindings(GetCurrentBindingSet())
 				end,
 				order = 100,
 			},
@@ -135,16 +121,12 @@ do
 				type = 'toggle',
 				name = L["Sticky"],
 				desc = L["When sticky, the portals open on one keypress and close on another. When disabled, you are required to hold the key whilst making your selection."],
-				get = function() return module.db.char.sticky end,
-				set = function(n) module.db.char.sticky = n end,
 				order = 120,
 			},
 			announce = {
 				type = 'toggle',
 				name = L["Announce"],
 				desc = L["Announce when you've created a portal to someplace more fun and sunny than this dark damp dungeon."],
-				get = function() return module.db.char.announce end,
-				set = function(n) module.db.char.announce = n end,
 				hidden = function() return select(2,UnitClass("player")) ~= "MAGE" end,
 				order = 130,
 			}
@@ -174,12 +156,10 @@ function module:InitFrames()
 		module:RegisterEvent("UNIT_INVENTORY_CHANGED")
 	end)
 	frame:SetScript("OnHide", function(self)
-		if (module:IsEventRegistered("UNIT_SPELLCAST_SENT")) then
-			module:UnregisterEvent("PLAYER_REGEN_DISABLED")
-			module:UnregisterEvent("UNIT_SPELLCAST_SENT")
-			module:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
-			module:UnregisterEvent("UNIT_INVENTORY_CHANGED")
-		end
+		module:UnregisterEvent("PLAYER_REGEN_DISABLED")
+		module:UnregisterEvent("UNIT_SPELLCAST_SENT")
+		module:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+		module:UnregisterEvent("UNIT_INVENTORY_CHANGED")
 	end)
 
 	frame:SetScript("OnUpdate",
@@ -203,7 +183,7 @@ end
 
 -- Keybinding
 function module:Keybinding(keystate)
-	if (InCombatLockdown() or z:IsDisabled()) then
+	if (InCombatLockdown() or not self:IsEnabled()) then
 		return
 	end
 
@@ -1142,20 +1122,21 @@ end
 function module:OnModuleInitialize()
 	playerClass = select(2, UnitClass("player"))
 
-	self.db = z:AcquireDBNamespace("Portalz")
-	z:RegisterDefaults("Portalz", "char", {
-		pattern = "arc",
-		locked = true,
-		scale = 1,
-		showall = false,
-		useitems = true,
-		sticky = true,
-		announce = false,
+	self.db = z.db:RegisterNamespace("Portalz",	{
+		char = {
+			pattern = "arc",
+			locked = true,
+			scale = 1,
+			showall = false,
+			useitems = true,
+			sticky = true,
+			announce = false,
+		},
 	})
 
-	z:RegisterChatCommand({"/zomgportalz", "/zomgport"}, self.options)
-	self.OnMenuRequest = self.options
-	z.options.args.ZOMGPortalz = self.options
+	--z:RegisterChatCommand({"/zomgportalz", "/zomgport"}, self.options)
+	--self.OnMenuRequest = self.options
+	--z.options.args.ZOMGPortalz = self.options
 
 	self.spellBlend = "BLEND"
 	self.itemBlend = "ADD"

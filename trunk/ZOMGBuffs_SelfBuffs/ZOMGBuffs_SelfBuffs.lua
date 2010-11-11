@@ -1,12 +1,12 @@
-﻿if (ZOMGSelfBuffs) then
+if (ZOMGSelfBuffs) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_SelfBuffs (Addons\ZOMGBuffs\ZOMGBuffs_SelfBuffs and Addons\ZOMGBuffs_SelfBuffs)")
 	return
 end
 
 local wowVersion = tonumber((select(2,GetBuildInfo())))
 
-local L = LibStub("AceLocale-2.2"):new("ZOMGSelfBuffs")
-local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
+local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGSelfBuffs")
+local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
 local playerClass, playerName, playerGUID
 local template = {}
@@ -38,12 +38,12 @@ do
 
 	elseif (GetLocale() == "deDE") then
 		enchantMatching = {
-			[GetSpellInfo(3408)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
+			[GetSpellInfo(3408)] = "Verkr�ppelungsgift",			-- Verkr�ppelndes Gift (Crippling Poison)
 			[GetSpellInfo(8232)] = "^Windzorn$",				-- Windfury Weapon
 			[GetSpellInfo(8024)] = "^Flammenzunge$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Lebensgeister$",		-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Felsbeißer$",       -- Rockbiter Weapon
+			[GetSpellInfo(8017)] = "^Felsbei�er$",       -- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "esES") then
@@ -67,63 +67,63 @@ do
 		
 	elseif (GetLocale() == "ruRU") then
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^Неистовство ветра$",		-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^Язык пламени$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^Жизнь Земли$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^Ледяное клеймо$",		-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^камнедробителя$",      -- Rockbiter Weapon      
+			[GetSpellInfo(8232)] = "^??????????? ?????$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^???? ???????$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^????? ?????$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^??????? ??????$",		-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^??????????????$",      -- Rockbiter Weapon      
 		}
 
 	elseif (GetLocale() == "koKR") then
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^질풍의 무기$",				-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^불꽃의 무기$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^대지의 생명$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^냉기의 무기$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^대지의 무기$",        -- Rockbiter Weapon
+			[GetSpellInfo(8232)] = "^??? ??$",				-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^??? ??$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^??? ??$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^??? ??$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^??? ??$",        -- Rockbiter Weapon
 		}
 	end
 end
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
-local function getOption(v)
-	return zs.db.char[v]
+local function getOption(info)
+	return zs.db.char[info[#info]]
 end
-
-local function setOption(v, n, s)
-	zs.db.char[v] = n
-	if (s) then
+local function setOption(info, value, update)
+	zs.db.char[info[#info]] = value
+	if (update) then
 		z:CheckForChange(zs)
 	end
 end
-
-local function getPrelude(k)
-	return zs.db.char.rebuff[k] or 0
+local function getPrelude(info)
+	return zs.db.char.rebuff[info[#info]] or 0
 end
 
-local function setPrelude(k, v)
+local function setPrelude(info, value)
+	local k = info[#info]
 	if ((not v or v == 0) and k ~= "default") then
 		zs.db.char.rebuff[k] = nil
 	else
-		zs.db.char.rebuff[k] = v
+		zs.db.char.rebuff[k] = value
 	end
 end
 
-zs.consoleCmd = L["Self"]
 zs.options = {
 	type = "group",
 	order = 1,
 	name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rSelfBuffs",
 	desc = L["Self Buff Configuration"],
 	handler = zs,
-	disabled = function() return z:IsDisabled() end,
+	get = getOption,
+	set = setOption,
 	args = {
 		flaskOfNorth = {
 			type = "group",
 			name = L["Flask of the North"],
 			desc = L["Special handling for Flask of the North"],
 			order = 5,
+			guiInline = true,
 			hidden = function()
 				if (zs:IsModuleActive()) then
 					local alc = GetSpellInfo(51304)
@@ -133,10 +133,16 @@ zs.options = {
 				end
 				return true
 			end,
-			isChecked = function(k) return zs.db.char.flask end,
-			onClick = function(k) zs.db.char.flask = not zs.db.char.flask end,
 			args = {
-				rebuff = {
+				enable = {
+					type = "toggle",
+					name = L["Enabled"],
+					desc = L["Auto-cast Flask of the North"],
+					get = function() return zs.db.char.flask end,
+					set = function(n,val) zs.db.char.flask = val end,
+					order = 1,
+				},
+				flask = {
 					type = "range",
 					name = L["Expiry Prelude"],
 					desc = L["Expiry prelude for flasks"],
@@ -144,7 +150,6 @@ zs.options = {
 					order = 60,
 					get = getPrelude,
 					set = setPrelude,
-					passValue = "flask",
 					min = 0,
 					max = 15 * 60,
 					step = 5,
@@ -157,7 +162,7 @@ zs.options = {
 			name = L["Templates"],
 			desc = L["Template configuration"],
 			order = 10,
-			hidden = function() return not zs:IsModuleActive() end,
+			guiInline = true,
 			args = {
 			}
 		},
@@ -166,25 +171,22 @@ zs.options = {
 			name = L["Behaviour"],
 			desc = L["Self buffing behaviour"],
 			order = 201,
-			hidden = function() return not zs:IsModuleActive() end,
+			guiInline = true,
 			args = {
 				combatnotice = {
 					type = "toggle",
 					name = L["Combat Warnings"],
 					desc = L["Warn about expiring buffs in combat. Note that auto buffing cannot be done in combat, this is simply a reminder"],
-					get = getOption,
 					set = function(k,v) setOption(k, v, true) end,
-					passValue = "combatnotice",
 					order = 5,
 				},
-				rebuff = {
+				default = {
 					type = "range",
 					name = L["Expiry Prelude"],
 					desc = L["Default rebuff prelude for all self buffs"],
 					func = timeFunc,
 					get = getPrelude,
 					set = setPrelude,
-					passValue = "default",
 					min = 0,
 					max = 15 * 60,
 					step = 5,
@@ -195,25 +197,19 @@ zs.options = {
 					type = "toggle",
 					name = L["Auto buffs"],
 					desc = L["Use auto-intelligent buffs such as Crusader Aura when mounted"],
-					get = getOption,
 					set = function(k,v) setOption(k, v, true) end,
-					passValue = "useauto",
 					order = 15,
 				},
-				info = {
+				reagentNotices = {
 					type = 'toggle',
 					name = L["Reagent Reminder"],
 					desc = L["Show message when spells requiring reagents are used"],
-					get = getOption,
-					set = setOption,
-					passValue = "reagentNotices",
 					order = 20,
 				},
 			},
 		},
 	}
 }
-zs.moduleOptions = zs.options
 
 -- GetExistingItemWithSequence
 local function GetExistingItemWithSequence(k, v)
@@ -408,7 +404,9 @@ function zs:CheckBuffs()
 							z:SetupForSpell()
 							z:SetupForSpell("player", k, self)
 							z:Notice(format(L["You need %s"], z:LinkSpell(k, nil, true)), "buffreminder")
-							z.icon.autospell = true
+							if z.icon then
+								z.icon.autospell = true
+							end
 							return
 						end
 					end
@@ -424,7 +422,7 @@ function zs:CheckBuffs()
 		return
 	end
 
-	if (z.icon.autospell) then
+	if (z.icon and z.icon.autospell) then
 		if (not InCombatLockdown()) then
 			z:SetupForSpell()
 		end
@@ -531,9 +529,10 @@ function zs:CheckBuffs()
 		end
 	end
 
-	self:CancelScheduledEvent("ZOMGBuffs_SelfCheckBuffs")
+	self:CancelTimer(self.timerCheck, true)
+	self.timerCheck = nil
 	if (not any and minTimeLeft) then
-		self:ScheduleEvent("ZOMGBuffs_SelfCheckBuffs", self.CheckBuffs, minTimeLeft, self)
+		self.timerCheck = self:ScheduleTimer(self.CheckBuffs, minTimeLeft or 60, self)
 	end
 end
 
@@ -685,7 +684,7 @@ function zs:GetClassBuffs()
 			{id = 465, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
 			{id = 7294, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
 			{id = 19746, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
-			{id = 19891, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "8020FF", checkdups = true, skip = skipFunc},		-- Resistance Aura
+			{id = 19891, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Resistance Aura
 			{id = 32223, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
 			{id = 54428, o = 22, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
 				skip = function()
@@ -809,8 +808,9 @@ local casterClasses = {MAGE = true, WARLOCK = true, PRIEST = true}
 
 -- MakeSpellOptions
 do
-	local function setFunc(k)
+	local function setFunc(info)
 		-- Untick any marked as 'dup' (Mutually exclusive buffs, such as Paladin Seals & Hunter Aspects)
+		local k = info[#info]
 		local b = zs.classBuffs[k]
 		if (b) then
 			local old = template[k]
@@ -830,7 +830,6 @@ do
 	local function getLearnable(k)
 		return not zs.db.char.notlearnable or not zs.db.char.notlearnable[k]
 	end
-
 	local function setLearnable(k, v)
 		if (v == false) then
 			if (not zs.db.char.notlearnable) then
@@ -848,7 +847,6 @@ do
 	local function getCharges(k)
 		return zs.db.char.charges and zs.db.char.charges[k] or 0
 	end
-
 	local function setCharges(k, v)
 		if (v > 0) then
 			if (not zs.db.char.charges) then
@@ -860,6 +858,17 @@ do
 			if (not next(zs.db.char.charges)) then
 				zs.db.char.charges = nil
 			end
+		end
+	end
+
+	local function getPrelude(k)
+		return zs.db.char.rebuff[k] or 0
+	end
+	local function setPrelude(k, value)
+		if ((not v or v == 0) and k ~= "default") then
+			zs.db.char.rebuff[k] = nil
+		else
+			zs.db.char.rebuff[k] = value
 		end
 	end
 
@@ -875,11 +884,11 @@ do
 				if (v.o == i and (v.who == "self" or v.who == "single" or v.who == "party")) then
 					if (not v.exclude or not v.exclude()) then
 						if (needBreak and any) then
-							args["header"..order] = {
-								type = "header",
-								name = " ",
-								order = order,
-							}
+							--args["header"..order] = {
+							--	type = "header",
+							--	name = " ",
+							--	order = order,
+							--}
 							order = order + 1
 						end
 						needBreak = nil
@@ -899,23 +908,23 @@ do
 							name = cName,
 							desc = cName,
 							order = order,
-							isChecked = function() return template[k] end,
-							onClick = setFunc,
-							passValue = k,
+							guiInline = true,
 							args = {
-								header = {
-									type = "header",
-									name = cName,
+								enabled = {
+									type = "toggle",
+									name = L["Enabled"],
+									desc = cName,
+									get = function() return template[k] end,
+									set = function(_, val) zs:ModifyTemplate(k, val) end,
 									order = 1,
 								},
 								nolearn = {
 									type = "toggle",
 									name = L["Learnable"],
 									desc = L["Remember this spell when it's cast manually?"],
-									order = 100,
-									get = getLearnable,
-									set = setLearnable,
-									passValue = k,
+									order = 2,
+									get = function() return getLearnable(k) end,
+									set = function(info, val) setLearnable(k, val) end,
 								}
 							}
 						}
@@ -927,9 +936,8 @@ do
 								desc = format(L["Rebuff prelude for %s (0=Module default)"], v.rebuff or cName),
 								func = timeFunc,
 								order = 10,
-								get = getPrelude,
-								set = setPrelude,
-								passValue = v.rebuff or k,
+								get = function() return getPrelude(k) end,
+								set = function() setPrelude(k) end,
 								min = 0,
 								max = (v.duration / 2) * 60,
 								step = (v.duration <= 60 and 1) or 5,
@@ -948,9 +956,8 @@ do
 								desc = L["Rebuff if number of charges left is less than defined amount"],
 								func = timeFunc,
 								order = 20,
-								get = getCharges,
-								set = setCharges,
-								passValue = v.rebuff or k,
+								get = function() return getCharges(k) end,
+								set = function() setCharges(k) end,
 								min = 0,
 								max = c,
 								step = 1,
@@ -976,11 +983,10 @@ do
 					desc = L["Class spell configuration"],
 					order = 1,
 					hidden = function() return not zs:IsModuleActive() end,
-					args = {
-					}
+					guiInline = true,
+					args = args,
 				}
 			end
-			zs.options.args.spells.args = args
 		end
 
 		del(list)
@@ -1178,13 +1184,13 @@ function zs:ChecksAfterItemChanges()
 end
 
 -- UNIT_INVENTORY_CHANGED
-function zs:UNIT_INVENTORY_CHANGED(unit)
+function zs:UNIT_INVENTORY_CHANGED(e, unit)
 	if (unit == "player") then
-		self:CancelScheduledEvent("ZOMGBuffs_ChecksAfterItemChanges")
+		self:CancelTimer(self.timerCheckAfterItemChanges)
 		if (not any and minTimeLeft) then
-			self:ScheduleEvent("ZOMGBuffs_ChecksAfterItemChanges", self.ChecksAfterItemChanges, 5, self)
+			self.timerCheckAfterItemChanges = self:ScheduleTimer(self.ChecksAfterItemChanges, 5, self)
 		end
-	
+
 		if (self.checkReagentUsage) then
 			if (self.checkReagentUsage.time + 5 >= GetTime()) then
 				local count = GetItemCount(self.checkReagentUsage.reagent)
@@ -1199,7 +1205,7 @@ function zs:UNIT_INVENTORY_CHANGED(unit)
 						colourCount = "|cFF40FF40"
 					end
 	
-					self:Print(L["%s, %s%d|r %s remain"], self.checkReagentUsage.spell, colourCount, count, self.checkReagentUsage.reagent)
+					self:Printf(L["%s, %s%d|r %s remain"], self.checkReagentUsage.spell, colourCount, count, self.checkReagentUsage.reagent)
 					self.checkReagentUsage = del(checkReagentUsage)
 				end
 			else
@@ -1223,7 +1229,7 @@ function zs:SpellCastSucceeded(spell, rank, target, manual)
 		local ospell = spell
 		local buff = self.classBuffs[spell]
 		if (buff and buff.who == "weapon") then
-			if (z.icon.mod == self) then
+			if (z.icon and z.icon.mod == self) then
 				z:SetupForSpell()
 			end
 			self.activeEnchant = nil
@@ -1349,8 +1355,14 @@ function zs:TooltipOnClick(name)
 	end
 end
 
+local function SuperTooltipOnClick(frame, keytype, button)
+	if (button == "LeftButton") then
+		return zs:TooltipOnClick(keytype)
+	end
+end
+
 -- AddItem
-function zs:AddItem(cat, which, item)
+function zs:AddItem(tooltip, which, item)
 	local name = (which == "mainhand" and L["Main Hand"]) or L["Off Hand"]
 	local itemName = GetExistingItemWithSequence(item, self.classBuffs[item])
 	local checkIcon
@@ -1358,23 +1370,12 @@ function zs:AddItem(cat, which, item)
 		item = itemName
 		checkIcon = select(10, GetItemInfo(itemName))
 	end
+	checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
-	cat:AddLine(
-		"text", name,
-		"textR", 0.5,
-		"textG", 1,
-		"textB", 0.5,
-		"text2", item,
-		"text2R", 1,
-		"text2G", 1,
-		"text2B", 0.5,
-		"func", "TooltipOnClick",
-		"arg1", self,
-		"arg2", which,
-		"hasCheck", checkIcon and true,
-		"checked", checkIcon and true,
-		"checkIcon", checkIcon
-	)
+	local line = tooltip:AddLine(checkIcon..name, item)
+	tooltip:SetCellColour(line, 1, 0.5, 1, 0.5)
+	tooltip:SetCellColour(line, 2, 1, 1, 0.5)
+	tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, which)
 end
 
 -- SortedBuffList
@@ -1396,22 +1397,20 @@ function zs:SortedBuffList()
 end
 
 -- TooltipUpdate
-function zs:TooltipUpdate(cat)
+function zs:TooltipUpdate(tooltip)
 	if (template and self.classBuffs) then
-		cat:AddLine('text', " ")
-		cat:AddLine(
-			"text", L["Self Buffs Template: "].."|cFFFFFFFF"..(zs:GetSelectedTemplate() or L["none"]),
-			"text2", (template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or ""
-		)
+		tooltip:AddSeparator(1, 0.5, 0.5, 0.5)
+		tooltip:AddLine(L["Self Buffs Template: "].."|cFFFFFFFF"..(zs:GetSelectedTemplate() or L["none"]),
+							(template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or "")
 
 		if (template.mainhand) then
-			self:AddItem(cat, "mainhand", template.mainhand)
+			self:AddItem(tooltip, "mainhand", template.mainhand)
 		end
 		if (template.offhand) then
-			self:AddItem(cat, "offhand", template.offhand)
+			self:AddItem(tooltip, "offhand", template.offhand)
 		end
 		if (template.ranged) then
-			self:AddItem(cat, "ranged", template.ranged)
+			self:AddItem(tooltip, "ranged", template.ranged)
 		end
 
 		local list = self:SortedBuffList()
@@ -1420,58 +1419,47 @@ function zs:TooltipUpdate(cat)
 				local buff = self.classBuffs[key]
 				local checkIcon = buff.id and select(3, GetSpellInfo(buff.id))
 				local c = "|cFF"..((buff and buff.c) or "FFFF80")
+				checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
-				cat:AddLine(
-					"text", c..key,
-					"func", "TooltipOnClick",
-					"arg1", self,
-					"arg2", key,
-					"hasCheck", checkIcon and true,
-					"checked", checkIcon and true,
-					"checkIcon", checkIcon
-				)
+				local line = tooltip:AddLine(checkIcon..c..key)
+				tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, key)
 			end
 		end
 		del(list)
 
 		local alc = GetSpellInfo(51304)
 		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
-			cat:AddLine(
-				"text", GetSpellInfo(67016),
-				"textR", 0,
-				"textG", 0.44,
-				"textB", 0.87,
-				"func", "TooltipOnClick",
-				"arg1", self,
-				"arg2", "flask",
-				"hasCheck", true,
-				"checked", true,
-				"checkIcon", select(3, GetSpellInfo(67016))
-			)
+			local checkIcon = select(3, GetSpellInfo(67016))
+			local checkIcon = buff.id and select(3, GetSpellInfo(buff.id))
+			checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
+
+			local line = tooltip:AddLine(checkIcon..GetSpellInfo(67016))
+			tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, "flask")
 		end
 	end
 end
 
 -- OnModuleInitialize
 function zs:OnModuleInitialize()
-	self.db = z:AcquireDBNamespace("SelfBuffs")
-	z:RegisterDefaults("SelfBuffs", "char", {
-		useauto = true,
-		itemsLearnable = true,
-		templates = { Default = { classBuffs = {} }, current = {} },
-		defaultTemplate = "Default",
-		reagents = {},
-		combatnotice = true,
-		rebuff = {
-			default = 30,
-			[L["Seals"]] = 60,
+	self.db = z.db:RegisterNamespace("SelfBuffs",	{
+		char = {
+			useauto = true,
+			itemsLearnable = true,
+			templates = { Default = { classBuffs = {} }, current = {} },
+			defaultTemplate = "Default",
+			reagents = {},
+			combatnotice = true,
+			rebuff = {
+				default = 30,
+				[L["Seals"]] = 60,
+			},
+			reagentNotices = true,
 		},
-		reagentNotices = true,
 	} )
 
-	z:RegisterChatCommand({"/zomgself", "/zomgselfbuffs"}, zs.options)
-	self.OnMenuRequest = self.options
-	z.options.args.ZOMGSelfBuffs = self.options
+	--z:RegisterChatCommand({"/zomgself", "/zomgselfbuffs"}, zs.options)
+	--self.OnMenuRequest = self.options
+	--z.options.args.ZOMGSelfBuffs = self.options
 
 	z:RegisterBuffer(self, 1)
 	self:OnSpellsChanged()

@@ -3,15 +3,16 @@ if (z) then
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
-local L = LibStub("AceLocale-2.2"):new("ZOMGBuffs")
+local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffs")
 
+z.modulePrototype = {}
 function z.modulePrototype:CheckBuffs()
 end
 
 function z.modulePrototype:SetClickSpells(cell)
 end
 
-function z.modulePrototype:TooltipUpdate(tablet, cat)
+function z.modulePrototype:TooltipUpdate(tooltip)
 end
 
 function z.modulePrototype:OnSaveTemplate(templateName)
@@ -50,11 +51,16 @@ function z.modulePrototype:CanChangeState()
 end
 
 function z.modulePrototype:IsModuleActive()
-	return z:IsModuleActive(self)
+	return self:IsEnabled()
+	--return z:IsModuleActive(self)
 end
 
 function z.modulePrototype:Print(...)
 	z.Print(self, ...)
+end
+
+function z.modulePrototype:Printf(...)
+	z.Printf(self, ...)
 end
 
 -- argCheck
@@ -113,7 +119,7 @@ end
 
 -- getOptAuto
 function z.modulePrototype:getOptAuto(which)
-	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()
 	if (templates and templates[which]) then
 		return templates[which].state or "never"
 	end
@@ -121,7 +127,7 @@ end
 
 -- setOptAuto
 function z.modulePrototype:setOptAuto(which, state)
-	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()
 	if (templates and templates[which]) then
 		templates[which].state = (state ~= "never" and state) or nil
 	end
@@ -134,8 +140,7 @@ function z.modulePrototype:MakeTemplateOptions()
 	end
 
 	local args = {}
-
-	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()
 
 	if (templates) then
 		local list = new()
@@ -165,13 +170,11 @@ function z.modulePrototype:MakeTemplateOptions()
 
 			if (templates.current.modified or self:GetSelectedTemplate() == "-") then
 				args.save = {
-					type = "text",
+					type = "input",
 					name = L["Save"],
 					desc = L["Save current setup as a new template"],
-					usage = L["<template name>"],
-					input = true,
 					get = false,
-					set = function(n) self:SaveTemplate(n) end,
+					set = function(info,n) self:SaveTemplate(n) end,
 					order = 102,
 				}
 			end
@@ -188,45 +191,37 @@ function z.modulePrototype:MakeTemplateOptions()
 					name = templateName,
 					desc = self:MakeTemplateDescription(templateName),
 					order = i,
-       				isChecked = function(x) return x == self:GetSelectedTemplate() and not templates.current.modified end,
-					onClick = function(n) self:SelectTemplate(n) end,
-					passValue = list[i],
+					guiInline = true,
 					args = {
 						load = {
 							type = "execute",
 							name = L["Load"],
 							desc = L["Load this template"],
-							func = function(n) self:SelectTemplate(n) end,
-							passValue = list[i],
+							func = function() self:SelectTemplate(list[i]) end,
 							order = 1,
 						},
 						auto = {
-							type = "text",
+							type = "select",
 							name = L["Auto Switch"],
 							desc = L["Automatically switch to this template"],
-							validate = {never = L["Never"], party = L["Party"], raid = L["Raid"], solo = L["Solo"], bg = L["Battleground"], arena = L["Arena"]},
-							get = "getOptAuto",
-							set = "setOptAuto",
-							passValue = list[i],
+							values = {never = L["Never"], party = L["Party"], raid = L["Raid"], solo = L["Solo"], bg = L["Battleground"], arena = L["Arena"]},
+							get = function() return self:getOptAuto(list[i]) end,
+							set = function(info,val) self:setOptAuto(list[i], val) end,
 							order = 2,
 						},
 						rename = {
-							type = "text",
+							type = "input",
 							name = L["Rename"],
 							desc = L["Rename this template"],
-							usage = L["<new name>"],
-							input = true,
 							get = false,
-							set = function(old, new) self:RenameTemplate(old, new) end,
-							passValue = list[i],
+							set = function(info, value) self:RenameTemplate(list[i], value) end,
 							order = 99,
 						},
 						delete = {
 							type = "execute",
 							name = L["Delete"],
 							desc = L["Delete this template"],
-							func = function(n) self:DeleteTemplate(n) end,
-							passValue = list[i],
+							func = function(n) self:DeleteTemplate(list[i]) end,
 							order = 100,
 						}
 					}
@@ -246,7 +241,7 @@ function z.modulePrototype:ModifyTemplate(key, value)
 	self:argCheck(value, 2, "string", "boolean", "nil")
 --@end-debug@
 	if (self.db) then
-		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()
 
 		if (templates and templates.current) then
 			value = value or nil
@@ -262,7 +257,9 @@ function z.modulePrototype:ModifyTemplate(key, value)
 				z:UpdateCellSpells()
 				self:MakeTemplateOptions()
 
-				z:UpdateTooltip()
+				if (z.qTooltip) then
+					z:OnTooltipUpdate()
+				end
 			end
 		end
 	end
@@ -272,7 +269,7 @@ end
 function z.modulePrototype:DeleteTemplate(n)
 	self:OnDeleteTemplate(n)
 
-	local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+	local templates = self:GetTemplates()
 	templates[n] = nil
 	self:MakeTemplateOptions()
 end
@@ -282,7 +279,7 @@ function z.modulePrototype:RenameTemplate(old, new)
 	if (new and new ~= "" and new ~= "-") then
 		self:OnRenameTemplate(n)
 
-		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()
 	
 		local t = templates[old]
 		templates[old] = nil
@@ -294,7 +291,7 @@ function z.modulePrototype:RenameTemplate(old, new)
 
 		self:MakeTemplateOptions()
 
-		self:Print(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], old, new)
+		self:Printf(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], old, new)
 	end
 end
 
@@ -340,17 +337,16 @@ end
 -- SaveTemplate
 function z.modulePrototype:SaveTemplate(templateName)
 	if (self.db and templateName and templateName ~= "" and templateName ~= "-") then
-		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()
 
 		local template = templates.current
 		template.modified = nil
 		self:SetSelectedTemplate(templateName)
-		--self.db.char.selectedTemplate = templateName
 		templates[templateName] = copy(template)
 
 		self:OnSaveTemplate(templateName, templates[templateName])
 
-		self:Print(L["Saved template %q"], templateName)
+		self:Printf(L["Saved template %q"], templateName)
 
 		self:MakeTemplateOptions(self)
 	end
@@ -359,7 +355,7 @@ end
 -- SelectTemplate
 function z.modulePrototype:SelectTemplate(templateName, reason)
 	if (self.db) then
-		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()
 		if (templates[templateName]) then
 			if (templates.current and templates.current.modified) then
 				del(templates.last)
@@ -367,13 +363,12 @@ function z.modulePrototype:SelectTemplate(templateName, reason)
 			end
 
 			if (reason) then
-				self:Print(L["Switched to template %q because %s"], templateName, reason)
+				self:Printf(L["Switched to template %q because %s"], templateName, reason)
 			else
-				self:Print(L["Switched to template %q"], templateName)
+				self:Printf(L["Switched to template %q"], templateName)
 			end
 
 			self:SetSelectedTemplate(templateName)
-			--self.db.char.selectedTemplate = templateName
 			templates.current = copy(templates[templateName])
 
 			self:OnSelectTemplate()
@@ -412,18 +407,10 @@ function z.modulePrototype:OnStateChanged(newState, reason)
 	end
 end
 
--- AceDB20_ResetDB
-function z.modulePrototype:AceDB20_ResetDB(mod, varName, index)
-	if (mod == self.title) then
-		self:SetupDB()
-		self:OnResetDB()
-	end
-end
-
 -- OnResetDB
 function z.modulePrototype:SetupDB()
 	if (self.db) then
-		local templates = self:GetTemplates()	-- self.db.char.templates or self.db.profile.templates
+		local templates = self:GetTemplates()
 		if (templates) then
 			local template = templates.current
 			if (not template) then
@@ -452,15 +439,27 @@ end
 
 -- OnInitialize
 function z.modulePrototype:OnInitialize()
+	self.name = self:GetName()
 	self:OnModuleInitialize()
+end
+
+-- SetupOptions
+function z.modulePrototype:SetupOptions()
+	if (self.options) then
+		local name = self:GetName()
+		if (not z.options.args[name]) then
+			z.options.args[name] = self.options
+			self.options.order = 5
+			z.optionsFrames[self:GetName()] = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("ZOMGBuffs", L[name], "ZOMGBuffs", name)
+		end
+	end
 end
 
 -- OnEnable
 function z.modulePrototype:OnEnable()
-	--self:RegisterBucketEvent("RAID_ROSTER_UPDATE", 0.2)			-- We don't care who
-	self:RegisterEvent("AceDB20_ResetDB")
 	self:SetupDB()
 	self:OnResetDB()
+	self:SetupOptions()
 
 	self:RegisterEvent("PLAYER_TALENT_UPDATE")
 
@@ -474,5 +473,7 @@ end
 function z.modulePrototype:OnDisable()
 	self:OnModuleDisable()
 end
+
+z:SetDefaultModulePrototype(z.modulePrototype)
 
 end

@@ -1,17 +1,17 @@
-﻿if (ZOMGBuffTehRaid) then
+if (ZOMGBuffTehRaid) then
 	ZOMGBuffs:Print("Installation error, duplicate copy of ZOMGBuffs_BuffTehRaid (Addons\ZOMGBuffs\ZOMGBuffs_BuffTehRaid and Addons\ZOMGBuffs_BuffTehRaid)")
 	return
 end
 
-local L = LibStub("AceLocale-2.2"):new("ZOMGBuffTehRaid")
-local R = LibStub("AceLocale-2.2"):new("ZOMGReagents")
+local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffTehRaid")
+local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
 local SM = LibStub("LibSharedMedia-3.0")
 local playerClass
 local template
 
 local z = ZOMGBuffs
-local zg = z:NewModule("ZOMGBuffTehRaid")
+local zg = z:NewModule("ZOMGBuffTehRaid", "AceBucket-3.0")
 ZOMGBuffTehRaid = zg
 
 z:CheckVersion("$Revision$")
@@ -38,30 +38,28 @@ local function UnitFullName(unit)
 	return name
 end
 
-local function getOption(k)
-	return zg.db.char[k]
+local function getOption(info)
+	return zg.db.char[info[#info]]
 end
-
-local function setOption(k, v, update)
-	if (not v or v == 0) then
-		zg.db.char[k] = nil
+local function setOption(info, value, update)
+	if (not value or value == 0) then
+		zg.db.char[info[#info]] = nil
 	else
-		zg.db.char[k] = v
+		zg.db.char[info[#info]] = value
 	end
 	if (update) then
 		z:CheckForChange(zg)
 	end
 end
 
-local function getPrelude(k)
-	return zg.db.char.rebuff[k] or 0
+local function getPrelude(info)
+	return zg.db.char.rebuff[info[#info]] or 0
 end
-
-local function setPrelude(k, v)
-	if (not v or v == 0) then
-		zg.db.char.rebuff[k] = nil
+local function setPrelude(info, value)
+	if (not value or value == 0) then
+		zg.db.char.rebuff[info[#info]] = nil
 	else
-		zg.db.char.rebuff[k] = v
+		zg.db.char.rebuff[info[#info]] = value
 	end
 	z:CheckForChange(zg)
 end
@@ -71,14 +69,14 @@ do
 		return not zg.db.char.tracker
 	end
 	
-	zg.consoleCmd = "ZOMGBuffTehRaid"
 	zg.options = {
 		type = 'group',
 		order = 2,
 		name = "|cFFFF8080Z|cFFFFFF80O|cFF80FF80M|cFF8080FFG|rBuffTehRaid",
 		desc = L["Group Buff Configuration"],
 		handler = zg,
-		disabled = function() return z:IsDisabled() end,
+		get = getOption,
+		set = setOption,
 		args = {
 			template = {
 				type = 'group',
@@ -86,14 +84,9 @@ do
 				desc = L["Template configuration"],
 				order = 50,
 				hidden = function() return not zg:IsModuleActive() end,
+				guiInline = true,
 				args = {
 				}
-			},
-			spacer = {
-				type = 'header',
-				name = " ",
-				hidden = function() return not zg:IsModuleActive() end,
-				order = 51,
 			},
 			tracker = {
 				type = 'group',
@@ -101,50 +94,38 @@ do
 				desc = L["Tracker Icon for single target exclusive buffs"],
 				hidden = function() return not zg:IsModuleActive() end,
 				order = 100,
+				guiInline = true,
 				args = {
 					tracker = {
 						type = 'toggle',
 						name = L["Enable"],
 						desc = L["Create a tracking icon for certain exclusive spells (Earth Shield, Fear Ward). Note that the icon can always display the correct status of the spell, but if you change targets in combat then the click action will be to the player who it was last set to before entering combat"],
-						get = getOption,
-						set = setOption,
-						passValue = "tracker",
 						order = 1,
 					},
 					lock = {
 						type = 'toggle',
 						name = L["Lock"],
 						desc = L["Lock all the Tracker icons to their current position"],
-						get = getOption,
-						set = setOption,
-						passValue = "lock",
 						order = 10,
 					},
-					sound = {
-						type = 'text',
+					tracksound = {
+						type = 'select',
+						dialogControl = "LSM30_Sound",
 						name = L["Sound"],
 						desc = L["Select a soundfile to play when player's tracked buff expires"],
-						get = getOption,
 						set = function(k,v)
 							setOption(k,v)
 							PlaySoundFile(SM:Fetch("sound", v))
 						end,
-						validate = SM:List("sound"),
+						values = AceGUIWidgetLSMlists.sound,
 						disabled = function() return not SM or not zg.db.char.tracker end,
-						passValue = "tracksound",
 						order = 20,
 					},
-					spacer = {
-						type = 'header',
-						name = " ",
-						order = 100,
-					},
-					scale = {
+					trackerscale = {
 						type = 'range',
 						name = L["Scale"],
 						desc = L["Adjust the scale of the tracking icon"],
 						func = timeFunc,
-						get = getOption,
 						set = function(k,v)
 							setOption(k,v)
 							if (zg.trackIcon) then
@@ -152,7 +133,6 @@ do
 							end
 						end,
 						disabled = trackerDisabled,
-						passValue = "trackerscale",
 						min = 0,
 						max = 2,
 						isPercent = true,
@@ -175,8 +155,9 @@ do
 				desc = L["Group buffing behaviour"],
 				order = 201,
 				hidden = function() return not zg:IsModuleActive() end,
+				guiInline = true,
 				args = {
-					rebuff = {
+					default = {
 						type = 'range',
 						name = L["Expiry Prelude"],
 						desc = L["Default rebuff prelude for all group buffs"],
@@ -184,7 +165,6 @@ do
 						order = 2,
 						get = getPrelude,
 						set = setPrelude,
-						passValue = "default",
 						min = 0,
 						max = 15 * 60,
 						step = 1,
@@ -195,14 +175,6 @@ do
 			},
 		}
 	}
-end
-
-local function getOption(v)
-	return zg.db.char[v]
-end
-
-local function setOption(v, n)
-	zg.db.char[v] = n
 end
 
 -- ColourSpellFromKey(key)
@@ -342,6 +314,17 @@ do
 		z:SetupForSpell()
 		zg:CheckBuffs()
 	end
+	local function getPrelude(k)
+		return zg.db.char.rebuff[k] or 0
+	end
+	local function setPrelude(k, value)
+		if (not value or value == 0) then
+			zg.db.char.rebuff[k] = nil
+		else
+			zg.db.char.rebuff[k] = value
+		end
+		z:CheckForChange(zg)
+	end
 
 	-- SetMenu
 	function zg:MakeSpellOptions()
@@ -362,16 +345,18 @@ do
 					name = cName,
 					desc = cName,
 					order = i,
-					isChecked = function(k) return template[key] end,
-					onClick = ToggleKeyType,
-					passValue = key,
+					guiInline = true,
 					args = {
-						header = {
-							type = "header",
-							name = cName,
-							order = 1,
-						},
 					}
+				}
+
+				menu.args.nolearn = {
+					type = "toggle",
+					name = L["Learnable"],
+					desc = L["Remember this spell when it's cast manually?"],
+					order = 1,
+					get = function() return getLearnable(key) end,
+					set = function(_, val) setLearnable(key, val) end,
 				}
 
 				if (not info.noaura) then
@@ -380,27 +365,15 @@ do
 						name = L["Expiry Prelude"],
 						desc = format(L["Rebuff prelude for %s (0=Module default)"], cName),
 						func = timeFunc,
-						order = 2,
-						get = getPrelude,
-						set = setPrelude,
-						passValue = key,
+						order = 50,
+						get = function() return getPrelude(key) end,
+						set = function(_, val) setPrelude(key, val) end,
 						min = 0,
 						max = 30 * 60,
 						step = 1,
 						bigStep = 15,
-						order = 2,
 					}
 				end
-
-				menu.args.nolearn = {
-					type = "toggle",
-					name = L["Learnable"],
-					desc = L["Remember this spell when it's cast manually?"],
-					order = 3,
-					get = getLearnable,
-					set = setLearnable,
-					passValue = key,
-				}
 
 				if (info.limited) then
 					if (info.exclusive) then
@@ -408,20 +381,17 @@ do
 							type = 'toggle',
 							name = L["No Auto-cast"],
 							desc = format(L["Disables auto-casting for %s in favor of rebuffing via tracker icons or their hotkeys"], cName),
-							get = getAutocast,
-							set = setAutocast,
-							passValue = key,
-							order = 10,
+							get = function() return getAutocast(key) end,
+							set = function(_, val) setAutocast(key, val) end,
+							order = 5,
 						}
 
 						menu.args.keybinding = {
-							type = 'text',
+							type = 'keybinding',
 							name = L["Key-Binding"],
 							desc = format(L["Define the key used for rebuffing %s from it's Spell Tracker icon"], cName),
-							validate = "keybinding",
-							get = getKeybinding,
-							set = setKeybinding,
-							passValue = key,
+							get = function() return getKeybinding(key) end,
+							set = function(_, val) setKeybinding(key, val) end,
 							order = 20,
 						}
 					end
@@ -431,20 +401,15 @@ do
 							type = 'group',
 							name = L["Single Spells"],
 							desc = L["Single spell configuration"],
-							order = 2,
+							order = 5,
+							guiInline = true,
 							args = {
-								spacer = {
-									type = 'header',
-									name = " ",
-									order = 999,
-								},
-								reset = {
+								resetOnClear = {
 									type = 'toggle',
 									name = L["Reset on Clear"],
 									desc = L["If noone is selected for this buff when you disable it, then the next time it is enabled, everyone will default to ON. If disabled, the last settings will be remembered"],
 									get = getOption,
 									set = setOption,
-									passValue = "resetOnClear",
 									order = 1000,
 								},
 							}
@@ -670,7 +635,8 @@ function zg:CheckBuffs()
 		-- See if enough of raid present
 		if (percentPresent < z.db.profile.waitforraid) then	-- Wait for % of raid before buffing
 			z.waitingForRaid = floor(percentPresent * 100)
-			self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, 5, self)
+			self:CancelTimer(self.timerCheck, true)
+			self.timerCheck = self:ScheduleTimer(self.CheckBuffs, 5, self)
 			return
 		end
 	end
@@ -768,19 +734,21 @@ function zg:CheckBuffs()
 		end
 	end
 
-	self:CancelScheduledEvent("ZOMGBuffTehRaid_CheckBuffs")
+	self:CancelTimer(self.timerCheck, true)
+	self.timerCheck = nil
+
 	if (anyBlacklisted) then
 		minTimeLeft = 1.5
 	end
 	if (any) then
 		z.waitingForRaid = nil
 	else
-		self:ScheduleEvent("ZOMGBuffTehRaid_CheckBuffs", self.CheckBuffs, minTimeLeft or 60, self)
+		self.timerCheck = self:ScheduleTimer(self.CheckBuffs, minTimeLeft or 60, self)
 	end
 end
 
 -- UNIT_AURA
-function zg:UNIT_AURA(unit)
+function zg:UNIT_AURA(e, unit)
 	if (not InCombatLockdown()) then
 		if (UnitInParty(unit) or UnitInRaid(unit)) then
 			local spell = z.icon and z.icon:GetAttribute("spell")
@@ -988,7 +956,7 @@ function zg:OnModuleInitialize()
 				notself = true,
 				keycode = "focusmagic",
 				defaultRebuff = 5,
-			} 		
+			} 
 		}
 	elseif (playerClass == "SHAMAN") then
 		self.buffs = {
@@ -1048,16 +1016,15 @@ function zg:OnModuleInitialize()
 				group = true,
 				required = true,
 				dup = 1,
-				colour = {0.7, 0.7, 0.2},
+				colour = {1, 0.5, 1},
 				keycode = "kings",
 			},
 			MIGHT = {
 				o = 2,
 				id = 19740,
 				group = true,
-				required = true,
 				dup = 1,
-				colour = {0.7, 0.7, 0.2},
+				colour = {1, 0.5, 0.5},
 				keycode = "might",
 			},
 			BEACON = {
@@ -1169,26 +1136,27 @@ function zg:OnModuleInitialize()
 		end
 	end
 
-	self.db = z:AcquireDBNamespace("BuffTehRaid")
-	z:RegisterDefaults("BuffTehRaid", "char", {
-		noautocast = {TRICKS = true},
-		reagent = {},
-		keybindings = {},
-		templates = defaultForClass,
-		defaultTemplate = "Default",
-		groupcast = 2,
-		rebuff = {
-			default = 30,
+	self.db = z.db:RegisterNamespace("BuffTehRaid",	{
+		char = {
+			noautocast = {TRICKS = true},
+			reagent = {},
+			keybindings = {},
+			templates = defaultForClass,
+			defaultTemplate = "Default",
+			groupcast = 2,
+			rebuff = {
+				default = 30,
+			},
+			resetOnClear = true,
+			tracker = true,
+			trackerscale = 1,
+			tracksound = "Gong",
+			notlearnable = {TRICKS = true},
 		},
-		resetOnClear = true,
-		tracker = true,
-		trackerscale = 1,
-		tracksound = "Gong",
-		notlearnable = {TRICKS = true},
 	} )
-	z:RegisterChatCommand({"/zomgraid", "/zomgbufftehraid"}, zg.options)
-	self.OnMenuRequest = self.options
-	z.options.args.ZOMGBuffTehRaid = self.options
+	--z:RegisterChatCommand({"/zomgraid", "/zomgbufftehraid"}, zg.options)
+	--self.OnMenuRequest = self.options
+	--z.options.args.ZOMGBuffTehRaid = self.options
 
 	self.lookup = {}
 	self.required = 0
@@ -1721,7 +1689,7 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 			end
 
 			local whoNotice = found.group and ((GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY)) or z:ColourUnitByName(name)
-			self:Print(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), whoNotice, reagentString)
+			self:Printf(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), whoNotice, reagentString)
 		end
 	end
 end
@@ -2564,8 +2532,41 @@ function zg:SortedBuffList()
 	return list
 end
 
+local function TooltipToggleKeyType(frame, keytype, button)
+	if (button == "LeftButton") then
+		return ToggleKeyType(keytype)
+	end
+end
+
 -- TooltipUpdate
-function zg:TooltipUpdate(cat)
+function zg:TooltipUpdate(tooltip)
+	if (template) then
+		tooltip:AddSeparator(1, 0.5, 0.5, 0.5)
+		tooltip:AddLine(L["Group Template: "].."|cFFFFFFFF"..(self:GetSelectedTemplate() or L["none"]), (template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or "")
+
+		local list = self:SortedBuffList()
+		for i,k in ipairs(list) do
+			local key = self.buffs[k]
+			if (GetSpellInfo(key.spellname)) then		-- GetSpellCooldown(key.list[1])) then
+				local endis
+				if (template[key.type]) then
+					endis = "|cFF80FF80"..L["Enabled"].."|r"
+				else
+					endis = "|cFFFF8080"..L["Disabled"].."|r"
+				end
+
+				local name, rank, tex = GetSpellInfo(key.id)
+				local checkIcon = tex and "|T"..tex..":0|t " or ""
+
+				local line = tooltip:AddLine(checkIcon..ColourSpellFromKey(key), endis)
+				tooltip:SetLineScript(line, "OnMouseDown", TooltipToggleKeyType, key.type)
+			end
+		end
+		del(list)
+	end
+
+
+--[[
 	if (template) then
 		cat:AddLine('text', " ")
 		cat:AddLine(
@@ -2600,6 +2601,7 @@ function zg:TooltipUpdate(cat)
 		end
 		del(list)
 	end
+]]
 end
 
 -- OnResetDB
