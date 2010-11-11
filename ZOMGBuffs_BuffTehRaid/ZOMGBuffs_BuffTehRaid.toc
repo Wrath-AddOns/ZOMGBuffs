@@ -6,13 +6,13 @@
 ## LoadOnDemand: 1
 ## RequiredDeps: ZOMGBuffs
 ## X-ZOMGBuffs: yes
-## X-Classes: PRIEST, DRUID, MAGE
-## X-Classes-Optional: PALADIN, SHAMAN, WARLOCK, WARRIOR, ROGUE, DEATHKNIGHT
+## X-Classes: PRIEST, DRUID, MAGE, PALADIN
+## X-Classes-Optional: SHAMAN, WARLOCK, WARRIOR, ROGUE, DEATHKNIGHT
 
 ## X-Category: Buffs
 ## X-eMail: zeksie@googlemail.com
 ## X-License: GPL v2 or later
 
-Locales\Locales.xml
+Locales\localization.lua
 
 ZOMGBuffs_BuffTehRaid.lua
