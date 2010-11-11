@@ -291,40 +291,40 @@ end
 if (GetLocale() == "deDE") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "deDE", true)
 	if not L then return end
-	--@localization(locale="deDE", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="deDE", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "esES") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "esES", true)
 	if not L then return end
-	--@localization(locale="esES", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="esES", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "esMX") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "esMX", true)
 	if not L then return end
-	--@localization(locale="esMX", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="esMX", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "frFR") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "frFR", true)
 	if not L then return end
-	--@localization(locale="frFR", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="frFR", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "koKR") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "koKR", true)
 	if not L then return end
-	--@localization(locale="koKR", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="koKR", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "ruRU") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "ruRU", true)
 	if not L then return end
-	--@localization(locale="ruRU", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="ruRU", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "zhCN") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "zhCN", true)
 	if not L then return end
-	--@localization(locale="zhCN", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="zhCN", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
 if (GetLocale() == "zhTW") then
 	local L = LibStub("AceLocale-3.0"):NewLocale("ZOMGBuffs", "zhTW", true)
 	if not L then return end
-	--@localization(locale="zhTW", format="lua_additive_table", namespace="", handle-unlocalized="ignore")@
+	--@localization(locale="zhTW", format="lua_additive_table", namespace="ZOMGBuffs", handle-unlocalized="ignore")@
 end
