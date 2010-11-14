@@ -84,7 +84,6 @@ do
 				desc = L["Template configuration"],
 				order = 50,
 				hidden = function() return not zg:IsModuleActive() end,
-				guiInline = true,
 				args = {
 				}
 			},
@@ -94,7 +93,6 @@ do
 				desc = L["Tracker Icon for single target exclusive buffs"],
 				hidden = function() return not zg:IsModuleActive() end,
 				order = 100,
-				guiInline = true,
 				args = {
 					tracker = {
 						type = 'toggle',
@@ -155,7 +153,6 @@ do
 				desc = L["Group buffing behaviour"],
 				order = 201,
 				hidden = function() return not zg:IsModuleActive() end,
-				guiInline = true,
 				args = {
 					default = {
 						type = 'range',
@@ -345,7 +342,6 @@ do
 					name = cName,
 					desc = cName,
 					order = i,
-					guiInline = true,
 					args = {
 					}
 				}
@@ -402,7 +398,6 @@ do
 							name = L["Single Spells"],
 							desc = L["Single spell configuration"],
 							order = 5,
-							guiInline = true,
 							args = {
 								resetOnClear = {
 									type = 'toggle',

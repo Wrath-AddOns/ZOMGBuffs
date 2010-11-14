@@ -55,13 +55,13 @@ function z.modulePrototype:IsModuleActive()
 	--return z:IsModuleActive(self)
 end
 
-function z.modulePrototype:Print(...)
-	z.Print(self, ...)
-end
-
-function z.modulePrototype:Printf(...)
-	z.Printf(self, ...)
-end
+--function z.modulePrototype:Print(...)
+--	z:Print(self, ...)
+--end
+--
+--function z.modulePrototype:Printf(...)
+--	z:Printf(self, ...)
+--end
 
 -- argCheck
 --@debug@
@@ -191,13 +191,12 @@ function z.modulePrototype:MakeTemplateOptions()
 					name = templateName,
 					desc = self:MakeTemplateDescription(templateName),
 					order = i,
-					guiInline = true,
 					args = {
 						load = {
 							type = "execute",
 							name = L["Load"],
 							desc = L["Load this template"],
-							func = function() self:SelectTemplate(list[i]) end,
+							func = function() self:SelectTemplate(templateName) end,
 							order = 1,
 						},
 						auto = {
@@ -205,8 +204,8 @@ function z.modulePrototype:MakeTemplateOptions()
 							name = L["Auto Switch"],
 							desc = L["Automatically switch to this template"],
 							values = {never = L["Never"], party = L["Party"], raid = L["Raid"], solo = L["Solo"], bg = L["Battleground"], arena = L["Arena"]},
-							get = function() return self:getOptAuto(list[i]) end,
-							set = function(info,val) self:setOptAuto(list[i], val) end,
+							get = function() return self:getOptAuto(templateName) end,
+							set = function(info,val) self:setOptAuto(templateName, val) end,
 							order = 2,
 						},
 						rename = {
@@ -214,14 +213,14 @@ function z.modulePrototype:MakeTemplateOptions()
 							name = L["Rename"],
 							desc = L["Rename this template"],
 							get = false,
-							set = function(info, value) self:RenameTemplate(list[i], value) end,
+							set = function(info, value) self:RenameTemplate(templateName, value) end,
 							order = 99,
 						},
 						delete = {
 							type = "execute",
 							name = L["Delete"],
 							desc = L["Delete this template"],
-							func = function(n) self:DeleteTemplate(list[i]) end,
+							func = function(n) self:DeleteTemplate(templateName) end,
 							order = 100,
 						}
 					}
@@ -280,18 +279,23 @@ function z.modulePrototype:RenameTemplate(old, new)
 		self:OnRenameTemplate(n)
 
 		local templates = self:GetTemplates()
-	
-		local t = templates[old]
-		templates[old] = nil
-		templates[new] = t
 
-		if (self:GetSelectedTemplate() == old) then
-			self:SetSelectedTemplate(new)
+Xtemplates = templates
+Xold = old
+Xnew = new
+		if (templates[old]) then
+			local t = templates[old]
+			templates[old] = nil
+			templates[new] = t
+
+			if (self:GetSelectedTemplate() == old) then
+				self:SetSelectedTemplate(new)
+			end
+
+			self:MakeTemplateOptions()
+
+			self:Printf(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], tostring(old), tostring(new))
 		end
-
-		self:MakeTemplateOptions()
-
-		self:Printf(L["Renamed template |cFFFFFF80%s|r to |cFFFFFF80%s|r"], old, new)
 	end
 end
 

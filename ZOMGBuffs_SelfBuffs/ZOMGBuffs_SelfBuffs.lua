@@ -123,7 +123,6 @@ zs.options = {
 			name = L["Flask of the North"],
 			desc = L["Special handling for Flask of the North"],
 			order = 5,
-			guiInline = true,
 			hidden = function()
 				if (zs:IsModuleActive()) then
 					local alc = GetSpellInfo(51304)
@@ -162,7 +161,6 @@ zs.options = {
 			name = L["Templates"],
 			desc = L["Template configuration"],
 			order = 10,
-			guiInline = true,
 			args = {
 			}
 		},
@@ -171,7 +169,6 @@ zs.options = {
 			name = L["Behaviour"],
 			desc = L["Self buffing behaviour"],
 			order = 201,
-			guiInline = true,
 			args = {
 				combatnotice = {
 					type = "toggle",
@@ -211,31 +208,13 @@ zs.options = {
 	}
 }
 
--- GetExistingItemWithSequence
-local function GetExistingItemWithSequence(k, v)
-	if (k and v) then
-		local n = k
-		if (v.sequence) then
-			for i = #v.sequence,1,-1 do
-				local temp = k..v.sequence[i]
-				local c = GetItemCount(temp)
-				if (c > 0) then
-					return temp
-				end
-			end
-		else
-			return GetItemCount(k) > 0 and k
-		end
-	end
-end
-
 -- SetupForItem
 function zs:SetupForItem(slot, itemName)
 	local spell, item
 	local t1, t2 = IsUsableSpell(itemName)
 	spell = (t1 or t2) and itemName
 	if (not spell) then
-		item = GetExistingItemWithSequence(itemName, self.classBuffs[itemName])
+		item = itemName
 	end
 	if (spell or item) then
 		z:SetupForItem(slot, item, self, spell, item and 4 or nil)	-- 4 for when casting poisons onto weapons, we need more than 1.5 secs for next check
@@ -337,7 +316,7 @@ function zs:CheckEnchant(slot, spellOrItem)
 				end
 				local name, tex, _, _, _, itemType, subType = GetItemInfo(itemLink)
 				if (name) then
-					if (subType == "Fishing Poles") then
+					if (subType == "Fishing Poles" or itemType == "Quest") then
 						return
 					end
 				end
@@ -377,7 +356,7 @@ end
 
 -- CheckWeaponBuff
 function zs:CheckWeaponBuffs()
-	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand)) or self:CheckEnchant(18, template.ranged)
+	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand)) or (playerClass == "ROGUE" and self:CheckEnchant(18, template.ranged))
 end
 
 -- CheckBuffs
@@ -908,7 +887,6 @@ do
 							name = cName,
 							desc = cName,
 							order = order,
-							guiInline = true,
 							args = {
 								enabled = {
 									type = "toggle",
@@ -983,7 +961,6 @@ do
 					desc = L["Class spell configuration"],
 					order = 1,
 					hidden = function() return not zs:IsModuleActive() end,
-					guiInline = true,
 					args = args,
 				}
 			end
@@ -993,34 +970,34 @@ do
 	end
 end
 
+local function getFunc(k)
+	local a,b = strmatch(k, "^(%a+):(.+)$")
+	if (a == "mainhand") then
+		return b == template.mainhand
+	elseif (a == "offhand") then
+		return b == template.offhand
+	elseif (a == "ranged") then
+		return b == template.ranged
+	end
+end
+local function setFunc(k,v)
+	local a,b = strmatch(k, "^(%a+):(.+)$")
+	zs.activeEnchant = nil
+	zs:ModifyTemplate(a, v and b)
+end
+
+local function hideOHWeapon()
+	return GetInventoryItemLink("player", 17) == nil
+end
+local function hideRangedWeapon()
+	return playerClass ~= "ROGUE" or GetInventoryItemLink("player", 18) == nil
+end
+
 -- MakeItemOptions
 function zs:MakeItemOptions()
 	local any
 	local args = {
 	}
-
-	local function getFunc(k)
-		local a,b = strmatch(k, "^(%a+):(.+)$")
-		if (a == "mainhand") then
-			return b == template.mainhand
-		elseif (a == "offhand") then
-			return b == template.offhand
-		elseif (a == "ranged") then
-			return b == template.ranged
-		end
-	end
-	local function setFunc(k,v)
-		local a,b = strmatch(k, "^(%a+):(.+)$")
-		self.activeEnchant = nil
-		self:ModifyTemplate(a, v and b)
-	end
-
-	local function hideOHWeapon()
-		return GetInventoryItemLink("player", 17) == nil
-	end
-	local function hideRangedWeapon()
-		return playerClass ~= "ROGUE" or GetInventoryItemLink("player", 18) == nil
-	end
 
 	for k,v in pairs(self.classBuffs) do
 		if (v.who == "weapon") then
@@ -1028,7 +1005,7 @@ function zs:MakeItemOptions()
 			local t1, t2 = IsUsableSpell(k)
 			spell = (t1 or t2) and k
 			if (not spell) then
-				item = GetExistingItemWithSequence(k,v)
+				item = k
 			end
 			if (spell or item) then
 				local e1, e2, e3
@@ -1050,39 +1027,32 @@ function zs:MakeItemOptions()
 					name = spell or item,
 					desc = spell or item,
 					order = v.o,
-					get = function(k) return template[spell or item] end,
-					set = function(k,v) end,
-					icon = spellIcon,
-					passValue = k,
 					args = {
 						mainhand = {
 							type = "toggle",
 							name = L["Main Hand"],
 							desc = L["Use this item or spell on the main hand weapon"],
 							order = 1,
-							get = getFunc,
-							set = setFunc,
-							passValue = e1,
+							get = function() getFunc(e1) end,
+							set = function(info,val) setFunc(e1, val) end,
 						},
 						offhand = {
 							type = "toggle",
 							name = L["Off Hand"],
 							desc = L["Use this item or spell on the off hand weapon"],
-							order = 1,
+							order = 2,
 							hidden = hideOHWeapon,
-							get = getFunc,
-							set = setFunc,
-							passValue = e2,
+							get = function() getFunc(e2) end,
+							set = function(info,val) setFunc(e2, val) end,
 						},
 						ranged = {
 							type = "toggle",
 							name = L["Ranged"],
 							desc = L["Use this item or spell on the ranged weapon"],
-							order = 2,
+							order = 3,
 							hidden = hideRangedWeapon,
-							get = getFunc,
-							set = setFunc,
-							passValue = e4,
+							get = function() getFunc(e4) end,
+							set = function(info,val) setFunc(e4, val) end,
 						},
 					}
 				}
@@ -1364,17 +1334,14 @@ end
 -- AddItem
 function zs:AddItem(tooltip, which, item)
 	local name = (which == "mainhand" and L["Main Hand"]) or L["Off Hand"]
-	local itemName = GetExistingItemWithSequence(item, self.classBuffs[item])
+	local itemName = item
 	local checkIcon
 	if (itemName) then
-		item = itemName
 		checkIcon = select(10, GetItemInfo(itemName))
 	end
 	checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
-	local line = tooltip:AddLine(checkIcon..name, item)
-	tooltip:SetCellColour(line, 1, 0.5, 1, 0.5)
-	tooltip:SetCellColour(line, 2, 1, 1, 0.5)
+	local line = tooltip:AddLine("|cFFFFFF80"..name, checkIcon.."|cFF80FF80"..itemName)
 	tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, which)
 end
 
