@@ -165,7 +165,7 @@ end
 
 _G.ZOMGBuffs = LibStub("AceAddon-3.0"):NewAddon("ZOMGBuffs", "AceConsole-3.0", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local z = ZOMGBuffs
-z:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0", "AceTimer-3.0")
+z:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0", "AceTimer-3.0", "AceConsole-3.0")
 local btr
 
 if (Sink) then
