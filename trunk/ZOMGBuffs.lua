@@ -732,8 +732,8 @@ z.options = {
 							type = 'toggle',
 							name = L["Enable"],
 							desc = L["Display the mouseover icon used by the popup player buff list"],
-							get = getPCOption,
-							set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
+							get = getOption,
+							set = function(k,v) setOption(k,v) z:SetIconSize() end,
 							disabled = InCombatLockdown,
 							order = 1,
 						},
@@ -749,7 +749,7 @@ z.options = {
 							type = 'toggle',
 							name = L["Class Icon"],
 							desc = L["Uses your main ZOMGBuffs spell for the floating icon, instead of the ZOMGBuffs default"],
-							get = getPCOption,
+							get = getOption,
 							set = function(k,v) setPCOption(k,v) z:SetIconSize() z:CanCheckBuffs() end,
 							order = 5,
 						},
@@ -771,8 +771,8 @@ z.options = {
 							type = 'range',
 							name = L["Icon Size"],
 							desc = L["Size of main icon"],
-							get = getPCOption,
-							set = function(k,v) setPCOption(k,v) z:SetIconSize() end,
+							get = getOption,
+							set = function(k,v) setOption(k,v) z:SetIconSize() end,
 							disabled = function() return InCombatLockdown() or not z.db.char.showicon end,
 							min = 20,
 							max = 64,
@@ -1017,8 +1017,8 @@ z.options = {
 									name = L["Font"],
 									desc = L["Font"],
 									values = AceGUIWidgetLSMlists.font,
-									get = getPCOption,
-									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
+									get = getOption,
+									set = function(k,v) setOption(k,v) z:ApplyFont() z:OptionsShowList() end,
 									order = 1,
 								},
 								fontsize = {
@@ -1028,16 +1028,16 @@ z.options = {
 									min = 5,
 									max = 25,
 									step = 1,
-									get = getPCOption,
-									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
+									get = getOption,
+									set = function(k,v) setOption(k,v) z:ApplyFont() z:OptionsShowList() end,
 									order = 2,
 								},
 								fontoutline = {
 									type = 'select',
 									name = L["Outlining"],
 									desc = L["Outlining"],
-									get = getPCOption,
-									set = function(k,v) setPCOption(k,v) z:ApplyFont() z:OptionsShowList() end,
+									get = getOption,
+									set = function(k,v) setOption(k,v) z:ApplyFont() z:OptionsShowList() end,
 									values = outlines,
 									order = 3,
 								},
@@ -1049,8 +1049,8 @@ z.options = {
 							desc = L["Choose the anchor to use for the player list"],
 							values = points,
 							order = 220,
-							get = getPCOption,
-							set = function(k,v) z.db.char.anchor = v z:SetAnchors() z:OptionsShowList() end,
+							get = getOption,
+							set = function(k,v) z.db.profile.anchor = v z:SetAnchors() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
 						},
 						relpoint = {
@@ -1059,8 +1059,8 @@ z.options = {
 							desc = L["Choose the relative point for the anchor"],
 							values = points,
 							order = 221,
-							get = getPCOption,
-							set = function(k,v) z.db.char.relpoint = v z:SetAnchors() z:OptionsShowList() end,
+							get = getOption,
+							set = function(k,v) z.db.profile.relpoint = v z:SetAnchors() z:OptionsShowList() end,
 							disabled = InCombatLockdown,
 						},
 					},
@@ -1546,7 +1546,7 @@ function z:MediaCallback(mediatype, key)
 	if (mediatype == "statusbar" and key == self.db.profile.bartexture and self.waitingForBarTex) then
 		self.waitingForBarTex = nil
 		self:SetAllBarTextures()
-	elseif (mediatype == "font" and key == self.db.char.fontface and self.waitingForFont) then
+	elseif (mediatype == "font" and key == self.db.profile.fontface and self.waitingForFont) then
 		self.waitingForFont = nil
 		self:ApplyFont()
 	end
@@ -1581,13 +1581,13 @@ end
 
 -- GetFont
 function z:GetFont()
-	local font = SM and SM:Fetch("font", self.db.char.fontface)
+	local font = SM and SM:Fetch("font", self.db.profile.fontface)
 	if (not font) then
 		self.waitingForFont = true
 		SM.RegisterCallback(self, "LibSharedMedia_Registered", "MediaCallback")
 		SM.RegisterCallback(self, "LibSharedMedia_SetGlobal", "MediaCallback")
 	end
-	return font or "", self.db.char.fontsize, self.db.char.fontoutline
+	return font or "", self.db.profile.fontsize, self.db.profile.fontoutline
 end
 
 -- ApplyFont
@@ -1939,10 +1939,10 @@ end
 function z:SetIconSize()
 	if (self.db.char.showicon) then
 		self.icon:Show()
-		self.icon:SetScale(self.db.char.iconsize / 36)
+		self.icon:SetScale(self.db.profile.iconsize / 36)
 		self.icon:SetAttribute("*childstate-OnEnter", "enter")
 		self.icon:SetClampedToScreen(true)
-		self:RestorePosition(self.icon, self.db.char.pos)
+		self:RestorePosition(self.icon, self.db.profile.pos)
 	else
 		self.icon:Hide()
 		self.icon:SetAttribute("*childstate-OnEnter", nil)
@@ -1950,21 +1950,6 @@ function z:SetIconSize()
 		self.icon:ClearAllPoints()
 		self.icon:SetPoint("TOPLEFT", UIParent, "BOTTOMRIGHT", 50, -50)		-- Push it off the screen
 	end
-
-	-- Border
-	--local border
-	--border = self.icon.border
-	--if (self.db.char.iconborder) then
-	--	if (not border) then
-	--		border = self:CreateBorder(self.icon)
-	--		self.icon.border = border
-	--	end
-	--	border:Show()
-	--else
-	--	if (border) then
-	--		border:Hide()
-	--	end
-	--end
 
 	if (self.db.profile.iconname) then
 		self.icon.name:Show()
@@ -2021,7 +2006,7 @@ function z:SetAnchors()
 	--local d = self.db.char.iconborder and 5 or 0
 	local d = 0
 	self.members:ClearAllPoints()
-	self.members:SetPoint(self.db.char.anchor or "BOTTOMRIGHT", self.icon, self.db.char.relpoint or "TOPLEFT", 0, d)
+	self.members:SetPoint(self.db.profile.anchor or "BOTTOMRIGHT", self.icon, self.db.profile.relpoint or "TOPLEFT", 0, d)
 	self.icon:SetHitRectInsets(-d, -d, -d, -d)
 end
 
@@ -2603,7 +2588,7 @@ function z:OnStartup()
 	icon:SetScript("OnDragStop",
 		function(self)
 			self:StopMovingOrSizing()
-			z.db.char.pos = z:GetPosition(self)
+			z.db.profile.pos = z:GetPosition(self)
 		end)
 	icon:HookScript("OnEnter", IconOnEnter)
 	icon:HookScript("OnLeave", IconOnLeave)
@@ -2660,9 +2645,9 @@ function z:OnStartup()
 	self:SetVisibilityOption()
 	members:UnregisterEvent("UNIT_NAME_UPDATE")				-- Fix for that old lockup issue
 	members:SetClampedToScreen(true)
-	members:SetClampRectInsets(0, 8, z.db.char.height, 0)
-	members:SetWidth(z.totalListWidth or self.db.char.width)
-	members:SetHeight(self.db.char.height)
+	members:SetClampRectInsets(0, 8, z.db.profile.height, 0)
+	members:SetWidth(z.totalListWidth or self.db.profile.width)
+	members:SetHeight(self.db.profile.height)
 	members:SetFrameStrata("DIALOG")
 
 	icon:SetFrameRef("list", members)				-- So the icon can access the list via GetFrameRef shown above
@@ -2699,8 +2684,8 @@ function z:OnStartup()
 		end
 	end
 
-	members:SetAttribute("cellWidth", z.totalListWidth or z.db.char.width)
-	members:SetAttribute("cellHeight", z.db.char.height)
+	members:SetAttribute("cellWidth", z.totalListWidth or z.db.profile.width)
+	members:SetAttribute("cellHeight", z.db.profile.height)
 	members:SetAttribute("template", "SecureUnitButtonTemplate")
 	members:SetAttribute("sortMethod", "NAME")
 	members:SetAttribute("initialConfigFunction",
@@ -2810,8 +2795,8 @@ end
 function z:SetAllBarSizes()
 	self:UpdateListWidth()
 	if (AllFrameArray and not InCombatLockdown() and self.members) then
-		local w = self.totalListWidth or self.db.char.width
-		local h = self.db.char.height
+		local w = self.totalListWidth or self.db.profile.width
+		local h = self.db.profile.height
 
 		self.members:SetClampRectInsets(0, 8, h, 0)
 
@@ -3162,7 +3147,7 @@ function z:DrawGroupNumbers()
 
 		-- Border
 		local border = self.members.border
-		if (self.db.char.border) then
+		if (self.db.profile.border) then
 			local topChild = self.members:GetAttribute("child1")
 			if (topChild) then
 				if (not border) then
@@ -3262,7 +3247,7 @@ do
 	leftModsDesc["*"] = ""
 
 	local function cellOrIconTooltip(self)
-		GameTooltip:SetOwner(self, "ANCHOR_"..(z.db.char.anchor or "TOPLEFT"))
+		GameTooltip:SetOwner(self, "ANCHOR_"..(z.db.profile.anchor or "TOPLEFT"))
 
 		local unit1 = self:GetAttribute("unit")
 		local name = unit1 and UnitExists(unit1) and UnitName(unit1)
@@ -3575,8 +3560,8 @@ function z:InitCell(cell)
 	cell.buff = {}
 	for i = 1,#self.allBuffs do
 		local b = cell:CreateTexture(nil, "ARTWORK")
-		b:SetHeight(z.db.char.height)
-		b:SetWidth(z.db.char.height)
+		b:SetHeight(z.db.profile.height)
+		b:SetWidth(z.db.profile.height)
 
 		if (i == 1) then
 			b:SetPoint("TOPLEFT", 0, 0)
@@ -3739,7 +3724,7 @@ function z:UpdateListWidth()
 		local icons = 0
 		icons = icons + #self.buffs
 
-		self.totalListWidth = self.db.char.width + icons * z.db.char.height
+		self.totalListWidth = self.db.profile.width + icons * z.db.profile.height
 		if (self.members) then
 			self.members:SetWidth(self.totalListWidth)
 			self.members:SetAttribute("cellWidth", self.totalListWidth)
@@ -4351,7 +4336,7 @@ end
 
 function z:OnProfileChanged(event, database, newProfileKey)
 	self:SetIconSize()
-	self:RestorePosition(self.icon, self.db.char.pos)
+	self:RestorePosition(self.icon, self.db.profile.pos)
 	self:SetKeyBindings()
 	self:SetAllBarSizes()
 	z:CallMethodOnAllModules("SetupDB")
@@ -4410,32 +4395,54 @@ function z:OnInitialize()
 			showroles = true,
 			iconswirl = true,
 			showFubar = true,
-		},
-		char = {
-			firstStartup = true,
-			showicon = true,
-			iconlocked = false,
-			iconsize = 36,
-			classIcon = false,
-			anchor = "BOTTOMRIGHT",
-			relpoint = "TOPRIGHT",
-			sort = "GROUP",
-			border = false,
-			autobuyreagents = false,
-			minmana = 0,
 			width = 150,
 			height = 14,
 			fontface = "Arial Narrow",
 			fontsize = 12,
 			fontoutline = "",
+			anchor = "BOTTOMRIGHT",
+			relpoint = "TOPRIGHT",
+			iconsize = 36,
+			border = false,
+		},
+		char = {
+			firstStartup = true,
+			showicon = true,
+			iconlocked = false,
+			classIcon = false,
+			sort = "GROUP",
+			autobuyreagents = false,
+			minmana = 0,
 			buffpets = true,
 			learnooc = true,
 			learncombat = true,
 			loadraidbuffmodule = true,
 		}
 	})
-
-	--self:RegisterChatCommand("zomg", self.options, "ZOMGBUFFS")
+	if (self.db.char.pos) then
+		self.db.profile.pos = self.db.char.pos
+		self.db.char.pos = nil
+	end
+	if (self.db.char.fontface) then
+		self.db.profile.width = self.db.char.width
+		self.db.profile.height = self.db.char.height
+		self.db.profile.fontface = self.db.char.fontface
+		self.db.profile.fontsize = self.db.char.fontsize
+		self.db.profile.fontoutline = self.db.char.fontoutline
+		self.db.profile.anchor = self.db.char.anchor
+		self.db.profile.relpoint = self.db.char.relpoint
+		self.db.profile.iconsize = self.db.char.iconsize
+		self.db.profile.border = self.db.char.border
+		self.db.char.width = nil
+		self.db.char.height = nil
+		self.db.char.fontface = nil
+		self.db.char.fontsize = nil
+		self.db.char.fontoutline = nil
+		self.db.char.anchor = nil
+		self.db.char.relpoint = nil
+		self.db.char.iconsize = nil
+		self.db.char.border = nil
+	end
 
 	self:SetKeyBindings()
 
