@@ -423,7 +423,7 @@ function zs:CheckBuffs()
 							if name then break end
 						end
 					end
-					local timeLeft = endTime and (endTime - GetTime())
+					local timeLeft = (endTime or 0) ~= 0 and (endTime - GetTime())
 					local requiredTimeLeft = self.db.char.rebuff[(cb and cb.rebuff) or k] or self.db.char.rebuff.default
 
 					local c = charges and charges[k]
@@ -510,7 +510,7 @@ function zs:CheckBuffs()
 
 	self:CancelTimer(self.timerCheck, true)
 	self.timerCheck = nil
-	if (not any and minTimeLeft) then
+	if (not any and (minTimeLeft or 0) > 0) then
 		self.timerCheck = self:ScheduleTimer(self.CheckBuffs, minTimeLeft or 60, self)
 	end
 end
@@ -587,7 +587,15 @@ function zs:GetClassBuffs()
 		classBuffs = {
 			{id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
 			{id = 13165, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
-			{id = 5118, o = 6, duration = -1, who = "self", dup = 1, c = "FFFF80", auto = function() return IsResting() and z.db.profile.notresting and not IsMounted() end},	-- Aspect of the Cheetah
+			{id = 5118, o = 6, duration = -1, who = "self", dup = 1, c = "FFFF80", auto =
+					function()
+						if (IsResting() and not IsMounted() and not UnitOnTaxi("player")) then
+							local spell = GetSpellInfo(59641)
+							if (UnitAura("player", spell) == nil) then
+								return z.db.profile.notresting 
+							end
+						end
+					end},	-- Aspect of the Cheetah
 			{id = 13159, o = 7, duration = -1, who = "self", dup = 1, c = "B0B0B0"},		-- Aspect of the Pack
 			{id = 20043, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
 		}
@@ -1156,7 +1164,8 @@ end
 -- UNIT_INVENTORY_CHANGED
 function zs:UNIT_INVENTORY_CHANGED(e, unit)
 	if (unit == "player") then
-		self:CancelTimer(self.timerCheckAfterItemChanges)
+		self:CancelTimer(self.timerCheckAfterItemChanges, true)
+		self.timerCheckAfterItemChanges = nil
 		if (not any and minTimeLeft) then
 			self.timerCheckAfterItemChanges = self:ScheduleTimer(self.ChecksAfterItemChanges, 5, self)
 		end

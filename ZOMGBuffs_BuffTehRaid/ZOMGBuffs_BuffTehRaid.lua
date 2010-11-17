@@ -52,6 +52,20 @@ local function setOption(info, value, update)
 	end
 end
 
+local function getProfileOption(info)
+	return zg.db.profile[info[#info]]
+end
+local function setProfileOption(info, value, update)
+	if (not value or value == 0) then
+		zg.db.profile[info[#info]] = nil
+	else
+		zg.db.profile[info[#info]] = value
+	end
+	if (update) then
+		z:CheckForChange(zg)
+	end
+end
+
 local function getPrelude(info)
 	return zg.db.char.rebuff[info[#info]] or 0
 end
@@ -66,7 +80,7 @@ end
 
 do
 	local function trackerDisabled()
-		return not zg.db.char.tracker
+		return not zg.db.profile.tracker
 	end
 	
 	zg.options = {
@@ -111,12 +125,13 @@ do
 						dialogControl = "LSM30_Sound",
 						name = L["Sound"],
 						desc = L["Select a soundfile to play when player's tracked buff expires"],
+						get = getProfileOption,
 						set = function(k,v)
-							setOption(k,v)
+							setProfileOption(k,v)
 							PlaySoundFile(SM:Fetch("sound", v))
 						end,
 						values = AceGUIWidgetLSMlists.sound,
-						disabled = function() return not SM or not zg.db.char.tracker end,
+						disabled = function() return not SM or not zg.db.profile.tracker end,
 						order = 20,
 					},
 					trackerscale = {
@@ -124,8 +139,9 @@ do
 						name = L["Scale"],
 						desc = L["Adjust the scale of the tracking icon"],
 						func = timeFunc,
+						get = getProfileOption,
 						set = function(k,v)
-							setOption(k,v)
+							setProfileOption(k,v)
 							if (zg.trackIcon) then
 								zg.trackIcon:SetPosition()
 							end
@@ -403,8 +419,8 @@ do
 									type = 'toggle',
 									name = L["Reset on Clear"],
 									desc = L["If noone is selected for this buff when you disable it, then the next time it is enabled, everyone will default to ON. If disabled, the last settings will be remembered"],
-									get = getOption,
-									set = setOption,
+									get = getProfileOption,
+									set = setProfileOption,
 									order = 1000,
 								},
 							}
@@ -1142,16 +1158,15 @@ function zg:OnModuleInitialize()
 			rebuff = {
 				default = 30,
 			},
-			resetOnClear = true,
-			tracker = true,
-			trackerscale = 1,
-			tracksound = "Gong",
 			notlearnable = {TRICKS = true},
 		},
+		profile = {
+			tracksound = "Gong",
+			tracker = true,
+			trackerscale = 1,
+			resetOnClear = true,
+		}
 	} )
-	--z:RegisterChatCommand({"/zomgraid", "/zomgbufftehraid"}, zg.options)
-	--self.OnMenuRequest = self.options
-	--z.options.args.ZOMGBuffTehRaid = self.options
 
 	self.lookup = {}
 	self.required = 0
@@ -1431,8 +1446,8 @@ end
 -- CreateTick
 function zg:CreateTick()
 	local tick = CreateFrame("CheckButton")
-	tick:SetHeight(z.db.char.height)
-	tick:SetWidth(z.db.char.height)
+	tick:SetHeight(z.db.profile.height)
+	tick:SetWidth(z.db.profile.height)
 	tick:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up")
 	tick:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down")
 	tick:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD")
@@ -1567,13 +1582,13 @@ function zg:CheckTickTitles(members)
 						icon = members:CreateTexture(nil, "BORDER")
 						icons[i] = icon
 					end
-					icon:SetWidth(z.db.char.height)
-					icon:SetHeight(z.db.char.height)
+					icon:SetWidth(z.db.profile.height)
+					icon:SetHeight(z.db.profile.height)
 					local name, rank, tex = GetSpellInfo(handler.spellID)
 					icon:SetTexture(tex)
 
 					icon:ClearAllPoints()
-					icon:SetPoint("BOTTOM", relative, "TOP", 0, (self.db.char.border and 3) or 1)
+					icon:SetPoint("BOTTOM", relative, "TOP", 0, (self.db.profile.border and 3) or 1)
 					if show then
 						icon:Show()
 					else
@@ -1758,7 +1773,7 @@ do
 					if (buff and self.needsCooldown) then
 						self.needsCooldown = nil
 						z:Notice(format(L["%s cooldown ready for %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
-						PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+						PlaySoundFile(SM:Fetch("sound", zg.db.profile.tracksound))
 					end
 				end
 				self.wasOnCooldown = nil
@@ -1840,7 +1855,7 @@ do
 
 				if (buff and not buff.noaura) then
 					z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
-					PlaySoundFile(SM:Fetch("sound", zg.db.char.tracksound))
+					PlaySoundFile(SM:Fetch("sound", zg.db.profile.tracksound))
 					if (enable == 1) then
 						self.needsCooldown = nil
 					end
@@ -2037,7 +2052,7 @@ do
 	local function iconSetPosition(self)
 		if (not InCombatLockdown() or self.dummy) then
 			self:SetPoint("CENTER")
-			self:SetScale(zg.db.char.trackerscale)
+			self:SetScale(zg.db.profile.trackerscale)
 			if (type(zg.db.char.postracker) == "table") then
 				pos = zg.db.char.postracker[self.posKey]
 				if (pos) then
@@ -2214,7 +2229,7 @@ end
 
 -- AddSpellTracker
 function zg:AddSpellTracker(key, target)
-	if (not self.db.char.tracker) then
+	if (not self.db.profile.tracker) then
 		return
 	end
 	local buff = self.buffs[key]
@@ -2441,7 +2456,7 @@ function zg:RemoveLimitedSpell(name, key)
 			self:StopSpellTracker(key)
 		end
 
-		if (self.db.char.resetOnClear) then
+		if (self.db.profile.resetOnClear) then
 			if (not next(part)) then
 				template.limited[key] = del(template.limited[key])
 			end
