@@ -5,7 +5,6 @@
 ## Version: @project-version@
 ## LoadOnDemand: 1
 ## RequiredDeps: ZOMGBuffs
-## OptionalDeps: Ace2
 ## X-ZOMGBuffs: yes
 
 ## X-Category: Buffs
