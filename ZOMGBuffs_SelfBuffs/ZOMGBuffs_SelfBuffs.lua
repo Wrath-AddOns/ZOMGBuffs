@@ -102,7 +102,7 @@ end
 
 local function setPrelude(info, value)
 	local k = info[#info]
-	if ((not v or v == 0) and k ~= "default") then
+	if ((not value or value == 0) and k ~= "default") then
 		zs.db.char.rebuff[k] = nil
 	else
 		zs.db.char.rebuff[k] = value
@@ -145,7 +145,6 @@ zs.options = {
 					type = "range",
 					name = L["Expiry Prelude"],
 					desc = L["Expiry prelude for flasks"],
-					func = timeFunc,
 					order = 60,
 					get = getPrelude,
 					set = setPrelude,
@@ -535,11 +534,11 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "MAGE") then
 		classBuffs = {
-			{id = 7302,  o = 4,  duration = 30,  who = "self", c = "0000FF"},	-- Frost Armor
-			{id = 30482, o = 5,  duration = 30,  who = "self", dup = 2, c = "FF0000"},							-- Molten Armor
-			{id = 6117, o = 7,  duration = 30,  who = "self", dup = 2, c = "8080FF"},							-- Mage Armor
-			{id = 11426, o = 9,  duration = 1,   who = "self", default = 5, c = "B0B0FF", noauto = true, cancancel = true}, -- Ice Barrier
-			{id = 1463, o = 12, duration = 1,   who = "self", default = 5, noauto = true, c = "FFB0B0", cancancel = true},	-- Mana Shield
+			{id = 7302,  o = 1,	duration = 30,  who = "self", dup = 1, c = "0000FF"},							-- Frost Armor
+			{id = 30482, o = 2,	duration = 30,  who = "self", dup = 1, c = "FF0000"},							-- Molten Armor
+			{id = 6117,  o = 3,	duration = 30,  who = "self", dup = 1, c = "8080FF"},							-- Mage Armor
+			{id = 11426, o = 5,	duration = 1,   who = "self", default = 5, c = "B0B0FF", noauto = true, cancancel = true}, -- Ice Barrier
+			{id = 1463,  o = 7,	duration = 1,   who = "self", default = 5, noauto = true, c = "FFB0B0", cancancel = true},	-- Mana Shield
 		}
 		local singlePort = GetItemInfo(17031) or R["Rune of Teleportation"]
 		local groupPort = GetItemInfo(17032) or R["Rune of Portals"]
@@ -835,7 +834,7 @@ do
 		return zs.db.char.charges and zs.db.char.charges[k] or 0
 	end
 	local function setCharges(k, v)
-		if (v > 0) then
+		if (v and v > 0) then
 			if (not zs.db.char.charges) then
 				zs.db.char.charges = {}
 			end
@@ -923,7 +922,7 @@ do
 								func = timeFunc,
 								order = 10,
 								get = function() return getPrelude(k) end,
-								set = function() setPrelude(k) end,
+								set = function(info,val) setPrelude(k,val) end,
 								min = 0,
 								max = (v.duration / 2) * 60,
 								step = (v.duration <= 60 and 1) or 5,
@@ -943,7 +942,7 @@ do
 								func = timeFunc,
 								order = 20,
 								get = function() return getCharges(k) end,
-								set = function() setCharges(k) end,
+								set = function(info,val) setCharges(k,val) end,
 								min = 0,
 								max = c,
 								step = 1,
@@ -1041,7 +1040,7 @@ function zs:MakeItemOptions()
 							name = L["Main Hand"],
 							desc = L["Use this item or spell on the main hand weapon"],
 							order = 1,
-							get = function() getFunc(e1) end,
+							get = function() return getFunc(e1) end,
 							set = function(info,val) setFunc(e1, val) end,
 						},
 						offhand = {
@@ -1050,7 +1049,7 @@ function zs:MakeItemOptions()
 							desc = L["Use this item or spell on the off hand weapon"],
 							order = 2,
 							hidden = hideOHWeapon,
-							get = function() getFunc(e2) end,
+							get = function() return getFunc(e2) end,
 							set = function(info,val) setFunc(e2, val) end,
 						},
 						ranged = {
@@ -1059,7 +1058,7 @@ function zs:MakeItemOptions()
 							desc = L["Use this item or spell on the ranged weapon"],
 							order = 3,
 							hidden = hideRangedWeapon,
-							get = function() getFunc(e4) end,
+							get = function() return getFunc(e4) end,
 							set = function(info,val) setFunc(e4, val) end,
 						},
 					}
