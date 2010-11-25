@@ -1512,15 +1512,13 @@ end
 
 -- OptionsReagentList
 function z:MakeOptionsReagentList()
---[[
-	local place = z.options.args.behaviour.args.reagentlevels
+	local place = z.options.args.General.args.reagents.args.reagentlevels
 	place.args = {}
 	for name, module in z:IterateModules() do
 		if (module.reagents) then
 			module:MakeReagentsOptions(place.args)
 		end
 	end
-]]
 end
 
 -- UnitHasBuff
@@ -4248,9 +4246,6 @@ function z:MERCHANT_SHOW()
 
 					if (bought > 0) then
 						self:Printf(L["Bought |cFF80FF80%d|cFFFFFF80 %s|r from vendor, you now have |cFF80FF80%d|r"], bought, itemLink or name, got)
-						if (splitStacks) then
-							self:Printf("NOTE: |cFFFFFF80%s|r is using more bag slots because of new item ID mismatches from WoW 4.0 reagents", itemLink or name)
-						end
 						-- TODO - Put newly bought stacks into same bag as matching reagents
 					end
 				end
@@ -4479,6 +4474,10 @@ end
 function z:RegisterModuleOptions(name, optionTbl, displayName)
 	self.options.args[name] = (type(optionTbl) == "function") and optionTbl() or optionTbl
 	self.optionsFrames[name] = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("ZOMGBuffs", displayName, "ZOMGBuffs", name)
+end
+
+local function d(...)
+	ChatFrame1:AddMessage(format(...))
 end
 
 -- ToggleOptions

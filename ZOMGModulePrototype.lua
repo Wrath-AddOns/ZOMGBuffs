@@ -95,14 +95,16 @@ function z.modulePrototype:MakeReagentsOptions(args)
 				end
 
 				if (name) then
-					args[k] = {
+					local icon = select(10, GetItemInfo(k))
+					if (icon and icon ~= "") then
+						name = "|T"..icon..":0|t "..name
+					end
+					args[name or tostring(k)] = {
 						type = "range",
 						name = name,
 						desc = format(L["Auto purchase level for %s (will not exceed this amount)"], name),
-						get = function(k) return self.db.char.reagents[k] end,
-						set = function(k,n) self.db.char.reagents[k] = n end,
-						icon = select(10, GetItemInfo(k)),
-						passValue = k,
+						get = function(info) return self.db.char.reagents[k] end,
+						set = function(info,value) self.db.char.reagents[k] = value end,
 						min = 0,
 						max = v[3],
 						step = v[2]
@@ -113,7 +115,6 @@ function z.modulePrototype:MakeReagentsOptions(args)
 				self.db.char.reagents[k] = nil			-- 0
 			end
 		end
-		z.hideReagentOptions = not any or nil
 	end
 end
 
