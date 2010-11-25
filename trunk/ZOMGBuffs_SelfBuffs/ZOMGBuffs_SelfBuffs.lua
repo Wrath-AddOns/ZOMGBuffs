@@ -85,6 +85,12 @@ do
 	end
 end
 
+local weaponSlotNames = {
+	mainhand = L["Main Hand"],
+	offhand = L["Off Hand"],
+	ranged = L["Ranged"],
+}
+
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
 local function getOption(info)
@@ -1293,7 +1299,7 @@ function zs:TooltipOnClick(name)
 				self:ModifyTemplate(name, nil)
 			else
 				local b
-				if (name == "mainhand" or name == "offhand" or name =="ranged") then
+				if (weaponSlotNames[name]) then
 					b = self.classBuffs[template[name]]
 				else
 					b = self.classBuffs[name]
@@ -1318,7 +1324,7 @@ function zs:TooltipOnClick(name)
 				end
 
 				if (replaceTo or firstOne) then
-					if (name == "mainhand" or name == "offhand" or name == "ranged") then
+					if (weaponSlotNames[name]) then
 						self.activeEnchant = nil
 						self:ModifyTemplate(name, replaceTo or firstOne)
 					else
@@ -1341,7 +1347,7 @@ end
 
 -- AddItem
 function zs:AddItem(tooltip, which, item)
-	local name = (which == "mainhand" and L["Main Hand"]) or L["Off Hand"]
+	local name = weaponSlotNames[which]
 	local itemName = item
 	local checkIcon
 	if (itemName) then
