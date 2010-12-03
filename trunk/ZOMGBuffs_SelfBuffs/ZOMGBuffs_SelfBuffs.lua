@@ -314,12 +314,11 @@ function zs:CheckEnchant(slot, spellOrItem)
 		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 2.5)) then
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
-				local itemName, _, quality, itemLevel = GetItemInfo(itemLink)
+				local name, tex, quality, itemLevel, _, itemType, subType = GetItemInfo(itemLink)
 				if (itemLevel == 1 and quality < 2) then
 					-- Ignore itemLevel == 1 (Argent Lances etc)
 					return
 				end
-				local name, tex, _, _, _, itemType, subType = GetItemInfo(itemLink)
 				if (name) then
 					if (subType == "Fishing Poles" or itemType == "Quest") then
 						return
@@ -1288,7 +1287,7 @@ function zs:SetPaladinAuraKey(key)
 end
 
 -- TooltipOnClick
-function zs:TooltipOnClick(name)
+function zs:TooltipOnClick(name, subType)
 	if (name) then
 		if (name == "flask") then
 			if (IsShiftKeyDown()) then
@@ -1321,6 +1320,15 @@ function zs:TooltipOnClick(name)
 							end
 						end
 					end
+				elseif (subType) then
+					local lowest
+					for find,s in pairs(self.classBuffs) do
+						if (s.who == subType) then
+							if (not lowest or s.o < lowest) then
+								firstOne = find
+							end
+						end
+					end
 				end
 
 				if (replaceTo or firstOne) then
@@ -1345,6 +1353,12 @@ local function SuperTooltipOnClick(frame, keytype, button)
 	end
 end
 
+local function SuperTooltipOnClickItem(frame, keytype, button)
+	if (button == "LeftButton") then
+		return zs:TooltipOnClick(keytype, "weapon")
+	end
+end
+
 -- AddItem
 function zs:AddItem(tooltip, which, item)
 	local name = weaponSlotNames[which]
@@ -1355,8 +1369,8 @@ function zs:AddItem(tooltip, which, item)
 	end
 	checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
-	local line = tooltip:AddLine("|cFFFFFF80"..name, checkIcon.."|cFF80FF80"..itemName)
-	tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, which)
+	local line = tooltip:AddLine("|cFFFFFF80"..name, itemName and (checkIcon.."|cFF80FF80"..itemName) or "|cFFFF8080"..NONE)
+	tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClickItem, which)
 end
 
 -- SortedBuffList
@@ -1377,6 +1391,15 @@ function zs:SortedBuffList()
 	return list
 end
 
+-- HasItemOptions
+function zs:HasItemOptions()
+	for name,info in pairs(self.classBuffs) do
+		if (info.who == "weapon") then
+			return true
+		end
+	end
+end
+
 -- TooltipUpdate
 function zs:TooltipUpdate(tooltip)
 	if (template and self.classBuffs) then
@@ -1384,14 +1407,25 @@ function zs:TooltipUpdate(tooltip)
 		tooltip:AddLine(L["Self Buffs Template: "].."|cFFFFFFFF"..(zs:GetSelectedTemplate() or L["none"]),
 							(template and template.modified and "|cFFFF4040"..L["(modified)"].."|r") or "")
 
-		if (template.mainhand) then
+		local itemOptions = self:HasItemOptions()
+		if (template.mainhand or itemOptions) then
 			self:AddItem(tooltip, "mainhand", template.mainhand)
 		end
-		if (template.offhand) then
-			self:AddItem(tooltip, "offhand", template.offhand)
+		if (template.offhand or itemOptions) then
+			if (OffhandHasWeapon()) then
+				self:AddItem(tooltip, "offhand", template.offhand)
+			end
 		end
-		if (template.ranged) then
-			self:AddItem(tooltip, "ranged", template.ranged)
+		if (template.ranged or itemOptions) then
+			if (playerClass == "ROGUE") then
+				local itemLink = GetInventoryItemLink("player", 18)				-- Ranged slot
+				if (itemLink) then
+					local name, tex, _, _, _, itemType, subType = GetItemInfo(itemLink)
+					if (name and itemType == "Weapon") then
+						self:AddItem(tooltip, "ranged", template.ranged)
+					end
+				end
+			end
 		end
 
 		local list = self:SortedBuffList()

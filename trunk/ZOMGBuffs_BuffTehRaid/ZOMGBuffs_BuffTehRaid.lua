@@ -3,6 +3,12 @@ if (ZOMGBuffTehRaid) then
 	return
 end
 
+--@debug@
+local function d(...)
+	ChatFrame1:AddMessage("ZOMG: "..format(...))
+end
+--@end-debug@
+
 local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffTehRaid")
 local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
 local LGT = LibStub("LibGroupTalents-1.0")
@@ -633,6 +639,12 @@ function zg:FindUnitInRangeMissing(typ)
 	end
 end
 
+-- CheckBuffsTimer
+function zg:CheckBuffsTimer()
+	self.timerCheck = nil
+	self:CheckBuffs()
+end
+
 -- CheckBuffs
 function zg:CheckBuffs()
 	if (not self.db or not template or not z:CanCheckBuffs()) then
@@ -642,12 +654,14 @@ function zg:CheckBuffs()
 	local temp, totals, minTimeLeft, percentPresent, anyBlacklisted = self:GetBuffedMembers()
 	local db = self.db.char
 
-	if (z.db.profile.waitforraid > 0) then
+	if (z.db.profile.waitforraid > 0 and not InCombatLockdown()) then
 		-- See if enough of raid present
 		if (percentPresent < z.db.profile.waitforraid) then	-- Wait for % of raid before buffing
 			z.waitingForRaid = floor(percentPresent * 100)
-			self:CancelTimer(self.timerCheck, true)
-			self.timerCheck = self:ScheduleTimer(self.CheckBuffs, 5, self)
+			if (self.timerCheck) then
+				self:CancelTimer(self.timerCheck)
+			end
+			self.timerCheck = self:ScheduleTimer(self.CheckBuffsTimer, 5, self)
 			return
 		end
 	end
@@ -695,7 +709,10 @@ function zg:CheckBuffs()
 							minTimeLeft = 10		-- Check again in 10 secs, not enough mana atm
 						else
 							-- Set min time left to cooldown end for this spell
-							minTimeLeft = min((start + dur) - GetTime(), minTimeLeft or 0)
+							local minTimeLeft2 = min((start + dur) - GetTime(), minTimeLeft or 0)
+							if (minTimeLeft2 >= 0.02 and (not minTimeLeft or minTimeLeft2 < minTimeLeft)) then
+								minTimeLeft = minTimeLeft2
+							end
 						end
 					end
 				end
@@ -745,16 +762,18 @@ function zg:CheckBuffs()
 		end
 	end
 
-	self:CancelTimer(self.timerCheck, true)
-	self.timerCheck = nil
+	if (self.timerCheck and self:TimeLeft(self.timerCheck) ~= minTimeLeft) then
+		self:CancelTimer(self.timerCheck)
+		self.timerCheck = nil
+	end
 
 	if (anyBlacklisted) then
 		minTimeLeft = 1.5
 	end
 	if (any) then
 		z.waitingForRaid = nil
-	else
-		self.timerCheck = self:ScheduleTimer(self.CheckBuffs, minTimeLeft or 60, self)
+	elseif not self.timerCheck then
+		self.timerCheck = self:ScheduleTimer(self.CheckBuffsTimer, minTimeLeft or 60, self)
 	end
 end
 

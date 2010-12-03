@@ -3,6 +3,12 @@ local Sink, SinkVersion = LibStub("LibSink-2.0", true)
 local SM = LibStub("LibSharedMedia-3.0")
 assert(AceGUIWidgetLSMlists, "ZOMGBuffs requires AceGUI-3.0-SharedMediaWidgets")
 
+--@debug@
+local function d(...)
+	ChatFrame1:AddMessage("ZOMG: "..format(...))
+end
+--@end-debug@
+
 local wowVersion = tonumber((select(2, GetBuildInfo())))
 
 BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
@@ -2016,11 +2022,13 @@ end
 -- GlobalCDSchedule
 function z:GlobalCDSchedule()
 	self:CancelTimer(self.timerGCD, true)
-	local when = self.globalCooldownEnd - GetTime() + 0.1
-	if (when <= 0) then
-		when = 0.1
+	if (not InCombatLockdown()) then
+		local when = self.globalCooldownEnd - GetTime() + 0.1
+		if (when <= 0) then
+			when = 0.1
+		end
+		self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, when, self)
 	end
-	self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, when, self)
 end
 
 local HasIllusionBuff
@@ -3747,8 +3755,23 @@ function z:RegisterBuffer(mod, priority)
 	end
 end
 
--- z:RequestSpells()
-function z:RequestSpells()
+do
+	local dummy = CreateFrame("Frame")
+	dummy:Hide()
+	dummy:SetScript("OnUpdate",
+		function(self)
+			z:RequestSpellsActual()
+			self:Hide()
+		end)
+
+	-- z:RequestSpells()
+	function z:RequestSpells()
+		dummy:Show()
+	end
+end
+
+-- RequestSpellsActual
+function z:RequestSpellsActual()
 	if (self.registeredBuffers) then
 		for i,module in ipairs(self.registeredBuffers) do
 			module:CheckBuffs()
@@ -3878,11 +3901,13 @@ function z:UNIT_SPELLCAST_SUCCEEDED(e, player, spell, rank)
 			end
 		end
 
-		if (self.globalCooldownEnd > GetTime()) then
-			self:GlobalCDSchedule()
-		else
-			if (self.icon and not self.icon:GetAttribute("*type*")) then
-				self:RequestSpells()
+		if (not InCombatLockdown()) then
+			if (self.globalCooldownEnd > GetTime()) then
+				self:GlobalCDSchedule()
+			else
+				if (self.icon and not self.icon:GetAttribute("*type*")) then
+					self:RequestSpells()
+				end
 			end
 		end
 
