@@ -2056,14 +2056,17 @@ function z:CheckMounted()
 		local m = IsMounted()
 		if (self.mounted ~= m) then
 			self.mounted = m
+
+			self.checkMountedCounter = nil
+			self:SetupForSpell()
 			if (m) then
-				self.checkMountedCounter = nil
-				self:SetupForSpell()
 				if (ZOMGSelfBuffs) then
 					ZOMGSelfBuffs:CheckBuffs()
 				end
-				return
+			else
+				self:RequestSpells()
 			end
+			return
 		end
 	end
 end
@@ -3970,6 +3973,7 @@ function z:PLAYER_REGEN_ENABLED()
 	end
 	if (buffClass) then
 		self:CancelTimer(self.timerListCheck)
+		self.timerListCheck = nil
 		self.icon.auto:Hide()
 	end
 	self:RequestSpells()
@@ -4059,6 +4063,7 @@ end
 function z:PLAYER_LEAVING_WORLD()
 	self.zoneFlag = GetTime()
 	self:CancelTimer(self.timerListCheck, true)
+	self.timerListCheck = nil
 	self:CancelTimer(self.timerGCD, true)
 	self:SetupForSpell()
 end
@@ -4069,6 +4074,7 @@ function z:PLAYER_ENTERING_WORLD()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
 	self:CancelTimer(self.timerListCheck, true)
+	self.timerListCheck = nil
 	self:CancelTimer(self.timerGCD, true)
 	self:ScheduleTimer(self.FinishedZoning, 5, self)
 
@@ -4298,6 +4304,16 @@ end
 -- TRAINER_CLOSED
 function z:TRAINER_CLOSED()
 	self.atTrainer = nil
+	self:RequestSpells()
+end
+
+-- PLAYER_DEAD
+function z:PLAYER_DEAD()
+	self:SetupForSpell()
+end
+
+-- PLAYER_DEAD
+function z:PLAYER_ALIVE()
 	self:RequestSpells()
 end
 
@@ -4949,6 +4965,8 @@ function z:OnEnable()
 	self:RegisterEvent("MERCHANT_CLOSED")
 	self:RegisterEvent("TRAINER_SHOW")
 	self:RegisterEvent("TRAINER_CLOSED")
+	self:RegisterEvent("PLAYER_DEAD")
+	self:RegisterEvent("PLAYER_ALIVE")
 
 	self:RegisterEvent("PLAYER_CONTROL_LOST")
 	self:RegisterEvent("PLAYER_CONTROL_GAINED")
