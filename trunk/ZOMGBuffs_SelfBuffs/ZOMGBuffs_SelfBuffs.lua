@@ -91,6 +91,35 @@ local weaponSlotNames = {
 	ranged = L["Ranged"],
 }
 
+local alchFlasks = {
+	{
+		item = 58149,
+		spells = {
+			[GetSpellInfo(79638)] = true,
+			[GetSpellInfo(79639)] = true,
+			[GetSpellInfo(79640)] = true
+		},
+	},	-- Flask of Enhancement
+	{
+		item = 47499,
+		spells = {
+			[GetSpellInfo(67016)] = true,
+			[GetSpellInfo(67017)] = true,
+			[GetSpellInfo(67018)] = true
+		},
+	},	-- Flask of the North
+}
+
+local function getAlchFlask()
+	local alc = GetSpellInfo(51304)
+	if not GetSpellInfo(alc) then return end
+	for _, flask in ipairs(alchFlasks) do
+		if GetItemCount(flask.item) > 0 then
+			return flask.item, flask.spells
+		end
+	end
+end
+
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 
 local function getOption(info)
@@ -124,15 +153,14 @@ zs.options = {
 	get = getOption,
 	set = setOption,
 	args = {
-		flaskOfNorth = {
+		alchFlasks = {
 			type = "group",
-			name = L["Flask of the North"],
-			desc = L["Special handling for Flask of the North"],
+			name = L["Alchemy Flasks"],
+			desc = L["Special handling for Alchemy Flasks"],
 			order = 5,
 			hidden = function()
 				if (zs:IsModuleActive()) then
-					local alc = GetSpellInfo(51304)
-					if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
+					if getAlchFlask() then
 						return false
 					end
 				end
@@ -142,7 +170,7 @@ zs.options = {
 				enable = {
 					type = "toggle",
 					name = L["Enabled"],
-					desc = L["Auto-cast Flask of the North"],
+					desc = L["Auto-cast Alchemy Flask"],
 					get = function() return zs.db.char.flask end,
 					set = function(n,val) zs.db.char.flask = val end,
 					order = 1,
@@ -479,28 +507,26 @@ function zs:CheckBuffs()
 	end
 
 	if (not any) then
-		local safeFlaskIcon = select(3, GetSpellInfo(67016))			-- Flask of the North icon
-
-		-- Handle Flask of the North
-		local alc = GetSpellInfo(51304)
-		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
-			if (self.db.char.flask) then
-				local skip		-- Skip Flask of the North if any other potions/elixirs/flasks are buffed
-				for i = 1,1000 do
-					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
-					if not name then break end
-					if (strmatch(buff, "INV_Potion") or strmatch(buff, "INV_Alchemy")) and buff ~= safeFlaskIcon then
-						skip = true
-						break
-					end
+		-- Handle Alchemy Flasks
+		local flaskitem, flaskspells = getAlchFlask()
+		if self.db.char.flask and flaskitem then
+			local skip		-- Skip Alchemy Flasks if any other potions/elixirs/flasks are buffed
+			local found, foundtime
+			for i = 1,1000 do
+				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
+				if not name then break end
+				if (flaskspells[name]) then
+					found = name
+					foundtime = endTime
+				elseif (strmatch(buff, "INV_Potion") or strmatch(buff, "INV_Alchemy")) then
+					skip = true
 				end
-				if (not skip) then
-					local requiredTimeLeft = self.db.char.rebuff.flask or self.db.char.rebuff.default
-					local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", (GetSpellInfo(67016)))
-					if (not name or endTime - GetTime() < requiredTimeLeft) then
-						z:SetupForItem(nil, (GetItemInfo(47499)), self)
-						any = true
-					end
+			end
+			if (found or not skip) then
+				local requiredTimeLeft = self.db.char.rebuff.flask or self.db.char.rebuff.default
+				if (not found or foundtime - GetTime() < requiredTimeLeft) then
+					z:SetupForItem(nil, (GetItemInfo(flaskitem)), self)
+					any = true
 				end
 			end
 		end
@@ -1292,6 +1318,9 @@ function zs:TooltipOnClick(name, subType)
 		if (name == "flask") then
 			if (IsShiftKeyDown()) then
 				self.db.char.flask = nil
+				if (z.qTooltip) then
+					z:OnTooltipUpdate()
+				end
 			end
 		else
 			if (IsShiftKeyDown()) then
@@ -1442,12 +1471,12 @@ function zs:TooltipUpdate(tooltip)
 		end
 		del(list)
 
-		local alc = GetSpellInfo(51304)
-		if (GetSpellInfo(alc) and GetItemCount(47499) > 0) then
-			local checkIcon = select(3, GetSpellInfo(67016))
+		local flask = getAlchFlask()
+		if (self.db.char.flask and flask) then
+			local checkIcon = select(10, GetItemInfo(flask))
 			checkIcon = checkIcon and "|T"..checkIcon..":0|t " or ""
 
-			local line = tooltip:AddLine(checkIcon..GetSpellInfo(67016))
+			local line = tooltip:AddLine(checkIcon..GetItemInfo(flask))
 			tooltip:SetLineScript(line, "OnMouseDown", SuperTooltipOnClick, "flask")
 		end
 	end

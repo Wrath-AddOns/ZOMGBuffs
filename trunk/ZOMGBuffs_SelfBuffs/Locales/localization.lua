@@ -49,11 +49,11 @@ L["Learnable"]												= true
 L["Remember this spell when it's cast manually?"]			= true
 L["Reagent Reminder"]										= true
 L["Show message when spells requiring reagents are used"]	= true
-L["Flask of the North"]										= true
-L["Special handling for Flask of the North"]				= true
+L["Alchemy Flasks"]										= true
+L["Special handling for Alchemy Flasks"]				= true
 L["Expiry prelude for flasks"]								= true
 L["Enabled"]												= true
-L["Auto-cast Flask of the North"]							= true
+L["Auto-cast Alchemy Flask"]							= true
 end
 
 if (GetLocale() == "deDE") then
