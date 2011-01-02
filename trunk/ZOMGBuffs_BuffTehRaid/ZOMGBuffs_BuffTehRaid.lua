@@ -688,7 +688,7 @@ function zg:CheckBuffs()
 							if (unit) then
 								local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
 								local toBuff = typeSpec.spellname
-								local whoNotice = (GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY) or z:ColourUnit(unit)
+								local whoNotice = typeSpec.group and ((GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY)) or z:ColourUnit(unit)
 								z:Notice(format(L["%s needs %s"], whoNotice, z:LinkSpell(toBuff, colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
 								any = true
 
