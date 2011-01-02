@@ -1028,8 +1028,18 @@ function zg:OnModuleInitialize()
 	
 	elseif (playerClass == "WARLOCK") then
 		self.buffs = {
-			WATERBREATH = {
+			DARKINTENT = {
 				o = 1,
+				id = 80398,
+				colour = {0.43, 0, 1},
+				limited = true,						-- Allow limited targets config
+				exclusive = true,					-- Can only be cast on 1 tarrget
+				notself = true,
+				keycode = "darkintent",
+				defaultRebuff = 5,
+			},
+			WATERBREATH = {
+				o = 2,
 				id = 5697,						-- Unending Breath
 				colour = {0.5, 1, 0.5},
 				limited = true,						-- Allow limited targets config
