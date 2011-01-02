@@ -597,7 +597,8 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "PRIEST") then
 		classBuffs = {
 			{id = 17, o = 1, duration = 0.5, default = 5, who = "single", noauto = true, c = "C0C0FF"},	-- Power Word: Shield
-			{id = 588, o = 2, duration = 30, who = "self", c = "FFA080"},					-- Inner Fire
+			{id = 588, o = 2, duration = 30, who = "self", dup = 1, c = "FFA080"},				-- Inner Fire
+			{id = 73413, o = 3, duration = 30, who = "self", dup = 1, c = "FFA080"},			-- Inner Will
 			{id = 15473, o = 9, duration = -1, who = "self", c = "A020A0"},					-- Shadowform
 			{id = 15286, o = 3, duration = 30, who = "self", c = "8080A0"},					-- Vampiric Embrace
 		}
