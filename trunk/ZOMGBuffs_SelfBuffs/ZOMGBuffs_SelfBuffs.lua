@@ -514,11 +514,12 @@ function zs:CheckBuffs()
 			local found, foundtime
 			for i = 1,1000 do
 				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
+				buff = strlower(buff)
 				if not name then break end
 				if (flaskspells[name]) then
 					found = name
 					foundtime = endTime
-				elseif (strmatch(buff, "INV_Potion") or strmatch(buff, "INV_Alchemy")) then
+				elseif (strmatch(buff, "^inv_potion") or strmatch(buff, "^inv_alchemy")) then
 					skip = true
 				end
 			end
