@@ -514,8 +514,8 @@ function zs:CheckBuffs()
 			local found, foundtime
 			for i = 1,1000 do
 				local name, rank, buff, count, _, max, endTime, isMine, isStealable = UnitBuff("player", i)
-				buff = strlower(buff)
 				if not name then break end
+				buff = strlower(buff)
 				if (flaskspells[name]) then
 					found = name
 					foundtime = endTime
