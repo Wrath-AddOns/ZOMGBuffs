@@ -519,7 +519,7 @@ function zs:CheckBuffs()
 				if (flaskspells[name]) then
 					found = name
 					foundtime = endTime
-				elseif (strmatch(buff, "^inv_potion") or strmatch(buff, "^inv_alchemy")) then
+				elseif (strmatch(buff, "inv_potion") or strmatch(buff, "inv_alchemy")) then
 					skip = true
 				end
 			end
