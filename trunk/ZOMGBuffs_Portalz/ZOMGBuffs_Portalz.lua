@@ -446,7 +446,7 @@ function module:ShowBindLocation(on)
 end
 
 -- OnEnterButton
-local hearthStoneItems = {[6948] = true, [28585] = true, [44315] = true, [44314] = true, [37118] = true}
+local hearthStoneItems = {[6948] = true, [28585] = true, [44315] = true, [44314] = true, [37118] = true, [64488] = true}
 function module:OnEnterButton(button)
 	if (ANIM) then
 		if (not button.highlight1:IsShown()) then
@@ -654,7 +654,9 @@ end
 -- CreateItemButtons
 function module:CreateItemButtons()
 	if (self.db.char.useitems) then
-		if (GetItemCount(6948) > 0) then
+		if (GetItemCount(64488) > 0) then
+			self:CreateItemButton(64488)			-- The Innkeeper's Daughter
+		elseif (GetItemCount(6948) > 0) then
 			self:CreateItemButton(6948)				-- Hearthstone
 		elseif (GetItemCount(28585) > 0) then
 			self:CreateItemButton(28585, true)		-- Ruby Slippers
@@ -688,6 +690,7 @@ function module:CreateItemButtons()
 			[51560] = true,				-- Runed Band of the Kirin Tor
 			[46874] = true,				-- Argent Crusader's Tabard
 			[52251] = false,			-- Jaina's Locket 
+			[64457] = false,			-- The Last Relic of Argus
 		}
 
 		for id,equip in pairs(clickItems) do

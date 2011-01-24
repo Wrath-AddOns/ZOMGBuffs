@@ -343,6 +343,15 @@ function zs:CheckEnchant(slot, spellOrItem)
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
 				local name, tex, quality, itemLevel, _, itemType, subType = GetItemInfo(itemLink)
+				if (slot == 18) then
+					-- If rogue and ranged item, check it's thrown weapon
+					if (playrerClass == "ROGUE") then
+						if (itemType ~= "Weapon" or subType ~= "Thrown") then
+							return
+						end
+					end
+				end
+
 				if (itemLevel == 1 and quality < 2) then
 					-- Ignore itemLevel == 1 (Argent Lances etc)
 					return
@@ -618,7 +627,8 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "HUNTER") then
 		classBuffs = {
 			{id = 19506, o = 1, duration = -1, who = "self", c = "FFFFFF"},					-- Trueshot Aura
-			{id = 13165, o = 4, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
+			{id = 13165, o = 2, duration = -1, who = "self", dup = 1, c = "4090FF"},		-- Aspect of the Hawk
+			{id = 82661, o = 3, duration = -1, who = "self", dup = 1, c = "FFCF60"},		-- Aspect of the Fox
 			{id = 5118, o = 6, duration = -1, who = "self", dup = 1, c = "FFFF80", auto =
 					function()
 						if (IsResting() and not IsMounted() and not UnitOnTaxi("player")) then
@@ -716,10 +726,13 @@ function zs:GetClassBuffs()
 	elseif (playerClass == "DEATHKNIGHT") then
 		classBuffs = {
 			{id = 49222, o = 1, duration = 5, charges = 3, who = "self", c = "209020"},		-- Bone Shield
-			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",			-- Horn of Winter
+			{id = 57330, o = 3, duration = 2, who = "self", c = "808080",					-- Horn of Winter
 				aliases = { 6673, 8076 },
 				-- Battle Shout, Strength of Earth
-                                                       			},
+            },
+            {id = 48263, o = 5, who = "self", dup = 1, c = "F03030"},						-- Blood Presence
+            {id = 48266, o = 6, who = "self", dup = 1, c = "3030F0"},						-- Frost Presence
+            {id = 48265, o = 7, who = "self", dup = 1, c = "30F030"},						-- Unholy Presence
 		}
 	end
 
