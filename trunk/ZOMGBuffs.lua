@@ -511,8 +511,8 @@ z.options = {
 							type = 'toggle',
 							name = L["Buff Pets"],
 							desc = L["Perform extra checks for pets in case any missed the group buffs when they were done"],
-							get = getPCOption,
-							set = setPCOption,
+							get = getOption,
+							set = setOption,
 							hidden = notRebuffer,
 							order = 200,
 						},
@@ -3030,7 +3030,7 @@ local function DrawCell(self)
 	-- system messages during zoning for people that ARE in your party/raid
 	local icon
 	if (z.db.profile.showroles and not z.zoneFlag) then
-		if (select(2, IsInInstance()) == "party") then
+		--if (select(2, IsInInstance()) == "party") then
 			-- No point getting it otherwise, as they can be wrong. Usually the values you had
 			-- from previous instance if you're running more than one with the same people
 			local role = UnitGroupRolesAssigned(partyid)
@@ -3041,13 +3041,14 @@ local function DrawCell(self)
 			elseif (role == "DAMAGER") then
 				icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
 			end
-		else
-			if (GetPartyAssignment("MAINTANK", partyid)) then
-				icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
-			elseif (GetPartyAssignment("MAINASSIST", partyid)) then
-				icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
-			end
-		end
+
+		--else
+		--	if (GetPartyAssignment("MAINTANK", partyid)) then
+		--		icon = "|TInterface\\GroupFrame\\UI-Group-MainTankIcon:0|t"
+		--	elseif (GetPartyAssignment("MAINASSIST", partyid)) then
+		--		icon = "|TInterface\\GroupFrame\\UI-Group-MainAssistIcon:0|t"
+		--	end
+		--end
 	end
 	if (icon) then
 		self.name:SetFormattedText("%s %s", unitname, icon)
@@ -4440,6 +4441,7 @@ function z:OnInitialize()
 			relpoint = "TOPRIGHT",
 			iconsize = 36,
 			border = false,
+			buffpets = true,
 		},
 		char = {
 			firstStartup = true,
@@ -4449,7 +4451,6 @@ function z:OnInitialize()
 			sort = "GROUP",
 			autobuyreagents = false,
 			minmana = 0,
-			buffpets = true,
 			learnooc = true,
 			learncombat = true,
 			loadraidbuffmodule = true,
@@ -4707,6 +4708,11 @@ function z:LibGroupTalents_Update(e, guid, unit, newSpec, n1, n2, n3, oldSpec, o
 	if (UnitIsUnit("player", unit)) then
 		self:CallMethodOnAllModules("OnSpellsChanged")
 	end
+end
+
+-- SPELLS_CHANGED
+function z:SPELLS_CHANGED()
+	self:CallMethodOnAllModules("OnSpellsChanged")
 end
 
 -- ADDON_LOADED

@@ -723,39 +723,41 @@ function zg:CheckBuffs()
 	if (not any and z.db.profile.buffpets) then
 		-- Catch any pets that missed the group buffing
 		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
-			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid) and IsSpellInRange(rangeCheckSpell, unitid)) then
+			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid)) then
 				local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
-				for i = 1,40 do
-					local name, rank, buff, count, _, max, endTime = UnitBuff(unitid, i)
-					if (not name) then
-						break
-					end
 
-					local buff = self.lookup[name]
-					if (buff) then
-						local dur = endTime and (endTime - GetTime())
-						if (template[buff.type]) then
+				for templateKey,templateVal in pairs(template) do
+					local buff = self.buffs[templateKey]
+					if buff and not buff.nopet then
+						local name, rank, tex, count, _, max, endTime = UnitBuff(unitid, buff.spellname)
+						if name then
 							local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
 							if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
-								local colour = buff.colour and z:HexColour(unpack(buff.colour))
-								z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
-								local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
-								if (special and IsUsableSpell(special)) then
-									z:SetupForSpell(unit, special, self)
-								else
-									z:SetupForSpell(unit, buff.spellname, self)
-								end
-								any = true
-								break
+								name = nil
+								dur = nil
 							end
+						end
+						if not name then
+							-- Rebuff it
+							local colour = buff.colour and z:HexColour(unpack(buff.colour))
+							z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
 
-							if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
-								minTimeLeft = dur - requiredTimeLeft
+							local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
+							if (special and IsUsableSpell(special)) then
+								z:SetupForSpell(unitid, special, self)
+							else
+								z:SetupForSpell(unitid, buff.spellname, self)
 							end
+							any = true
+							break
+						end
+
+						if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
+							minTimeLeft = dur - requiredTimeLeft
 						end
 					end
 				end
-				if (any) then
+				if any then
 					break
 				end
 			end
@@ -1014,6 +1016,7 @@ function zg:OnModuleInitialize()
 				reagent = 17058,					-- Fish Oil
 				colour = {0.5, 0.5, 1},
 				limited = true,						-- Allow limited targets config
+				nopet = true,
 				keycode = "water",
 			},
 			WATERBREATH = {
@@ -1022,6 +1025,7 @@ function zg:OnModuleInitialize()
 				reagent = 17057,					-- Shiny Fish Scales
 				colour = {0.2, 0.8, 1},
 				limited = true,						-- Allow limited targets config
+				nopet = true,
 				keycode = "breath",
 			}
 		}
@@ -1041,7 +1045,7 @@ function zg:OnModuleInitialize()
 			WATERBREATH = {
 				o = 2,
 				id = 5697,						-- Unending Breath
-				colour = {0.5, 1, 0.5},
+				colour = {0.4, 0.6, 1},
 				limited = true,						-- Allow limited targets config
 				keycode = "breath",
 			}
@@ -2419,7 +2423,7 @@ function zg:SpellCastSucceeded(spell, rank, target, manual, listClick)
 	if (z:CanLearn()) then
 		local info = self.lookup and self.lookup[spell]
 		if (info) then
-			if (UnitInRaid(target) or UnitInParty(target)) then
+			if (UnitInRaid(target) or UnitInParty(target) or UnitIsUnit(target, "pet")) then
 				if (not self.db.char.notlearnable[info.type]) then
 					if (info.exclusive) then
 						self:ModifyTemplate(info.type, true)
