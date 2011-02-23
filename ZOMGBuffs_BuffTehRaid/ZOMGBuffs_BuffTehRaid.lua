@@ -729,31 +729,34 @@ function zg:CheckBuffs()
 				for templateKey,templateVal in pairs(template) do
 					local buff = self.buffs[templateKey]
 					if buff and not buff.nopet then
-						local name, rank, tex, count, _, max, endTime = UnitBuff(unitid, buff.spellname)
-						if name then
-							local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
-							if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
-								name = nil
-								dur = nil
+						local l = template.limited and template.limited[templateKey]
+						if not buff.limited or (l and l[unitname]) then
+							local name, rank, tex, count, _, max, endTime = UnitBuff(unitid, buff.spellname)
+							if name then
+								local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
+								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
+									name = nil
+									dur = nil
+								end
 							end
-						end
-						if not name then
-							-- Rebuff it
-							local colour = buff.colour and z:HexColour(unpack(buff.colour))
-							z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
+							if not name then
+								-- Rebuff it
+								local colour = buff.colour and z:HexColour(unpack(buff.colour))
+								z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
 
-							local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
-							if (special and IsUsableSpell(special)) then
-								z:SetupForSpell(unitid, special, self)
-							else
-								z:SetupForSpell(unitid, buff.spellname, self)
+								local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
+								if (special and IsUsableSpell(special)) then
+									z:SetupForSpell(unitid, special, self)
+								else
+									z:SetupForSpell(unitid, buff.spellname, self)
+								end
+								any = true
+								break
 							end
-							any = true
-							break
-						end
 
-						if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
-							minTimeLeft = dur - requiredTimeLeft
+							if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
+								minTimeLeft = dur - requiredTimeLeft
+							end
 						end
 					end
 				end
@@ -1887,10 +1890,12 @@ do
 				end
 
 				if (buff and not buff.noaura) then
-					z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
-					PlaySoundFile(SM:Fetch("sound", zg.db.profile.tracksound))
-					if (enable == 1) then
-						self.needsCooldown = nil
+					if not UnitIsUnit(self.target, "pet") then			-- We don't need to hear this for the pet, and besides, it causes problems..
+						z:Notice(format(L["%s has expired on %s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target)))
+						PlaySoundFile(SM:Fetch("sound", zg.db.profile.tracksound))
+						if (enable == 1) then
+							self.needsCooldown = nil
+						end
 					end
 				end
 			end
