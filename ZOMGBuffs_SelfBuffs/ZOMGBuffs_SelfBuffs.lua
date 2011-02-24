@@ -1210,9 +1210,9 @@ end
 function zs:UNIT_INVENTORY_CHANGED(e, unit)
 	if (unit == "player") then
 		if (not any and minTimeLeft) then
-			self:Schedule(self.ChecksAfterItemChanges, 5, self)
+			z:Schedule(self.ChecksAfterItemChanges, 5, self)
 		else
-			self:SchedCancel(self.ChecksAfterItemChanges)
+			z:SchedCancel(self.ChecksAfterItemChanges)
 		end
 
 		if (self.checkReagentUsage) then
