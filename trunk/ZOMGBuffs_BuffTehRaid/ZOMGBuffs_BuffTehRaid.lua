@@ -641,7 +641,6 @@ end
 
 -- CheckBuffsTimer
 function zg:CheckBuffsTimer()
-	self.timerCheck = nil
 	self:CheckBuffs()
 end
 
@@ -658,10 +657,7 @@ function zg:CheckBuffs()
 		-- See if enough of raid present
 		if (percentPresent < z.db.profile.waitforraid) then	-- Wait for % of raid before buffing
 			z.waitingForRaid = floor(percentPresent * 100)
-			if (self.timerCheck) then
-				self:CancelTimer(self.timerCheck)
-			end
-			self.timerCheck = self:ScheduleTimer(self.CheckBuffsTimer, 5, self)
+			z:Schedule(self.CheckBuffsTimer, 5, self)
 			return
 		end
 	end
@@ -767,18 +763,14 @@ function zg:CheckBuffs()
 		end
 	end
 
-	if (self.timerCheck and self:TimeLeft(self.timerCheck) ~= minTimeLeft) then
-		self:CancelTimer(self.timerCheck)
-		self.timerCheck = nil
-	end
-
 	if (anyBlacklisted) then
 		minTimeLeft = 1.5
 	end
 	if (any) then
 		z.waitingForRaid = nil
+		z:SchedCancel(self.CheckBuffsTimer)
 	elseif not self.timerCheck then
-		self.timerCheck = self:ScheduleTimer(self.CheckBuffsTimer, minTimeLeft or 60, self)
+		z:Schedule(self.CheckBuffsTimer, minTimeLeft or 60, self)
 	end
 end
 
