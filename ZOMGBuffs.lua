@@ -169,9 +169,9 @@ do
 end
 
 
-_G.ZOMGBuffs = LibStub("AceAddon-3.0"):NewAddon("ZOMGBuffs", "AceConsole-3.0", "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0")
+_G.ZOMGBuffs = LibStub("AceAddon-3.0"):NewAddon("ZOMGBuffs", "AceConsole-3.0", "AceHook-3.0", "AceEvent-3.0")
 local z = ZOMGBuffs
-z:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0", "AceTimer-3.0", "AceConsole-3.0")
+z:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0", "AceConsole-3.0")
 local btr
 
 if (Sink) then
@@ -1492,7 +1492,6 @@ end
 
 -- HideMeLaterz
 local function HideMeLaterz()
-	z.timerHideMeLaterz = nil
 	if (not InCombatLockdown()) then
 		z.members:Hide()
 	end
@@ -1502,8 +1501,7 @@ end
 function z:OptionsShowList()
 	if (not InCombatLockdown()) then
 		self.members:Show()
-		self:CancelTimer(self.timerHideMeLaterz, true)
-		self.timerHideMeLaterz = self:ScheduleTimer(HideMeLaterz, 5)
+		self:Schedule(HideMeLaterz, 5)
 	end
 end
 
@@ -2019,15 +2017,82 @@ function z:CanLearn()
 	return (InCombatLockdown() and self.db.char.learncombat) or self.db.char.learnooc
 end
 
+local timerFrame = CreateFrame("Frame")
+timerFrame:Hide()
+timerFrame:SetScript("OnUpdate",
+	function(self, elapsed)
+		for func,timer in pairs(z.timers) do
+			timer.delay = timer.delay - elapsed
+			if timer.delay < 0 then
+				if not timer.repeating then
+					z.timers[func] = nil
+				end
+
+				func(unpack(timer.args))
+
+				if timer.repeating then
+					timer.delay = timer.repeating
+				else
+                	del(timer)
+					if not next(z.timers) then
+						self:Hide()
+						return
+					end
+				end
+			end
+		end
+	end)
+
+z.timers = {}
+function z:Schedule(func, delay, ...)
+--@debug@
+	assert(func, "missing function for timer")
+	assert(delay > 0, "timer delay is <= 0")
+--@end-debug@
+	local t = self.timers[func]
+	if not t then
+		t = new()
+		t.args = new(...)
+	end
+	t.delay = delay
+	self.timers[func] = t
+	timerFrame:Show()
+end
+
+function z:ScheduleRepeating(func, delay, ...)
+--@debug@
+	assert(func, "missing function for timer")
+	assert(delay > 0, "timer delay is <= 0")
+--@end-debug@
+	local t = self.timers[func]
+	if not t then
+		t = new()
+		t.args = new(...)
+	end
+	t.delay = delay
+	t.repeating = delay
+	self.timers[func] = t
+	timerFrame:Show()
+end
+
+function z:SchedCancel(func)
+	self.timers[func] = nil
+	if not next(self.timers) then
+		timerFrame:Hide()
+		return
+	end
+end
+
 -- GlobalCDSchedule
 function z:GlobalCDSchedule()
-	self:CancelTimer(self.timerGCD, true)
 	if (not InCombatLockdown()) then
 		local when = self.globalCooldownEnd - GetTime() + 0.1
 		if (when <= 0) then
 			when = 0.1
 		end
-		self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, when, self)
+		self:Schedule(self.GlobalCooldownEnd, when, self)
+	else
+		self:SchedCancel(self.GlobalCooldownEnd)
 	end
 end
 
@@ -2048,8 +2113,7 @@ local shadowmeld = GetSpellInfo(58984)
 function z:CheckMounted()
 	if (self.checkMountedCounter and self.checkMountedCounter > 0) then
 		self.checkMountedCounter = self.checkMountedCounter - 1
-		self:CancelTimer(self.timerMount, true)
-		self.timerMount = self:ScheduleTimer(self.CheckMounted, 0.2, self)
+		self:Schedule(self.CheckMounted, 0.2, self)
 	end
 
 	if (not InCombatLockdown()) then
@@ -2075,15 +2139,15 @@ end
 function z:StartCheckMounted()
 	if (not InCombatLockdown()) then
 		-- self:Printf("UNIT_AURA - z.mounted = "..tostring(z.mounted)..", IsMounted() = "..tostring(IsMounted()))
-		self:CancelTimer(self.timerMount, true)
-		self.timerMount = nil
 		if (not IsMounted()) then
 			-- Nasty hack, because IsMounted() does not work immediately after
 			-- the player gains a mount buff, as it did with PLAYER_AURAS_CHANGED
 			-- Currently, there are no events fired when IsMounted() is toggled on
 			-- Might have to do an OnUpdate check
-			self.timerMount = self:ScheduleTimer(self.CheckMounted, 0.2, self)
+			self:Schedule(self.CheckMounted, 0.2, self)
 			self.checkMountedCounter = 4
+		else
+			self:SchedCancel(self.CheckMounted)
 		end
 		self:CheckMounted()
 		self:CheckForChange(self)
@@ -3839,7 +3903,6 @@ end
 
 -- GlobalCooldownEnd()
 function z:GlobalCooldownEnd()
-	self.timerGCD = nil
 	self:RequestSpells()
 end
 
@@ -3930,8 +3993,7 @@ function z:UNIT_SPELLCAST_FAILED(e, player)
 		self.clickCast = nil
 		self.clickList = nil
 
-		self:CancelTimer(self.timerGCD, true)
-		self.timerGCD = self:ScheduleTimer(self.GlobalCooldownEnd, 0.5, self)
+		self:Schedule(self.GlobalCooldownEnd, 0.5, self)
 	end
 end
 
@@ -3973,8 +4035,7 @@ function z:PLAYER_REGEN_ENABLED()
 		secureCalls[k] = nil
 	end
 	if (buffClass) then
-		self:CancelTimer(self.timerListCheck)
-		self.timerListCheck = nil
+		self:SchedCancel(self.PeriodicListCheck)
 		self.icon.auto:Hide()
 	end
 	self:RequestSpells()
@@ -3995,11 +4056,10 @@ end
 
 -- PLAYER_REGEN_DISABLED
 function z:PLAYER_REGEN_DISABLED()
-	self:CancelTimer(self.timerHideMeLaterz)
-	self.timerHideMeLaterz = nil
+	self:SchedCancel(HideMeLaterz)
 	self:SetupForSpell()
 	if (buffClass) then
-		self.timerListCheck = self:ScheduleRepeatingTimer(self.PeriodicListCheck, 10, self)
+		self:ScheduleRepeating(self.PeriodicListCheck, 10, self)
 	end
 
 	for name, module in self:IterateModules() do
@@ -4063,9 +4123,8 @@ end
 -- PLAYER_LEAVING_WORLD
 function z:PLAYER_LEAVING_WORLD()
 	self.zoneFlag = GetTime()
-	self:CancelTimer(self.timerListCheck, true)
-	self.timerListCheck = nil
-	self:CancelTimer(self.timerGCD, true)
+	self:SchedCancel(self.PeriodicListCheck)
+	self:SchedCancel(self.GlobalCooldownEnd)
 	self:SetupForSpell()
 end
 
@@ -4074,10 +4133,9 @@ function z:PLAYER_ENTERING_WORLD()
 	self:SetMainIcon()
 	self.zoneFlag = GetTime()
 	self:SetupForSpell()
-	self:CancelTimer(self.timerListCheck, true)
-	self.timerListCheck = nil
-	self:CancelTimer(self.timerGCD, true)
-	self:ScheduleTimer(self.FinishedZoning, 5, self)
+	self:SchedCancel(self.PeriodicListCheck)
+	self:SchedCancel(self.GlobalCooldownEnd)
+	self:Schedule(self.FinishedZoning, 5, self)
 
 	-- Buff timers aren't available immediately upon zoning
 	self:CheckStateChange()
@@ -4131,8 +4189,7 @@ function z:OnClick()
 		else
 			self.atTrainer, self.atVendor = nil
 			self:SetupForSpell()
-			self:CancelTimer(self.timerGCD, true)
-			self.timerGCD = nil
+			self:SchedCancel(self.GlobalCooldownEnd)
 		end
 		if (not self.icon:GetAttribute("spell") and not self.icon:GetAttribute("item")) then
 			self:SetStatusIcon()

@@ -548,10 +548,10 @@ function zs:CheckBuffs()
 		end
 	end
 
-	self:CancelTimer(self.timerCheck, true)
-	self.timerCheck = nil
 	if (not any and (minTimeLeft or 0) > 0) then
-		self.timerCheck = self:ScheduleTimer(self.CheckBuffs, minTimeLeft or 60, self)
+		z:Schedule(self.CheckBuffs, minTimeLeft or 60, self)
+	else
+		z:SchedCancel(self.CheckBuffs)
 	end
 end
 
@@ -1209,10 +1209,10 @@ end
 -- UNIT_INVENTORY_CHANGED
 function zs:UNIT_INVENTORY_CHANGED(e, unit)
 	if (unit == "player") then
-		self:CancelTimer(self.timerCheckAfterItemChanges, true)
-		self.timerCheckAfterItemChanges = nil
 		if (not any and minTimeLeft) then
-			self.timerCheckAfterItemChanges = self:ScheduleTimer(self.ChecksAfterItemChanges, 5, self)
+			self:Schedule(self.ChecksAfterItemChanges, 5, self)
+		else
+			self:SchedCancel(self.ChecksAfterItemChanges)
 		end
 
 		if (self.checkReagentUsage) then
