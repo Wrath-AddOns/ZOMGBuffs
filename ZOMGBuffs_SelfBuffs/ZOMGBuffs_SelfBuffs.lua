@@ -38,12 +38,12 @@ do
 
 	elseif (GetLocale() == "deDE") then
 		enchantMatching = {
-			[GetSpellInfo(3408)] = "Verkr�ppelungsgift",			-- Verkr�ppelndes Gift (Crippling Poison)
+			[GetSpellInfo(3408)] = "Verkrüppelungsgift",			-- Verkrüppelndes Gift (Crippling Poison)
 			[GetSpellInfo(8232)] = "^Windzorn$",				-- Windfury Weapon
 			[GetSpellInfo(8024)] = "^Flammenzunge$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Lebensgeister$",		-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Felsbei�er$",       -- Rockbiter Weapon
+			[GetSpellInfo(8017)] = "^Felsbeißer$",       -- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "esES") then
@@ -67,20 +67,20 @@ do
 		
 	elseif (GetLocale() == "ruRU") then
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^??????????? ?????$",		-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^???? ???????$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^????? ?????$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^??????? ??????$",		-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^??????????????$",      -- Rockbiter Weapon      
+			[GetSpellInfo(8232)] = "^Неистовство ветра$",		-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^Язык пламени$",			-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^Жизнь Земли$",			-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^Ледяное клеймо$",			-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^Оружие камнедробителя$",	-- Rockbiter Weapon      
 		}
 
-	elseif (GetLocale() == "koKR") then
+	elseif (GetLocale() == "koKR") then		-- FIXME
 		enchantMatching = {
-			[GetSpellInfo(8232)] = "^??? ??$",				-- Windfury Weapon
-			[GetSpellInfo(8024)] = "^??? ??$",			-- Flametongue Weapon
-			[GetSpellInfo(51730)] = "^??? ??$",			-- Earthliving Weapon
-			[GetSpellInfo(8033)] = "^??? ??$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^??? ??$",        -- Rockbiter Weapon
+			[GetSpellInfo(8232)] = "^??? ??$",					-- Windfury Weapon
+			[GetSpellInfo(8024)] = "^??? ??$",					-- Flametongue Weapon
+			[GetSpellInfo(51730)] = "^??? ??$",					-- Earthliving Weapon
+			[GetSpellInfo(8033)] = "^??? ??$",					-- Frostbrand Weapon
+			[GetSpellInfo(8017)] = "^??? ??$",      	 		-- Rockbiter Weapon
 		}
 	end
 end
@@ -617,7 +617,7 @@ function zs:GetClassBuffs()
 		classBuffs = {
 			{id = 687, o = 1, duration = 30, who = "self", dup = 1, c = "FF80FF"},					-- Demon Armor
 			{id = 28176, o = 2, duration = 30, who = "self", dup = 1, c = "10D020"},					-- Fel Armor
-			{id = 6229, o = 6, duration = 0.5, default = 5, who = "self", noauto = true, c = "FF60FF"},				-- Shadow Ward
+			{id = 6229, o = 4, duration = 0.5, default = 5, dup = 2, who = "self", noauto = true, c = "FF60FF", aliases = {91711}},				-- Shadow Ward / Nether Ward
 			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
 			{id = 79268, o = 9, duration = 0.15, who = "self", c = "9482C9", nocombatnotice = true,		-- Soul Harvest
 				skip = function() return not (UnitPower("player", SPELL_POWER_SOUL_SHARDS) < 3) end		-- Skip if shards are full

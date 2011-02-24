@@ -474,7 +474,7 @@ function zg:TickInitForTemplate()
 						local name = next(template.limited[Type])
 						if (name) then
 							if (not buff.notself or not UnitIsUnit(name, "player")) then
-								if (UnitInParty(name) or UnitInRaid(name)) then
+								if (name == "pet" or UnitPlayerOrPetInParty(name) or UnitPlayerOrPetInRaid(name)) then
 									self:AddSpellTracker(Type, name)
 									if (buff.onEnable) then
 										buff.onEnable(name)
@@ -730,7 +730,7 @@ function zg:CheckBuffs()
 					local buff = self.buffs[templateKey]
 					if buff and not buff.nopet then
 						local l = template.limited and template.limited[templateKey]
-						if not buff.limited or (l and l[unitname]) then
+						if not buff.limited or (l and (l[unitname] or (UnitIsUnit("pet", unitid) and l.pet))) then
 							local name, rank, tex, count, _, max, endTime = UnitBuff(unitid, buff.spellname)
 							if name then
 								local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
@@ -1926,9 +1926,14 @@ do
 			keyb = ""
 		end
 
+		local target = self.target
+		if target == "pet" and not UnitExists("pet") then
+			target = zg.db.char.lastPetName
+		end
+
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
 		GameTooltip:SetText(format("%s %s", z.titleColour, L["Spell Tracker"]), 1, 1, 1)
-		GameTooltip:AddLine(format(L["%s on %s%s"], ColourSpellFromKey(buff), z:ColourUnitByName(self.target), keyb))
+		GameTooltip:AddLine(format(L["%s on %s%s"], ColourSpellFromKey(buff), z:ColourUnitByName(target), keyb))
 
 		if (not got) then
 			GameTooltip:AddLine(L["MISSING!"], 1, 0, 0)
@@ -2072,17 +2077,12 @@ do
 		self:UnregisterEvent("ACTIONBAR_UPDATE_USABLE")
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 		self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-		self.key = nil
 
 		if (not InCombatLockdown()) then
 			if (self.keybinding) then
 				SetBinding(self.keybinding, nil)
 				self.keybinding = nil
 			end
-
-			self:SetAttribute("unit", nil)
-			self:SetAttribute("type", nil)
-			self:SetAttribute("spell", nil)
 		end
 	end
 
@@ -2114,7 +2114,7 @@ do
 		self.icon:SetTexture(tex)
 
 		local oldUnit = self:GetAttribute("unit")
-		if (oldUnit and not UnitIsUnit(oldUnit, target)) then
+		if (oldUnit and not UnitIsUnit(oldUnit, target) and UnitExists(target)) then
 			self.timeLeft = nil
 			self.had = nil
 			self.needsCooldown = nil
@@ -2345,7 +2345,11 @@ function zg:StopSpellTracker(key)
 			self.stopSpellTracking = self.stopSpellTracking or new()
 			tinsert(self.stopSpellTracking, key)
 		else
+			icon:SetAttribute("unit", nil)
+			icon:SetAttribute("type", nil)
+			icon:SetAttribute("spell", nil)
 			icon:Hide()
+			icon.key = nil
 		end
 
 		if (not InCombatLockdown()) then
@@ -2426,6 +2430,10 @@ end
 -- SpellCastSucceeded
 function zg:SpellCastSucceeded(spell, rank, target, manual, listClick)
 	if (z:CanLearn()) then
+		if UnitIsUnit(target, "pet") then
+			self.db.char.lastPetName = UnitName(target)
+		end
+		
 		local info = self.lookup and self.lookup[spell]
 		if (info) then
 			if (UnitInRaid(target) or UnitInParty(target) or UnitIsUnit(target, "pet")) then
@@ -2449,6 +2457,9 @@ end
 function zg:AddLimitedSpell(name, key)
 	if (not self.tickHandlers[key]) then
 		error(format("No handler for %q", tostring(key)), 2)
+	end
+	if UnitIsUnit(name, "pet") then
+		name = "pet"
 	end
 
 	local buff = self.buffs[key]
@@ -2485,6 +2496,10 @@ end
 function zg:RemoveLimitedSpell(name, key)
 	local part = template.limited and template.limited[key]
 	if (part) then
+		if UnitIsUnit(name, "pet") then
+			name = "pet"
+		end
+
 		if (part[name]) then
 			part[name] = nil
 			z:CheckForChange(self)
@@ -2531,7 +2546,7 @@ function zg:OnRaidRosterUpdate()
 	if (lim) then
 		for key,list in pairs(lim) do
 			for name in pairs(list) do
-				if (not UnitInRaid(name) and not UnitInParty(name)) then
+				if (name ~= "pet" and not UnitInRaid(name) and not UnitInParty(name)) then
 					list[name] = nil
 					self:StopSpellTracker(key)
 					if (not next(list)) then
