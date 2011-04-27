@@ -4389,8 +4389,8 @@ end
 
 -- COMBAT_LOG_EVENT_UNFILTERED
 local mask = COMBATLOG_OBJECT_AFFILIATION_PARTY + COMBATLOG_OBJECT_AFFILIATION_RAID
-function z:COMBAT_LOG_EVENT_UNFILTERED(e, ev, timestamp, event, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
-	if (event == "UNIT_DIES") then
+function z:COMBAT_LOG_EVENT_UNFILTERED(e, ev, timestamp, event, hideCaster, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
+	if (event == "UNIT_DIED") then
 		if (self.icon and band(srcFlags, mask)) then
 			local loadedUnit = self.icon:GetAttribute("unit")
 			if (UnitIsUnit(srcName, loadedUnit)) then
