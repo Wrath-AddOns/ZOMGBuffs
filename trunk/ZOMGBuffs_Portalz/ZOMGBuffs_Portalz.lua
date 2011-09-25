@@ -1155,7 +1155,7 @@ function module:OnModuleInitialize()
 				["Thunder Bluff"]	= {group = 11420, single = 3566,	tex = "SPELLS\\ThunderBluff_Portal"},
 				["Silvermoon"]		= {group = 32267, single = 32272, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Silvermoon"},
 				["Stonard"]			= {group = 49361, single = 49358, 	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Stonard_Portal"},
-				["Tol Barad"]		= {group = 88346, single = 88344,	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Stonard_Portal"},
+				["Tol Barad"]		= {group = 88346, single = 88344,	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Portal_TolBarad"},
 			}
 		else
 			self.portals = {
@@ -1166,7 +1166,7 @@ function module:OnModuleInitialize()
 				["Darnassus"]		= {group = 11419, single = 3565, 	tex = "SPELLS\\Darnassus_Portal"},
 				["Exodar"]			= {group = 32266, single = 32271, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Exodar"},
 				["Theramore"]		= {group = 49360, single = 49359, 	tex = "Interface\\Addons\\ZOMGBuffs\\Textures\\MagePortal_Theramore"},
-				["Tol Barad"]		= {group = 88345, single = 88342,	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Stonard_Portal"},
+				["Tol Barad"]		= {group = 88345, single = 88342,	tex = "World\\GENERIC\\ACTIVEDOODADS\\SpellPortals\\Portal_TolBarad"},
 			}
 		end
 		self.singleReagent = 17031
