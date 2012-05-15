@@ -507,15 +507,6 @@ z.options = {
 							hidden = function() return playerClass ~= "DRUID" and playerClass ~= "SHAMAN" end,
 							order = 116,
 						},
-						buffpets = {
-							type = 'toggle',
-							name = L["Buff Pets"],
-							desc = L["Perform extra checks for pets in case any missed the group buffs when they were done"],
-							get = getOption,
-							set = setOption,
-							hidden = notRebuffer,
-							order = 200,
-						},
 						minmana = {
 							type = 'range',
 							name = L["Minimum Mana %"],
@@ -4498,7 +4489,6 @@ function z:OnInitialize()
 			relpoint = "TOPRIGHT",
 			iconsize = 36,
 			border = false,
-			buffpets = true,
 		},
 		char = {
 			firstStartup = true,

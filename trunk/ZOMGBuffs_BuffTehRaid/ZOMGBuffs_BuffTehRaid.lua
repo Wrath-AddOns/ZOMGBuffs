@@ -716,53 +716,6 @@ function zg:CheckBuffs()
 		end
 	end
 
-	if (not any and z.db.profile.buffpets) then
-		-- Catch any pets that missed the group buffing
-		for unitid, unitname, unitclass, subgroup, index in z:IterateRoster(true) do
-			if (unitclass == "PET" and UnitIsVisible(unitid) and UnitCanAssist("player", unitid)) then
-				local manaUser = z.manaClasses[unitclass]		-- UnitPowerType(unitid) == 0
-
-				for templateKey,templateVal in pairs(template) do
-					local buff = self.buffs[templateKey]
-					if buff and not buff.nopet then
-						local l = template.limited and template.limited[templateKey]
-						if not buff.limited or (l and (l[unitname] or (UnitIsUnit("pet", unitid) and l.pet))) then
-							local name, rank, tex, count, _, max, endTime = UnitBuff(unitid, buff.spellname)
-							if name then
-								local requiredTimeLeft = (db.rebuff and db.rebuff[buff.type]) or db.rebuff.default
-								if ((not requiredTimeLeft or not dur or dur > requiredTimeLeft) and (buff.onlyManaUsers and not manaUser)) then
-									name = nil
-									dur = nil
-								end
-							end
-							if not name then
-								-- Rebuff it
-								local colour = buff.colour and z:HexColour(unpack(buff.colour))
-								z:Notice(format(L["%s needs %s"], z:ColourUnit(unitid), z:LinkSpell(buff.spellname, colour, true, z.db.profile.short and buff.name)), "buffreminder")
-
-								local special = buff.spellPrefs and buff.spellPrefs[buff.spellname]
-								if (special and IsUsableSpell(special)) then
-									z:SetupForSpell(unitid, special, self)
-								else
-									z:SetupForSpell(unitid, buff.spellname, self)
-								end
-								any = true
-								break
-							end
-
-							if (dur and (not minTimeLeft or dur - requiredTimeLeft < minTimeLeft)) then
-								minTimeLeft = dur - requiredTimeLeft
-							end
-						end
-					end
-				end
-				if any then
-					break
-				end
-			end
-		end
-	end
-
 	if (anyBlacklisted) then
 		minTimeLeft = 1.5
 	end
