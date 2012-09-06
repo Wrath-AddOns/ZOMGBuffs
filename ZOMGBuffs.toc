@@ -10,7 +10,7 @@
 ## X-License: GPL v2 or later
 ## X-Website: http://www.wowace.com/wiki/ZOMGBuffs
 
-## OptionalDeps: Ace3, LibSharedMedia-3.0, LibSink-2.0, LibDBIcon-1.0, LibQTip-1.0, LibTalentQuery-1.0, LibGroupTalents-1.0
+## OptionalDeps: Ace3, LibSharedMedia-3.0, LibSink-2.0, LibDBIcon-1.0, LibQTip-1.0, LibTalentQuery-1.0
 
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
@@ -37,7 +37,6 @@ Libs\LibQTip-1.0\LibQTip-1.0.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 Libs\LibTalentQuery-1.0\LibTalentQuery-1.0.lua
-Libs\LibGroupTalents-1.0\LibGroupTalents-1.0.lua
 #@end-no-lib-strip@
 
 Locales\localization.lua
