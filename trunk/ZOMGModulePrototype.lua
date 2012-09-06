@@ -303,14 +303,14 @@ end
 -- GetTemplates
 function z.modulePrototype:GetTemplates()
 	local page
-	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
-		page = "templates"..GetActiveTalentGroup()
+	if (not self.db.profile.templates and GetNumSpecGroups() > 1 and GetActiveSpecGroup() > 1) then
+		page = "templates"..GetActiveSpecGroup()
 
 		if (not self.db.char[page]) then
 			-- First time selecting a new talent group will copy the templates from group 1
 			self.db.char[page] = copy(self.db.char.templates)
 
-			self.db.char["selectedTemplate"..GetActiveTalentGroup()] = self.db.char.selectedTemplate
+			self.db.char["selectedTemplate"..GetActiveSpecGroup()] = self.db.char.selectedTemplate
 		end
 	else
 		page = "templates"
@@ -320,8 +320,8 @@ end
 
 -- GetSelectedTemplate
 function z.modulePrototype:GetSelectedTemplate()
-	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
-		local name = "selectedTemplate"..GetActiveTalentGroup()
+	if (not self.db.profile.templates and GetNumSpecGroups() > 1 and GetActiveSpecGroup() > 1) then
+		local name = "selectedTemplate"..GetActiveSpecGroup()
 		return self.db.char[name]
 	end
 
@@ -330,8 +330,8 @@ end
 
 -- GetSelectedTemplate
 function z.modulePrototype:SetSelectedTemplate(set)
-	if (not self.db.profile.templates and GetNumTalentGroups() > 1 and GetActiveTalentGroup() > 1) then
-		local name = "selectedTemplate"..GetActiveTalentGroup()
+	if (not self.db.profile.templates and GetNumSpecGroups() > 1 and GetActiveSpecGroup() > 1) then
+		local name = "selectedTemplate"..GetActiveSpecGroup()
 		self.db.char[name] = set
 		return
 	end
@@ -468,7 +468,7 @@ function z.modulePrototype:OnEnable()
 
 	self:RegisterEvent("PLAYER_TALENT_UPDATE")
 
-	self.currentTalentGroup = GetActiveTalentGroup()
+	self.currentTalentGroup = GetActiveSpecGroup()
 
 	self:OnModuleEnable()
 	self:MakeTemplateOptions(self)
