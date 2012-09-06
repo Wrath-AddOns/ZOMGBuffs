@@ -11,7 +11,6 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffTehRaid")
 local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
---local LGT = LibStub("LibGroupTalents-1.0")
 local SM = LibStub("LibSharedMedia-3.0")
 local playerClass
 local template
@@ -851,12 +850,6 @@ function zg:RebuffQuery(unit)
 	return
 end
 
--- GetEarthShieldStacks
-local function GetEarthShieldStacks()
-	--local impES = LGT:UnitHasTalent("player", (GetSpellInfo(51560)))
-	return 6 --+ (impES or 0)
-end
-
 -- OnModuleInitialize
 function zg:OnModuleInitialize()
 	playerClass = select(2, UnitClass("player"))
@@ -955,7 +948,7 @@ function zg:OnModuleInitialize()
 				colour = {0.7, 0.7, 0.2},
 				limited = true,						-- Allow limited targets config
 				exclusive = true,					-- Can only be cast on 1 target
-				stacks = GetEarthShieldStacks,
+				stacks = 9,
 				keycode = "earthshield",
 			},
 			WATERWALK = {
