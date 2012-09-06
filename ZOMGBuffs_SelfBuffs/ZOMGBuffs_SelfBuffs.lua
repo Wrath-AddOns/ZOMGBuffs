@@ -615,13 +615,13 @@ function zs:GetClassBuffs()
 
 	elseif (playerClass == "WARLOCK") then
 		classBuffs = {
-			{id = 687, o = 1, duration = 30, who = "self", dup = 1, c = "FF80FF"},					-- Demon Armor
-			{id = 28176, o = 2, duration = 30, who = "self", dup = 1, c = "10D020"},					-- Fel Armor
+-- DEPRECATED			{id = 687, o = 1, duration = 30, who = "self", dup = 1, c = "FF80FF"},					-- Demon Armor
+-- DEPRECATED			{id = 28176, o = 2, duration = 30, who = "self", dup = 1, c = "10D020"},					-- Fel Armor
 			{id = 6229, o = 4, duration = 0.5, default = 5, dup = 2, who = "self", noauto = true, c = "FF60FF", aliases = {91711}},				-- Shadow Ward / Nether Ward
-			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
-			{id = 79268, o = 9, duration = 0.15, who = "self", c = "9482C9", nocombatnotice = true,		-- Soul Harvest
-				skip = function() return not (UnitPower("player", SPELL_POWER_SOUL_SHARDS) < 3) end		-- Skip if shards are full
-			},
+-- DEPRECATED			{id = 19028, o = 7, duration = -1, who = "self", noauto = true, c = "20FF80", skip = function() return not UnitExists("pet") end},				-- Soul Link
+-- DEPRECATED			{id = 79268, o = 9, duration = 0.15, who = "self", c = "9482C9", nocombatnotice = true,		-- Soul Harvest
+-- DEPRECATED				skip = function() return not (UnitPower("player", SPELL_POWER_SOUL_SHARDS) < 3) end		-- Skip if shards are full
+-- DEPRECATED			},
 		}
 
 	elseif (playerClass == "HUNTER") then
@@ -639,7 +639,7 @@ function zs:GetClassBuffs()
 						end
 					end},	-- Aspect of the Cheetah
 			{id = 13159, o = 7, duration = -1, who = "self", dup = 1, c = "B0B0B0"},		-- Aspect of the Pack
-			{id = 20043, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
+-- DEPRECATED			{id = 20043, o = 8, duration = -1, who = "self", dup = 1, c = "20FF20"},		-- Aspect of the Wild
 		}
 
 	elseif (playerClass == "SHAMAN") then
@@ -705,15 +705,15 @@ function zs:GetClassBuffs()
 
 		classBuffs = {
 			{id = 20154, o = 1,  duration = 30, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
-			{id = 85126, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
+-- DEPRECATED			{id = 85126, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
 			{id = 20165, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Insight
 			{id = 31801, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Truth
 			{id = 20164, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
 			{id = 25780, o = 10, duration = 30, who = "self", c = "FFD020", cancancel = true},								-- Righteous Fury
-			{id = 465, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
-			{id = 7294, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
-			{id = 19746, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
-			{id = 19891, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Resistance Aura
+-- DEPRECATED			{id = 465, o = 14, duration = -1, who = "self", dup = 2, mounted = true, c = "8090C0", checkdups = true, skip = skipFunc},		-- Devotion Aura
+-- DEPRECATED			{id = 7294, o = 15, duration = -1, who = "self", dup = 2, mounted = true, c = "D040D0", checkdups = true, skip = skipFunc},		-- Retribution Aura
+-- DEPRECATED			{id = 19746, o = 16, duration = -1, who = "self", dup = 2, mounted = true, c = "C020E0", checkdups = true, skip = skipFunc},		-- Concentration Aura
+-- DEPRECATED			{id = 19891, o = 17, duration = -1, who = "self", dup = 2, mounted = true, c = "E06020", checkdups = true, skip = skipFunc},		-- Resistance Aura
 			{id = 32223, o = 18, duration = -1, who = "self", dup = 2, mounted = true, c = "D0D060", noauto = true, auto = function(v) return IsMounted() end, c = "FFFFFF"},	-- Crusader Aura
 			{id = 54428, o = 22, duration = 0.25, who = "self", c = "FFFF70", noauto = true,		-- Divine Plea
 				skip = function()

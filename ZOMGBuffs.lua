@@ -188,7 +188,7 @@ do
 		{opt = "mark",	ids = {1126},	class = "DRUID",	type = "MARKINGS"},		-- Mark of the Wild
 		{opt = "sta",	ids = {21562, 69377},	class = "PRIEST",	type = "STA", runescroll = true},	-- Power Word: Fortitude
 		{opt = "int",	ids = {1459},	class = "MAGE",		type = "INT", manaOnly = true},	-- Arcane Brilliance
-		{opt = "shadow",ids = {27683},	class = "PRIEST",	type = "SHADOWPROT"},	-- Shadow Protection
+-- DEPRECATED		{opt = "shadow",ids = {27683},	class = "PRIEST",	type = "SHADOWPROT"},	-- Shadow Protection
 		{opt = "kings",ids = {20217},	class = "PALADIN",	type = "MARKINGS", runescroll = true},	-- Kings
 		{opt = "might",ids = {19740},	class = "PALADIN",	type = "MIGHT"},	-- Might
 		{opt = "food",	ids = {46899, 433},							type = "FOOD"},		-- Well Fed (Food = 433)
@@ -197,7 +197,7 @@ do
 	local otherBuffs = {
 		[469] = "STA",		-- Commanding Shout
 		[6307] = "STA",		-- Blood Pact
-		[54424] = "INT",	-- Fel Intelligence
+-- DEPRECATED		[54424] = "INT",	-- Fel Intelligence
 		[61316] = "INT",	-- Dalaran Brilliance
 	}
 
@@ -866,12 +866,12 @@ z.options = {
 									desc = GetSpellInfo(19740),		-- Might
 									order = 5,
 								},
-								shadow = {
-									type = 'toggle',
-									name = GetSpellInfo(27683),		-- Shadow Protection
-									desc = GetSpellInfo(27683),		-- Shadow Protection
-									order = 6,
-								},
+-- DEPRECATED								shadow = {
+-- DEPRECATED									type = 'toggle',
+-- DEPRECATED									name = GetSpellInfo(27683),		-- Shadow Protection
+-- DEPRECATED									desc = GetSpellInfo(27683),		-- Shadow Protection
+-- DEPRECATED									order = 6,
+-- DEPRECATED								},
 								food = {
 									type = 'toggle',
 									name = GetSpellInfo(46899),		-- Well Fed
@@ -1131,9 +1131,9 @@ do
 				playerClass = playerClass or select(2, UnitClass("player"))
 			end
 
-			if (GetNumRaidMembers() > 0) then
+			if (GetNumGroupMembers() > 0 and IsInRaid()) then
 				SetCacheMode("raid")
-				local End = GetNumRaidMembers()
+				local End = GetNumGroupMembers()
 				t.End = End
 				t.type = "raid"
 				t.index = 0
@@ -1145,7 +1145,7 @@ do
 				return unit, playerName, playerClass, subgroup, End
 			else
 				SetCacheMode("party")
-				t.End = GetNumPartyMembers()
+				t.End = GetNumGroupMembers()
 				t.type = "party"
 				t.index = 0
 				t.doPet = pets
@@ -3739,7 +3739,7 @@ function z:OnRaidRosterUpdate()
 		end
 	end
 
-	if (GetNumRaidMembers() == 0 and GetNumPartyMembers() == 0) then
+	if (GetNumGroupMembers() == 0) then
 		deepDel(self.buffRoster)
 		self.buffRoster = new()
 		
@@ -4771,8 +4771,8 @@ end
 
 -- CheckStateChange
 function z:CheckStateChange()
-	local party = GetNumPartyMembers() > 0
-	local raid = GetNumRaidMembers() > 0
+	local party = GetNumGroupMembers() > 0
+	local raid = party and IsInRaid()
 	local instance, Type = IsInInstance()
 
 	local state, reason

@@ -664,7 +664,7 @@ function zg:CheckBuffs()
 	z.waitingForRaid = nil
 
 	-- Now go through this and find anything we need to buff
-	local notInRaid = GetNumRaidMembers() == 0
+	local notInRaid = not IsInRaid()
 	local any
 	
 	if (totals > 0) then
@@ -684,7 +684,7 @@ function zg:CheckBuffs()
 							if (unit) then
 								local colour = typeSpec.colour and z:HexColour(unpack(typeSpec.colour))
 								local toBuff = typeSpec.spellname
-								local whoNotice = typeSpec.group and ((GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY)) or z:ColourUnit(unit)
+								local whoNotice = typeSpec.group and ((GetNumGroupMembers() > 0 and RAID) or (GetNumGroupMembers() > 0 and PARTY)) or z:ColourUnit(unit)
 								z:Notice(format(L["%s needs %s"], whoNotice, z:LinkSpell(toBuff, colour, true, z.db.profile.short and typeSpec.name)), "buffreminder")
 								any = true
 
@@ -873,13 +873,13 @@ function zg:OnModuleInitialize()
 				colour = {0.7, 0.7, 1},
 				keycode = "stamina",
 			},
-			SHADOWPROT = {
-				o = 2,
-				id = 27683,
-				group = true,
-				colour = {0.7, 0.2, 0.7},
-				keycode = "shadowprot",
-			},
+-- DEPRECATED			SHADOWPROT = {
+-- DEPRECATED				o = 2,
+-- DEPRECATED				id = 27683,
+-- DEPRECATED				group = true,
+-- DEPRECATED				colour = {0.7, 0.2, 0.7},
+-- DEPRECATED				keycode = "shadowprot",
+-- DEPRECATED			},
 			FEARWARD = {
 				o = 3,
 				id = 6346,
@@ -902,13 +902,13 @@ function zg:OnModuleInitialize()
 				colour = {0.9, 0.5, 0.9},
 				keycode = "mark",
 			},
-			THORNS = {
-				o = 2,
-				id = 467,
-				colour = {0.7, 0.7, 0.3},
-				limited = true,						-- Allow limited targets config
-				keycode = "thorns",
-			}
+-- DEPRECATED			THORNS = {
+-- DEPRECATED				o = 2,
+-- DEPRECATED				id = 467,
+-- DEPRECATED				colour = {0.7, 0.7, 0.3},
+-- DEPRECATED				limited = true,						-- Allow limited targets config
+-- DEPRECATED				keycode = "thorns",
+-- DEPRECATED			}
 		}
 
 	elseif (playerClass == "MAGE") then
@@ -926,17 +926,17 @@ function zg:OnModuleInitialize()
 				colour = {0.3, 0.3, 1},
 				keycode = "int"
 			},
-			FOCUSMAGIC = {
-				o = 2,
-				id = 54646,						-- Focus Magic
-				onlyManaUsers = true,
-				colour = {0.80, 0.2, 1},
-				limited = true,						-- Allow limited targets config
-				exclusive = true,					-- Can only be cast on 1 tarrget
-				notself = true,
-				keycode = "focusmagic",
-				defaultRebuff = 5,
-			} 
+-- DEPRECATED			FOCUSMAGIC = {
+-- DEPRECATED				o = 2,
+-- DEPRECATED				id = 54646,						-- Focus Magic
+-- DEPRECATED				onlyManaUsers = true,
+-- DEPRECATED				colour = {0.80, 0.2, 1},
+-- DEPRECATED				limited = true,						-- Allow limited targets config
+-- DEPRECATED				exclusive = true,					-- Can only be cast on 1 tarrget
+-- DEPRECATED				notself = true,
+-- DEPRECATED				keycode = "focusmagic",
+-- DEPRECATED				defaultRebuff = 5,
+-- DEPRECATED			} 
 		}
 	elseif (playerClass == "SHAMAN") then
 		self.buffs = {
@@ -967,29 +967,29 @@ function zg:OnModuleInitialize()
 				nopet = true,
 				keycode = "water",
 			},
-			WATERBREATH = {
-				o = 2,
-				id = 131,						-- Water Breathing
-				reagent = 17057,					-- Shiny Fish Scales
-				colour = {0.2, 0.8, 1},
-				limited = true,						-- Allow limited targets config
-				nopet = true,
-				keycode = "breath",
-			}
+-- DEPRECATED			WATERBREATH = {
+-- DEPRECATED				o = 2,
+-- DEPRECATED				id = 131,						-- Water Breathing
+-- DEPRECATED				reagent = 17057,					-- Shiny Fish Scales
+-- DEPRECATED				colour = {0.2, 0.8, 1},
+-- DEPRECATED				limited = true,						-- Allow limited targets config
+-- DEPRECATED				nopet = true,
+-- DEPRECATED				keycode = "breath",
+-- DEPRECATED			}
 		}
 	
 	elseif (playerClass == "WARLOCK") then
 		self.buffs = {
-			DARKINTENT = {
-				o = 1,
-				id = 80398,
-				colour = {0.43, 0, 1},
-				limited = true,						-- Allow limited targets config
-				exclusive = true,					-- Can only be cast on 1 tarrget
-				notself = true,
-				keycode = "darkintent",
-				defaultRebuff = 5,
-			},
+-- DEPRECATED			DARKINTENT = {
+-- DEPRECATED				o = 1,
+-- DEPRECATED				id = 80398,
+-- DEPRECATED				colour = {0.43, 0, 1},
+-- DEPRECATED				limited = true,						-- Allow limited targets config
+-- DEPRECATED				exclusive = true,					-- Can only be cast on 1 tarrget
+-- DEPRECATED				notself = true,
+-- DEPRECATED				keycode = "darkintent",
+-- DEPRECATED				defaultRebuff = 5,
+-- DEPRECATED			},
 			WATERBREATH = {
 				o = 2,
 				id = 5697,						-- Unending Breath
@@ -1050,15 +1050,15 @@ function zg:OnModuleInitialize()
 		}	
 	elseif (playerClass == "WARRIOR") then
 		self.buffs = {
-			VIGILANCE = {
-				o = 1,
-				id = 50720,						-- Vigilance
-				colour = {1, 1, 0.7},
-				limited = true,						-- Allow limited targets config
-				exclusive = true,
-				notself = true,
-				keycode = "vigilance",
-			},
+-- DEPRECATED			VIGILANCE = {
+-- DEPRECATED				o = 1,
+-- DEPRECATED				id = 50720,						-- Vigilance
+-- DEPRECATED				colour = {1, 1, 0.7},
+-- DEPRECATED				limited = true,						-- Allow limited targets config
+-- DEPRECATED				exclusive = true,
+-- DEPRECATED				notself = true,
+-- DEPRECATED				keycode = "vigilance",
+-- DEPRECATED			},
 		}
 
 	elseif (playerClass == "ROGUE") then
@@ -1679,7 +1679,7 @@ function zg:SayWhatWeDid(icon, spell, name, rank)
 				reagentString = ""
 			end
 
-			local whoNotice = found.group and ((GetNumRaidMembers() > 0 and RAID) or (GetNumPartyMembers() > 0 and PARTY)) or z:ColourUnitByName(name)
+			local whoNotice = found.group and (((GetNumGroupMembers() > 0 and IsInRaid()) and RAID) or (GetNumGroupMembers() > 0 and PARTY)) or z:ColourUnitByName(name)
 			self:Printf(L["%s on %s%s"], z:LinkSpell(s, colour, true, z.db.profile.short and found.name), whoNotice, reagentString)
 		end
 	end
