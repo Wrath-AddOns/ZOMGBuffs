@@ -11,7 +11,7 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGBuffTehRaid")
 local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
-local LGT = LibStub("LibGroupTalents-1.0")
+--local LGT = LibStub("LibGroupTalents-1.0")
 local SM = LibStub("LibSharedMedia-3.0")
 local playerClass
 local template
@@ -853,8 +853,8 @@ end
 
 -- GetEarthShieldStacks
 local function GetEarthShieldStacks()
-	local impES = LGT:UnitHasTalent("player", (GetSpellInfo(51560)))
-	return 6 + (impES or 0)
+	--local impES = LGT:UnitHasTalent("player", (GetSpellInfo(51560)))
+	return 6 --+ (impES or 0)
 end
 
 -- OnModuleInitialize

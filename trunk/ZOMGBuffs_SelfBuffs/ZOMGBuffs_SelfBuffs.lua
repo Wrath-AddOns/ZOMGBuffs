@@ -7,7 +7,7 @@ local wowVersion = tonumber((select(2,GetBuildInfo())))
 
 local L = LibStub("AceLocale-3.0"):GetLocale("ZOMGSelfBuffs")
 local R = LibStub("AceLocale-3.0"):GetLocale("ZOMGReagents")
-local LGT = LibStub("LibGroupTalents-1.0")
+--local LGT = LibStub("LibGroupTalents-1.0")
 local playerClass, playerName, playerGUID
 local template = {}
 
@@ -477,12 +477,12 @@ function zs:CheckBuffs()
 							if (type(cdef) == "function") then
 								cdef = cdef()
 							end
-							if (c > cdef) then
-								if (LGT:GetUnitTalents("player")) then
-									c = cdef
-									charges[k] = cdef
-								end
-							end
+							--if (c > cdef) then
+								--if (LGT:GetUnitTalents("player")) then
+								--	c = cdef
+								--	charges[k] = cdef
+								--end
+							--end
 						end
 					end
 
