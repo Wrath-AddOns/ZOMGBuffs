@@ -688,7 +688,7 @@ function zs:GetClassBuffs()
 			{id = 2823, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040" },	-- Deadly Poison
 			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
 			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
-			{id = 13219, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040"},					-- Wound Poison
+-- DEPRECATED			{id = 13219, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040"},					-- Wound Poison
 		}
 		self.reagents = {
 			[6947] = {20, 1, 100, minLevel = 10, alternateCount = "6949,6950,8926,8927,8928,21927,43230,43231"},		-- Instant Poison
