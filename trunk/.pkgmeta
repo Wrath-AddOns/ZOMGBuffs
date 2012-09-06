@@ -18,7 +18,6 @@ externals:
     Libs/AceGUI-3.0-SharedMediaWidgets: svn://svn.wowace.com/wow/ace-gui-3-0-shared-media-widgets/mainline/trunk
 	Libs/LibSink-2.0: svn://svn.wowace.com/wow/libsink-2-0/mainline/trunk/LibSink-2.0
 	Libs/LibTalentQuery-1.0: svn://svn.wowace.com/wow/libtalentquery-1-0/mainline/trunk
-	Libs/LibGroupTalents-1.0: svn://svn.wowace.com/wow/libgrouptalents-1-0/mainline/trunk
 	Libs/LibQTip-1.0: svn://svn.wowace.com/wow/libqtip-1-0/mainline/trunk
 
 move-folders:

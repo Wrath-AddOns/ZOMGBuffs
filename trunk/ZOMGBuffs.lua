@@ -15,7 +15,7 @@ BINDING_HEADER_ZOMGBUFFS = L["TITLECOLOUR"]
 BINDING_NAME_ZOMGBUFFS_PORTAL = L["PORTALZ_HOTKEY"]
 
 local qtip = LibStub("LibQTip-1.0")
-local LGT = LibStub("LibGroupTalents-1.0")
+--local LGT = LibStub("LibGroupTalents-1.0")
 local FrameArray = {}
 local AllFrameArray = {}
 local secureCalls = {}
@@ -3530,21 +3530,22 @@ do
 			GameTooltip:AddLine(format(L["Out-of-date spell (should be %s). Will be updated when combat ends"], self.invalidAttributes), 1, 0, 0, 1)
 		end
 
-		if (self ~= z.icon) then
-			local unit = self:GetAttribute("unit")
-			local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
-			if (spec) then
-				local _, class = UnitClass(unit)
-				if (class == "DEATHKNIGHT" or (class == "DRUID" and s2 > s1 + s3)) then
-					local role = LGT:GetUnitRole(unit)
-					spec = format("%s (%s)", spec, role == "tank" and TANK or DAMAGE)
-				end
+		-- Disabled until LGT is fixed
+		--if (self ~= z.icon) then
+			--local unit = self:GetAttribute("unit")
+			--local spec, s1, s2, s3 = LGT:GetUnitTalentSpec(unit)
+			--if (spec) then
+			--	local _, class = UnitClass(unit)
+			--	if (class == "DEATHKNIGHT" or (class == "DRUID" and s2 > s1 + s3)) then
+			--		local role = LGT:GetUnitRole(unit)
+			--		spec = format("%s (%s)", spec, role == "tank" and TANK or DAMAGE)
+			--	end
 
-				GameTooltipTextRight1:SetText(spec)
-				GameTooltipTextRight1:SetTextColor(0.5, 0.5, 0.5)
-				GameTooltipTextRight1:Show()
-			end
-		end
+			--	GameTooltipTextRight1:SetText(spec)
+			--	GameTooltipTextRight1:SetTextColor(0.5, 0.5, 0.5)
+			--	GameTooltipTextRight1:Show()
+			--end
+		--end
 
 		GameTooltip:Show()
 	end
@@ -4991,7 +4992,7 @@ function z:OnEnable()
 		self.members:RegisterEvent("PARTY_MEMBERS_CHANGED")
 	end
 
-	LGT.RegisterCallback(self, "LibGroupTalents_Update")
+	--LGT.RegisterCallback(self, "LibGroupTalents_Update")
 
 	self:MakeOptionsReagentList()
 	self:SetSort()
