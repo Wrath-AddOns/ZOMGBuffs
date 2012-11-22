@@ -33,7 +33,7 @@ do
 			[GetSpellInfo(8024)] = "^Flametongue$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Earthliving$",			-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Rockbiter$",        -- Rockbiter Weapon
+			[GetSpellInfo(8017)] = "^Rockbiter$", 			-- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "deDE") then
@@ -43,7 +43,7 @@ do
 			[GetSpellInfo(8024)] = "^Flammenzunge$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Lebensgeister$",		-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Frostbrand$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Felsbeißer$",       -- Rockbiter Weapon
+			[GetSpellInfo(8017)] = "^Felsbeißer$",			-- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "esES") then
@@ -52,7 +52,7 @@ do
 			[GetSpellInfo(8024)] = "^Lengua de Fuego$",		-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Vida terrestre$",		-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Estigma de Escarcha$",	-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Muerdepiedras$",       -- Rockbiter Weapon          
+			[GetSpellInfo(8017)] = "^Muerdepiedras$",       -- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "frFR") then
@@ -62,16 +62,16 @@ do
 			[GetSpellInfo(8024)] = "^Langue de feu$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Viveterre$",			-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Arme de givre$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Croque-roc$",       -- Rockbiter Weapon       
+			[GetSpellInfo(8017)] = "^Croque-roc$",       -- Rockbiter Weapon
 		}
-		
+
 	elseif (GetLocale() == "ruRU") then
 		enchantMatching = {
 			[GetSpellInfo(8232)] = "^Неистовство ветра$",		-- Windfury Weapon
 			[GetSpellInfo(8024)] = "^Язык пламени$",			-- Flametongue Weapon
 			[GetSpellInfo(51730)] = "^Жизнь Земли$",			-- Earthliving Weapon
 			[GetSpellInfo(8033)] = "^Ледяное клеймо$",			-- Frostbrand Weapon
-			[GetSpellInfo(8017)] = "^Оружие камнедробителя$",	-- Rockbiter Weapon      
+			[GetSpellInfo(8017)] = "^Оружие камнедробителя$",	-- Rockbiter Weapon
 		}
 
 	elseif (GetLocale() == "koKR") then		-- FIXME
@@ -93,21 +93,13 @@ local weaponSlotNames = {
 
 local alchFlasks = {
 	{
-		item = 58149,
+		item = 75525,
 		spells = {
 			[GetSpellInfo(79638)] = true,
 			[GetSpellInfo(79639)] = true,
 			[GetSpellInfo(79640)] = true
 		},
-	},	-- Flask of Enhancement
-	{
-		item = 47499,
-		spells = {
-			[GetSpellInfo(67016)] = true,
-			[GetSpellInfo(67017)] = true,
-			[GetSpellInfo(67018)] = true
-		},
-	},	-- Flask of the North
+	},	-- Alchemist's Flask
 }
 
 local function getAlchFlask()
@@ -337,20 +329,12 @@ do
 end
 
 -- CheckEnchant
-function zs:CheckEnchant(slot, spellOrItem)
+function zs:CheckEnchant(slot, spellOrItem) -- seems like only shaman get weapon buffs now
 	if (spellOrItem) then
 		if (not self.activeEnchant or self.activeEnchant < GetTime() - (playerClass == "ROGUE" and 3.5 or 2.5)) then
 			local itemLink = GetInventoryItemLink("player", slot)
 			if (itemLink) then
 				local name, tex, quality, itemLevel, _, itemType, subType = GetItemInfo(itemLink)
-				if (slot == 18) then
-					-- If rogue and ranged item, check it's thrown weapon
-					if (playrerClass == "ROGUE") then
-						if (itemType ~= "Weapon" or subType ~= "Thrown") then
-							return
-						end
-					end
-				end
 
 				if (itemLevel == 1 and quality < 2) then
 					-- Ignore itemLevel == 1 (Argent Lances etc)
@@ -397,7 +381,7 @@ end
 
 -- CheckWeaponBuff
 function zs:CheckWeaponBuffs()
-	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand)) or (playerClass == "ROGUE" and self:CheckEnchant(18, template.ranged))
+	return self:CheckEnchant(16, template.mainhand) or (OffhandHasWeapon() and self:CheckEnchant(17, template.offhand))
 end
 
 -- CheckBuffs
@@ -634,7 +618,7 @@ function zs:GetClassBuffs()
 						if (IsResting() and not IsMounted() and not UnitOnTaxi("player")) then
 							local spell = GetSpellInfo(59641)
 							if (UnitAura("player", spell) == nil) then
-								return z.db.profile.notresting 
+								return z.db.profile.notresting
 							end
 						end
 					end},	-- Aspect of the Cheetah
@@ -643,7 +627,7 @@ function zs:GetClassBuffs()
 		}
 
 	elseif (playerClass == "SHAMAN") then
-		local onEnableShield = function(key) 
+		local onEnableShield = function(key)
 			local btr = ZOMGBuffTehRaid
 			if (btr) then
 				local who = btr:ExclusiveTarget("EARTHSHIELD")
@@ -676,26 +660,19 @@ function zs:GetClassBuffs()
 				-- Strength of Earth, Horn of Winter
 			},
 			{id = 469, o = 2, duration = 2, dup = 1, who = "self", c = "40FF40", checkdups = true,		-- Commanding Shout
-				aliases = { 6307, 21562 },
-				-- Blood Pact, Power Word: Fortitude
+				aliases = { 6307, 21562 }, -- Blood Pact, Power Word: Fortitude
 			},
 			{id = 18499, o = 4, duration = 0.165, who = "self", noauto = true, c = "FFFF40"},				-- Berserker Rage
 		}
 
 	elseif (playerClass == "ROGUE") then
 		classBuffs = {
-			{id = 8679, o = 1, dup = 1, duration = 60, who = "weapon", c = "40F040"},	-- Instant Poison
-			{id = 2823, o = 2, dup = 1, duration = 60, who = "weapon", c = "40E040" },	-- Deadly Poison
-			{id = 3408, o = 3, dup = 1, duration = 60, who = "weapon", c = "40C020"},																-- Crippling Poison
-			{id = 5761, o = 4, dup = 1, duration = 60, who = "weapon", c = "40B040"},																-- Mind-numbing Poison
--- DEPRECATED			{id = 13219, o = 5, dup = 1, duration = 60, who = "weapon", c = "A0A040"},					-- Wound Poison
-		}
-		self.reagents = {
-			[6947] = {20, 1, 100, minLevel = 10, alternateCount = "6949,6950,8926,8927,8928,21927,43230,43231"},		-- Instant Poison
-			[2892] = {20, 1, 100, minLevel = 30, alternateCount = "2893,8984,8985,20844,22053,22054,43232,43233"},		-- Deadly Poison
-			[10918]= {20, 1, 100, minLevel = 32, alternateCount = "10920,10921,10922,22055,43234,43235"},				-- Wound Poison
-			[3775] = {20, 1, 100, minLevel = 20},														-- Crippling Poison
-			[5237] = {20, 1, 100, minLevel = 20},														-- Mind-numbing Poison
+			{id = 2818, o = 1, dup = 1, duration = 60, who = "self", c = "66ff66"},	-- Deadly Poison
+			{id = 8680, o = 2, dup = 1, duration = 60, who = "self", c = "66ff66" },	-- Wound Poison
+			{id = 3409, o = 3, dup = 2, duration = 60, who = "self", c = "339933"},	-- Crippling Poison
+			{id = 5760, o = 4, dup = 2, duration = 60, who = "self", c = "339933"},	-- Mind-numbing Poison
+			{id = 113952, o = 5, dup = 2, duration = 60, who = "self", c = "339933"},	-- Paralytic Poison
+			{id = 112961, o = 5, dup = 2, duration = 60, who = "self", c = "339933"},	-- Leeching Poison
 		}
 
 	elseif (playerClass == "PALADIN") then
@@ -705,7 +682,6 @@ function zs:GetClassBuffs()
 
 		classBuffs = {
 			{id = 20154, o = 1,  duration = 30, who = "self", dup = 1, noauto = true, c = "C0C0FF", rebuff = L["Seals"]},	-- Seal of Righteousness
--- DEPRECATED			{id = 85126, o = 2,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Command
 			{id = 20165, o = 3,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFA040", rebuff = L["Seals"]},	-- Seal of Insight
 			{id = 31801, o = 4,  duration = 30, who = "self", dup = 1, noauto = true, c = "FFD010", rebuff = L["Seals"]},	-- Seal of Truth
 			{id = 20164, o = 5,  duration = 30, who = "self", dup = 1, noauto = true, c = "A0FFA0", rebuff = L["Seals"]},	-- Seal of Justice
@@ -1218,7 +1194,7 @@ function zs:UNIT_INVENTORY_CHANGED(e, unit)
 		if (self.checkReagentUsage) then
 			if (self.checkReagentUsage.time + 5 >= GetTime()) then
 				local count = GetItemCount(self.checkReagentUsage.reagent)
-	
+
 				if (count < self.checkReagentUsage.count) then
 					local colourCount
 					if (count < 2) then
@@ -1228,7 +1204,7 @@ function zs:UNIT_INVENTORY_CHANGED(e, unit)
 					else
 						colourCount = "|cFF40FF40"
 					end
-	
+
 					self:Printf(L["%s, %s%d|r %s remain"], self.checkReagentUsage.spell, colourCount, count, self.checkReagentUsage.reagent)
 					self.checkReagentUsage = del(checkReagentUsage)
 				end
@@ -1458,17 +1434,6 @@ function zs:TooltipUpdate(tooltip)
 		if (template.offhand or itemOptions) then
 			if (OffhandHasWeapon()) then
 				self:AddItem(tooltip, "offhand", template.offhand)
-			end
-		end
-		if (template.ranged or itemOptions) then
-			if (playerClass == "ROGUE") then
-				local itemLink = GetInventoryItemLink("player", 18)				-- Ranged slot
-				if (itemLink) then
-					local name, tex, _, _, _, itemType, subType = GetItemInfo(itemLink)
-					if (name and itemType == "Weapon") then
-						self:AddItem(tooltip, "ranged", template.ranged)
-					end
-				end
 			end
 		end
 
