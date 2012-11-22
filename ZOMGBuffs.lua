@@ -313,14 +313,14 @@ local function err(self, message, ...)
 	if type(self) ~= "table" then
 		return error(("Bad argument #1 to `err' (table expected, got %s)"):format(type(self)), 2)
 	end
-	
+
 	local stack = debugstack(self == z and 2 or 3)
 	if not message then
 		local second = stack:match("\n(.-)\n")
 		message = "error raised! " .. second
 	else
 		local arg = { ... } -- not worried about table creation, as errors don't happen often
-		
+
 		for i = 1, #arg do
 			arg[i] = tostring(arg[i])
 		end
@@ -329,7 +329,7 @@ local function err(self, message, ...)
 		end
 		message = message:format(unpack(arg))
 	end
-	
+
 	if getmetatable(self) and getmetatable(self).__tostring then
 		message = ("%s: %s"):format(tostring(self), message)
 	elseif type(rawget(self, 'GetLibraryVersion')) == "function" and AceLibrary:HasInstance(self:GetLibraryVersion()) then
@@ -337,12 +337,12 @@ local function err(self, message, ...)
 	elseif type(rawget(self, 'class')) == "table" and type(rawget(self.class, 'GetLibraryVersion')) == "function" and AceLibrary:HasInstance(self.class:GetLibraryVersion()) then
 		message = ("%s: %s"):format(self.class:GetLibraryVersion(), message)
 	end
-	
+
 	local first = stack:gsub("\n.*", "")
 	local file = first:gsub(".*\\(.*).lua:%d+: .*", "%1")
 	file = file:gsub("([%(%)%.%*%+%-%[%]%?%^%$%%])", "%%%1")
-	
-	
+
+
 	local i = 0
 	for s in stack:gmatch("\n([^\n]*)") do
 		i = i + 1
@@ -407,7 +407,7 @@ do
 	local setOption = function(info, value) z.db.profile[info[#info]] = value end
 	local setOptionUpdate =
 		function(info, value)
-			z.db.profile[info[#info]] = value			
+			z.db.profile[info[#info]] = value
 			z:SetupForSpell()
 			z:RequestSpells()
 		end
@@ -1097,7 +1097,7 @@ end
 -- Custom roster iterator
 do
 	local unitCache, unitCacheMode
-	
+
 	local function SetCacheMode(m)
 		if (unitCacheMode ~= m) then
 			unitCacheMode = m
@@ -1115,7 +1115,7 @@ do
 					return n
 				end
 			end
-			
+
 			unitCache = setmetatable({}, {__mode = "kv", __index = meta})
 		end
 	end
@@ -1225,7 +1225,7 @@ do
 		t.pets = pets
 		return iter, t
 	end
-	
+
 	function z:UNIT_NAME_UPDATE(unit)
 		if (self.unknownUnits[unit]) then
 			self.unknownUnits[unit] = nil
@@ -1242,7 +1242,7 @@ do
 			end
 		end
 	end
-	
+
 	function z:UnitRank(who)
 		local index = UnitInRaid(who)
 		if (index) then
@@ -1461,7 +1461,7 @@ function z:LinkSpell(name, hexColor, icon, overrideName)
 	if (not name) then
 		return "?"
 	end
-	
+
 	if (z.linkSpells and icon) then
 		local icon
 		if (self.db.profile.spellIcons) then
@@ -1721,9 +1721,9 @@ function z:MovableNoticeWindow()
 		f.finish:Show()
 		f.default:Show()
 	end
-		
+
 	f:SetMovable(true)
-	
+
 	f:SetBackdrop({
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background", tile = true, tileSize = 16,
 	})
@@ -1915,7 +1915,7 @@ function z:Report(option)
 				end
 			end
 		end
-		
+
 		for k,v in pairs(list) do
 			sort(v)
 			SendChatMessage(format(L["<ZOMG> Missing %s: %s"], ShortDesc(k), table.concat(v, ", ")), strupper(self.db.profile.channel) or "RAID")
@@ -2176,7 +2176,7 @@ function z:CanCheckBuffs(allowCombat, soloBuffs)
 	elseif (InCombatLockdown() and not allowCombat) then
 		lastCheckFail = L["COMBAT"]
 		icon = "combat"
-	elseif (HasIllusionBuff()) then		-- (UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) or 
+	elseif (HasIllusionBuff()) then		-- (UnitExists("pet") and (UnitIsCharmed("pet") or UnitIsPlayer("pet"))) or
 		lastCheckFail = L["REMOTECONTROL"]
 		icon = "remote"
 	elseif (UnitIsCharmed("player")) then
@@ -2286,14 +2286,14 @@ function z:SetStatusIcon(t, spellIcon)
 
 	elseif (t == "nocontrol") then
 		status = "Interface\\Icons\\Ability_Rogue_BloodyEye"
-		
+
 	elseif (t == "stealth") then
 		status = "Interface\\Icons\\Ability_Stealth"
 
 	elseif (t == "icon") then
 		status = spellIcon
 		spellIcon = nil
-		
+
 	elseif (z.waitingForRaid) then
 		status = "Interface\\Addons\\ZOMGBuffs\\Textures\\Clock"
 	end
@@ -3332,7 +3332,7 @@ do
 				local k = c:sub(2, 2) == "1" and 3 or 1
 				local l = c:sub(3, 3) == "1" and 4 or 1
 				local leftMod = format("%s%s%s", leftMods[j], leftMods[k], leftMods[l])
-	
+
 				local Type = self:GetAttribute(leftMod, "type", rightMod)
 				if (not Type and self == z.icon) then
 					Type = self:GetAttribute("*", "type", "*")
@@ -3348,24 +3348,24 @@ do
 						if (spell ~= lastSpell or Type == "target") then
 							local leftModDesc = format("%s%s%s", leftModsDesc[j], leftModsDesc[k], leftModsDesc[l])
 							lastSpell = spell
-	
+
 							local match1 = tostring(strfind(leftMod, "ctrl-") and 1 or 0) .. tostring(strfind(leftMod, "shift-") and 1 or 0) .. tostring(strfind(leftMod, "alt-") and 1 or 0)
 							local match2 = tostring(IsControlKeyDown() and 1 or 0) .. tostring(IsShiftKeyDown() and 1 or 0) .. tostring(IsAltKeyDown() and 1 or 0)
-	
+
 							local buttonColour = ((match1 == match2) and "|cFFFFFFFF") or "|cFF808080"
-	
+
 							local unitShow
 							if (unit and unit ~= unit1) then
 								unitShow = format(L[" on %s"], z:ColourUnit(unit))
 							else
 								unitShow = ""
 							end
-	
+
 							if (spec and line == 1 and Type ~= "target") then
 								GameTooltip:AddDoubleLine(" ", spec, nil, nil, nil, 0.5, 0.5, 0.5)
 								spec = nil
 							end
-							
+
 							local spellColour = z:GetSpellColour(spell) or "|cFFFFFF80"
 							if (Type == "target") then
 								if (spec and line == 1) then
@@ -3640,7 +3640,7 @@ function z:InitCell(cell)
 	end
 
 	local tex = self:GetBarTexture()
-	
+
 	cell.bar = CreateFrame("StatusBar", nil, cell)
 	cell.bar:SetStatusBarTexture(tex)
 	cell.bar:SetStatusBarColor(1, 1, 0.5, 0.5)
@@ -3652,7 +3652,7 @@ function z:InitCell(cell)
 		cell.bar:SetPoint("TOPLEFT", cell.buff[#self.buffs], "TOPRIGHT")
 	end
 	cell.bar:SetPoint("BOTTOMRIGHT")
-	
+
 	local timer = CreateFrame("Frame", nil, cell.bar)
 	cell.bar.timer = timer
 	timer:SetScale(self.db.profile.bufftimersize)
@@ -3743,7 +3743,7 @@ function z:OnRaidRosterUpdate()
 	if (GetNumGroupMembers() == 0) then
 		deepDel(self.buffRoster)
 		self.buffRoster = new()
-		
+
 		if (self.wasInGroup) then
 			reqHistorySpec = {}
 			reqHistoryCap = {}
@@ -4092,9 +4092,9 @@ function z:UNIT_PET(e, ownerid)
 
 		-- Since we'll get a UNIT_PET event for raid1 and party1 and potentially player all from
 		-- the same unit, we'll limit those events here depending what sort of group we're in:
-		if (GetNumRaidMembers() > 0 and strfind(ownerid, "^raid(%d+)$")) then
+		if (GetNumGroupMembers() > 0 and strfind(ownerid, "^raid(%d+)$")) then
 			petid = ownerid:gsub("^raid(%d+)", "raidpet%1")
-		elseif (GetNumPartyMembers() > 0 and strfind(ownerid, "^party(%d+)$")) then
+		elseif (GetNumGroupMembers() > 0 and strfind(ownerid, "^party(%d+)$")) then
 			petid = ownerid:gsub("^party(%d+)", "partypet%1")
 		elseif (ownerid == "player") then
 			petid = "pet"
@@ -4109,7 +4109,7 @@ function z:UNIT_PET(e, ownerid)
 				end
 			end
 		end
-	end	
+	end
 end
 
 -- PLAYER_LEAVING_WORLD
@@ -4591,7 +4591,7 @@ end
 -- GetGroupNumber
 function z:GetGroupNumber(unit)
 	-- Fix for rosterlib's occasional group barf
-	if (GetNumRaidMembers() > 0) then
+	if (GetNumGroupMembers() > 0) then
 		local id = UnitInRaid(unit)		--strmatch(unit, "(%d+)")
 		if (id) then
 			id = id + 1
@@ -4683,7 +4683,7 @@ function z:CreateHelpFrame()
 	b:SetScript("OnClick", function(self) helpFrame:Hide() end)
 	b:SetText(CLOSE)
 	helpFrame.close = b
-	
+
 	helpFrame:Hide()
 	z.CreateHelpFrame = nil
 
@@ -4873,7 +4873,7 @@ function z:OnEnableOnce()
 			end
 		end
 	end
-	
+
 	btr = ZOMGBuffTehRaid
 
 	self:MaybeLoadPortalz()
@@ -4970,7 +4970,7 @@ function z:OnEnable()
 		LDBIcon:Register("ZOMGBuffs", LDB, self.db.profile.ldbIcon)
 	end
 
-	self.groupColours = {{1, 1, 0.5}, {1, 0.5, 1}, {0.5, 1, 1}, {1, 0.5, 0.5}, {0.5, 1, 0.5}, {0.5, 0.5, 1}, {0.5, 0.5, 0.5}, {1, 1, 0}, {1, 0, 1}, {0, 1, 1}}	
+	self.groupColours = {{1, 1, 0.5}, {1, 0.5, 1}, {0.5, 1, 1}, {1, 0.5, 0.5}, {0.5, 1, 0.5}, {0.5, 0.5, 1}, {0.5, 0.5, 0.5}, {1, 1, 0}, {1, 0, 1}, {0, 1, 1}}
 
 	if (self.OnEnableOnce) then
 		self:OnEnableOnce()
