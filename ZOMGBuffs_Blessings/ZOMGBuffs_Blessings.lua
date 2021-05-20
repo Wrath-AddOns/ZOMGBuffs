@@ -22,7 +22,7 @@ local z = ZOMGBuffs
 local zb = z:NewModule("ZOMGBlessings")
 ZOMGBlessings = zb
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 147 $")
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 local classOrder, classIndex = z.classOrder, z.classIndex
@@ -735,10 +735,10 @@ end
 
 -- OnModifyTemplate
 function zb:OnModifyTemplate(class, type, response)
---@debug@
+--[===[@debug@
 	self:argCheck(class, 1, "string")
 	self:argCheck(type, 2, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 	self:BroadcastTemplate(response)
 end
 

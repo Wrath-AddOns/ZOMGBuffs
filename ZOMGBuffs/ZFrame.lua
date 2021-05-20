@@ -21,7 +21,7 @@ ALTCLICKTOSIZE		= "Alt-Click to size window"
 --end
 
 local MAJOR_VERSION = "ZFrame-1.0"
-local MINOR_VERSION = "$Revision$"
+local MINOR_VERSION = "$Revision: 2 $"
 
 if not LibStub then error(MAJOR_VERSION .. " requires LibStub") end
 local ZFrame, oldLib = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)

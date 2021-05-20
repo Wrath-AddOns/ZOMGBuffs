@@ -1,9 +1,11 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 
 L:RegisterTranslations("esMX", function() return
---@debug@
+--[===[@debug@
 {
 }
---@end-debug@
---@localization(locale="esMX", format="lua_table", namespace="ZOMGBlessings", handle-unlocalized="ignore")@
+--@end-debug@]===]
+{
+}
+
 end)

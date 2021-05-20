@@ -19,7 +19,7 @@ local module = z:NewModule("ZOMGPortalz")
 local portalBinding
 ZOMGPortalz = module
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 143 $")
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 local InCombatLockdown	= InCombatLockdown

@@ -1,9 +1,11 @@
 local L = LibStub("AceLocale-2.2"):new("ZOMGBlessings")
 
 L:RegisterTranslations("koKR", function() return
---@debug@
+--[===[@debug@
 {
 }
---@end-debug@
---@localization(locale="koKR", format="lua_table", namespace="ZOMGBlessings", handle-unlocalized="ignore")@
+--@end-debug@]===]
+{
+}
+
 end)

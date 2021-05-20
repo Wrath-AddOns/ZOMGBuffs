@@ -24,7 +24,7 @@ local z = ZOMGBuffs
 local man = z:NewModule("ZOMGBlessingsManager")
 ZOMGBlessingsManager = man
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 156 $")
 
 do
 	local frostPresence = GetSpellInfo(48263)
@@ -2620,12 +2620,12 @@ end
 
 -- OnReceiveBroadcastTemplatePart
 function man:OnReceiveBroadcastTemplatePart(sender, name, class, buff)
---@debug@
+--[===[@debug@
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(class, 3, "string")
 	self:argCheck(buff, 4, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala[name]
 		if (pala) then
@@ -2640,11 +2640,11 @@ end
 
 -- OnReceiveBroadcastAura
 function man:OnReceiveBroadcastAura(sender, name, aura)
---@debug@
+--[===[@debug@
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(buff, 3, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala[name]
@@ -2663,12 +2663,12 @@ end
 -- OnReceiveTemplatePart
 -- PallyPower support only
 function man:OnReceiveTemplatePart(sender, name, classOrName, spell)
---@debug@
+--[===[@debug@
 	self:argCheck(sender, 1, "string")
 	self:argCheck(name, 2, "string")
 	self:argCheck(classOrName, 3, "string")
 	self:argCheck(spell, 4, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 	if (select(2,UnitClass(sender)) == "PALADIN" or z:UnitRank(sender) > 0 or (sender == name)) then
 		local pala = self.pala and self.pala[name]
 		if (pala) then
@@ -3726,11 +3726,11 @@ end
 
 -- SetCell
 function man:SetCell(row, col, Type, panel)
---@debug@
+--[===[@debug@
 	self:argCheck(row, 1, "number")
 	self:argCheck(col, 2, "number")
 	self:argCheck(Type, 3, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 	if (panel) then
 		if (row and col) then
 			local class = self.expandpanel.class
@@ -3851,12 +3851,12 @@ end
 
 -- SetException
 function man:SetException(name, row, col, n)
---@debug@
+--[===[@debug@
 	self:argCheck(name, 1, "string")
 	self:argCheck(row, 2, "number")
 	self:argCheck(col, 3, "number")
 	self:argCheck(n, 4, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 	local class = classOrder[col]
 	if (not man.configuring and self.canEdit) then
 		local pala, palaName = self:GetPalaFromRow(row)
@@ -4661,10 +4661,10 @@ end
 
 -- OnModifyTemplate
 function man:OnModifyTemplate(key, value)
---@debug@
+--[===[@debug@
 	self:argCheck(key, 1, "string")
 	self:argCheck(value, 2, "string", "nil")
---@end-debug@
+--@end-debug@]===]
 end
 
 -- OnReceiveAck

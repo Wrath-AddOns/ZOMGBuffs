@@ -10,7 +10,7 @@ local z = ZOMGBuffs
 local mod = z:NewModule("ZOMGLog")
 ZOMGLog = mod
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 32 $")
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 

@@ -22,7 +22,7 @@ local z = ZOMGBuffs
 local zs = z:NewModule("ZOMGSelfBuffs")
 ZOMGSelfBuffs = zs
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 152 $")
 
 local enchantMatching		-- Table of spellName -> enchantName conversions
 do

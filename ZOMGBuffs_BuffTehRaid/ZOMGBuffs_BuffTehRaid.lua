@@ -14,7 +14,7 @@ local z = ZOMGBuffs
 local zg = z:NewModule("ZOMGBuffTehRaid")
 ZOMGBuffTehRaid = zg
 
-z:CheckVersion("$Revision$")
+z:CheckVersion("$Revision: 152 $")
 
 local new, del, deepDel, copy = z.new, z.del, z.deepDel, z.copy
 local InCombatLockdown	= InCombatLockdown
